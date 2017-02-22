@@ -25,26 +25,17 @@
 #include <QAbstractTableModel>
 #include <QFutureWatcher>
 #include <QAbstractItemView>
-#include <QStyledItemDelegate>
 #include <QPainter>
 #include <QTimer>
+#include <QMouseEvent>
+#include <QRubberBand>
+#include <QPoint>
 
 //
 // classes
 //
 class ListView;
 class Entry;
-
-/**
- * @brief The ListViewDelegate class
- */
-class ListViewDelegate : public QStyledItemDelegate {
-public:
-    ListViewDelegate( ListView *parent );
-    ~ListViewDelegate() {}
-    void paint( QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index ) const;
-    QSize sizeHint( const QStyleOptionViewItem &option, const QModelIndex &index ) const;
-};
 
 /**
  * @brief The ContainerItem class
@@ -89,7 +80,7 @@ public:
 
     // constructor
     explicit ContainerModel( QAbstractItemView *parent, Containers container = ListContainer, Modes mode = FileMode, int iconSize = 64 );
-    ~ContainerModel() {}
+    ~ContainerModel();
 
     // overrides
     int rowCount( const QModelIndex & = QModelIndex()) const { return this->numItems(); }
@@ -108,6 +99,8 @@ public:
     Entry *indexToEntry( const QModelIndex &index ) const;
     int numItems() const { return this->list.count(); }
     QAbstractItemView *listParent() const { return this->m_listParent; }
+    QRubberBand *rubberBand() const { return this->m_rubberBand; }
+    int verticalOffset() const { return this->m_verticalOffset; }
 
 signals:
     void stop();
@@ -122,7 +115,11 @@ public slots:
     void processItemOpen( const QModelIndex &index );
     void setSelection( const QModelIndexList &selection ) { this->selectionTimer.stop(); this->selection = selection; }
     void processEntries();
-    void processMouseMove( const QModelIndex &index );
+    void processMousePress( QMouseEvent *e );
+    void processMouseRelease( QMouseEvent *e );
+    void processMouseMove( QMouseEvent *e );
+    void updateRubberBand();
+    void setVerticalOffset( int offset ) { this->m_verticalOffset = offset; }
 
 private slots:
     void determineMimeTypes();
@@ -143,6 +140,10 @@ private:
     QFutureWatcher<Entry*> futureWatcher;
     QModelIndex currentIndex;
     QTimer selectionTimer;
+    QRubberBand *m_rubberBand;
+    QPoint selectionOrigin;
+    QPoint currentMousePos;
+    int m_verticalOffset;
 };
 
 #endif // CONTAINERMODEL_H

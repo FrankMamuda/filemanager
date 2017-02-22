@@ -24,6 +24,11 @@
 #include <QStandardItemModel>
 #include "entry.h"
 #include <QApplication>
+#include <QItemSelectionModel>
+#include <QScrollBar>
+#include "listviewdelegate.h"
+
+// TODO: keep selection on update
 
 /**
  * @brief ListView::ListView
@@ -39,6 +44,9 @@ ListView::ListView( QWidget* parent ) : QListView( parent ), m_model( new Contai
 
     // enable mouse tracking
     this->setMouseTracking( true );
+
+    // update selection rectangle on scroll bar changes
+    this->connect( this->verticalScrollBar(), SIGNAL( valueChanged( int )), this, SLOT( updateRubberBand()));
 }
 
 /**
@@ -83,19 +91,19 @@ void ListView::switchDisplayMode( ViewMode viewMode ) {
 }
 
 /**
+ * @brief ListView::mousePressEvent
+ */
+void ListView::mousePressEvent( QMouseEvent *e ) {
+    this->model()->processMousePress( e );
+    QListView::mousePressEvent( e );
+}
+
+/**
  * @brief ListView::mouseReleaseEvent
  * @param e
  */
 void ListView::mouseReleaseEvent( QMouseEvent *e ) {
-    QModelIndex index;
-
-    index = this->indexAt( e->pos());
-    if ( e->button() == Qt::RightButton ) {
-        if ( index.isValid())
-            this->model()->processContextMenu( index, this->mapToGlobal( e->pos()) );
-        else
-            this->selectionModel()->clear();
-    }
+    this->model()->processMouseRelease( e );
     QListView::mouseReleaseEvent( e );
 }
 
@@ -122,7 +130,15 @@ void ListView::dropEvent( QDropEvent *e ) {
  * @brief entered
  * @param index
  */
-void ListView::mouseMoveEvent( QMouseEvent *event ) {
-    this->model()->processMouseMove( this->indexAt( event->pos()));
-    QAbstractItemView::mouseMoveEvent( event );
+void ListView::mouseMoveEvent( QMouseEvent *e ) {
+    this->model()->processMouseMove( e );
+    QAbstractItemView::mouseMoveEvent( e );
+}
+
+/**
+ * @brief ListView::updateRubberBand
+ */
+void ListView::updateRubberBand() {
+    this->model()->setVerticalOffset( this->verticalOffset());
+    this->model()->updateRubberBand();
 }

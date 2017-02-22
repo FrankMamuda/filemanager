@@ -50,6 +50,7 @@ public slots:
 
 private slots:
     void headerResized();
+    void updateRubberBand();
 
 protected:
     void dropEvent( QDropEvent *e );
@@ -62,10 +63,6 @@ protected:
 
 private:
     ContainerModel *m_model;
-    int m_scrollPosition;
-    bool m_selection;
-    QPoint m_startPoint;
-    QRect m_selectionRect;
 };
 
 #endif // TABLEVIEW_H

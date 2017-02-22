@@ -308,7 +308,7 @@ void MainWindow::setListView() {
  */
 void MainWindow::setDetailView() {
     if ( this->ui->stackedWidget->currentIndex() == 0 )
-        this->ui->tableView->selectionModel()->select( this->ui->listView->selectionModel()->selection(), QItemSelectionModel::Select );
+        this->ui->tableView->selectionModel()->select( this->ui->listView->selectionModel()->selection(), QItemSelectionModel::Select | QItemSelectionModel::Rows );
 
     this->ui->stackedWidget->setCurrentIndex( 1 );
     this->ui->horizontalSlider->setEnabled( false );

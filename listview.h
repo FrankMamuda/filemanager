@@ -49,9 +49,13 @@ public slots:
 protected:
     void dropEvent( QDropEvent * );
     void dragLeaveEvent( QDragLeaveEvent *e ) { e->accept(); }
+    void mousePressEvent( QMouseEvent * );
     void mouseReleaseEvent( QMouseEvent * );
     void selectionChanged( const QItemSelection &, const QItemSelection & );
-    void mouseMoveEvent( QMouseEvent *event );
+    void mouseMoveEvent( QMouseEvent *e );
+
+private slots:
+    void updateRubberBand();
 
 private:
     ContainerModel *m_model;

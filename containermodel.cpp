@@ -43,6 +43,16 @@ ContainerModel::ContainerModel( QAbstractItemView *parent, Containers container,
     this->connect( &this->futureWatcher, SIGNAL( resultReadyAt( int )), this, SLOT( mimeTypeDetected( int )));
     this->connect( this, SIGNAL( stop()), &this->futureWatcher, SLOT( cancel()));
     this->connect( qApp, SIGNAL( aboutToQuit()), &this->futureWatcher, SLOT( cancel()));
+
+    // create rubber band
+    this->m_rubberBand = new QRubberBand( QRubberBand::Rectangle, this->listParent()->viewport());
+}
+
+/**
+ * @brief ContainerModel::~ContainerModel
+ */
+ContainerModel::~ContainerModel() {
+    this->m_rubberBand->deleteLater();
 }
 
 /**
@@ -316,20 +326,85 @@ void ContainerModel::processEntries() {
 }
 
 /**
+ * @brief ContainerModel::processMousePress
+ * @param pos
+ */
+void ContainerModel::processMousePress( QMouseEvent *e ) {
+    if ( e->button() == Qt::LeftButton ) {
+        this->selectionOrigin = e->pos();
+        this->rubberBand()->setGeometry( QRect( this->selectionOrigin, QSize()));
+        this->rubberBand()->show();
+    }
+}
+
+/**
+ * @brief ContainerModel::processMouseRelease
+ */
+void ContainerModel::processMouseRelease( QMouseEvent *e ) {
+    QModelIndex index;
+
+    this->rubberBand()->hide();
+
+    index = this->listParent()->indexAt( e->pos());
+    if ( e->button() == Qt::RightButton ) {
+        if ( index.isValid())
+            this->processContextMenu( index, this->listParent()->mapToGlobal( e->pos()) );
+        else
+            this->listParent()->selectionModel()->clear();
+    }
+}
+
+/**
  * @brief ContainerModel::processMouseMove
  * @param selection
  */
-void ContainerModel::processMouseMove( const QModelIndex &index ) {
-    if ( index.isValid() && this->currentIndex != index && !( QApplication::mouseButtons() & Qt::LeftButton )) {
-        this->selectionTimer.stop();
+void ContainerModel::processMouseMove( QMouseEvent *e ) {
+    QModelIndex index;
 
-        if ( !this->listParent()->selectionModel()->isSelected( index ))
-            this->selectionTimer.singleShot( 500, this, SLOT( selectCurrent()));
-        else
-            this->selectionTimer.singleShot( 500, this, SLOT( deselectCurrent()));
+    this->currentMousePos = e->pos();
+    this->updateRubberBand();
+
+    if ( !this->rubberBand()->isVisible()) {
+        index = this->listParent()->indexAt( e->pos());
+
+        if ( index.isValid() && this->currentIndex != index && !( QApplication::mouseButtons() & Qt::LeftButton )) {
+            this->selectionTimer.stop();
+
+            if ( !this->listParent()->selectionModel()->isSelected( index ))
+                this->selectionTimer.singleShot( 500, this, SLOT( selectCurrent()));
+            else
+                this->selectionTimer.singleShot( 500, this, SLOT( deselectCurrent()));
+        }
+
+        this->currentIndex = index;
     }
+}
 
-    this->currentIndex = index;
+/**
+ * @brief ContainerModel::updateRubberBand
+ */
+void ContainerModel::updateRubberBand() {
+    QPoint origin;
+    int y, k;
+
+    if ( !this->rubberBand()->isHidden()) {
+        origin = this->selectionOrigin;
+        origin.setY( this->selectionOrigin.y() - this->verticalOffset());
+        this->rubberBand()->setGeometry( QRect( origin, this->currentMousePos ).normalized());
+
+        // manually update selection
+        for ( y = 0; y < this->rowCount(); y++ ) {
+            for ( k = 0; k < this->columnCount(); k++ ) {
+                QModelIndex index;
+
+                index = this->index( y, k );
+                if ( this->rubberBand()->geometry().intersects( this->listParent()->visualRect( index )))
+                    this->listParent()->selectionModel()->select( index, QItemSelectionModel::Select | QItemSelectionModel::Rows );
+                else
+                    this->listParent()->selectionModel()->select( index, QItemSelectionModel::Deselect | QItemSelectionModel::Rows );
+            }
+        }
+    }
 }
 
 /**
@@ -364,13 +439,17 @@ void ContainerModel::deselectCurrent() {
  */
 void ContainerModel::mimeTypeDetected( int index ) {
     Entry *entry;
+    int y;
 
     // update entry in view with corresponding icon or thumbnail
     entry = this->list.at( index );
     if ( entry != NULL ) {
         if ( entry->updateScheduled()) {
             if ( this->listParent() != NULL ) {
-                this->listParent()->update( this->index( index, 0 ));
+
+                for ( y = 0; y < this->columnCount(); y++ )
+                    this->listParent()->update( this->index( index, y ));
+
                 entry->scheduleUpdate( false );
             }
         }
@@ -531,125 +610,4 @@ void ContainerModel::displayProperties() {
     }
 
     props.exec();
-}
-
-/**
- * @brief ListViewDelegate::ListViewDelegate
- * @param parent
- */
-ListViewDelegate::ListViewDelegate( ListView *parent ) {
-    this->setParent( qobject_cast<QObject*>( parent ));
-}
-
-/**
- * @brief ListViewDelegate::sizeHint
- * @param option
- * @param index
- * @return
- */
-QSize ListViewDelegate::sizeHint( const QStyleOptionViewItem &option, const QModelIndex &index ) const {
-    QSize size;
-    ContainerItem item;
-    QListView::ViewMode viewMode;
-
-    // get view mode
-    viewMode = qobject_cast<QListView*>( this->parent())->viewMode();
-    if ( viewMode == QListView::ListMode )
-        return QStyledItemDelegate::sizeHint( option, index );
-
-    // calculate proper size for multi-line text
-    item = qvariant_cast<ContainerItem>( index.model()->data( index, Qt::UserRole + ContainerModel::DisplayItem ));
-    size = QStyledItemDelegate::sizeHint( option, index );
-    size.setHeight( option.decorationSize.height() + item.lines.count() * item.textHeight );
-
-    return size;
-}
-
-/**
- * @brief ListViewDelegate::paint
- * @param painter
- * @param option
- * @param index
- */
-void ListViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index ) const {
-    QListView::ViewMode viewMode;
-
-    // get view mode
-    viewMode = qobject_cast<QListView*>( this->parent())->viewMode();
-    if ( viewMode == QListView::ListMode )
-        return QStyledItemDelegate::paint( painter, option, index );
-
-    //
-    // STAGE 0: display hilight
-    //
-    QBrush hilightBrush;
-
-    // save painter state & get hilight brush
-    painter->save();
-    hilightBrush = option.palette.highlight();
-    painter->setPen( Qt::NoPen );
-
-    // selected item
-    if ( option.state & QStyle::State_Selected ) {
-        hilightBrush.setColor( QColor::fromRgbF( hilightBrush.color().redF(), hilightBrush.color().greenF(), hilightBrush.color().blueF(), 0.50f ));
-        painter->fillRect( option.rect, hilightBrush );
-    }
-
-    // mouseOver/hover item
-    if ( option.state & QStyle::State_MouseOver && !( option.state & QStyle::State_Selected )) {
-        hilightBrush.setColor( QColor::fromRgbF( hilightBrush.color().redF(), hilightBrush.color().greenF(), hilightBrush.color().blueF(), 0.25f ));
-        painter->fillRect( option.rect, hilightBrush );
-    }
-
-    // restore painter state
-    painter->restore();
-
-    //
-    // STAGE 1: display pixmap
-    //
-    QRect pixmapRect;
-    QPixmap pixmap;
-    int width, height, offset;
-
-    // get pixmap and its dimensions
-    pixmap = qvariant_cast<QPixmap>( index.model()->data( index, Qt::DecorationRole ));
-    pixmapRect = option.rect;
-    width = option.decorationSize.width();
-    height = option.decorationSize.height();
-
-    // properly position pixmap
-    if ( width < pixmapRect.width()) {
-        offset = pixmapRect.width() - width;
-        pixmapRect.setX( pixmapRect.x() + offset / 2 );
-        pixmapRect.setWidth( width );
-    }
-
-    // draw pixmap
-    pixmapRect.setHeight( height );
-    painter->drawPixmap( pixmapRect, pixmap );
-
-    //
-    // STAGE 3: display text
-    //
-    ContainerItem item;
-    QRect textRect;
-    QTextOption to;
-    int y;
-
-    // get pre-calculated display item
-    item = qvariant_cast<ContainerItem>( index.model()->data( index, Qt::UserRole + ContainerModel::DisplayItem ));
-    to.setAlignment( Qt::AlignHCenter );
-
-    // init text rectangle
-    textRect = option.rect;
-    textRect.setY( textRect.y() + height - item.textHeight );
-
-    // display multi-line text
-    for ( y = 0; y < item.lines.count(); y++ ) {
-        textRect.setX( textRect.x() + ( textRect.width() - item.lineWidths.at( y )) / 2 );
-        textRect.setY( textRect.y() + item.textHeight );
-        textRect.setHeight( item.textHeight );
-        textRect.setWidth( item.lineWidths.at( y ));
-        painter->drawText( textRect, item.lines.at( y ), to );
-    }
 }

@@ -32,15 +32,16 @@
 //   transfer selection from QListView
 //   fix jumpy scroll (move to top when cursor is outside widget?)
 //   ignore custom selection event if modifier key is pressed
+//   PROPERLY RESTORE SELECTION: rows not items
+//
 
 /**
  * @brief TableView::TableView
  * @param parent
  */
-TableView::TableView( QWidget *parent ) : QTableView( parent ), m_model( new ContainerModel( this, ContainerModel::TableContainer, ContainerModel::FileMode, 16 )), m_selection( false ) {
+TableView::TableView( QWidget *parent ) : QTableView( parent ), m_model( new ContainerModel( this, ContainerModel::TableContainer, ContainerModel::FileMode, 16 ))/*, m_selection( false )*/ {
     this->setModel( this->m_model );
     this->connect( this, SIGNAL( clicked( QModelIndex )), this->model(), SLOT( processItemOpen( QModelIndex )));
-    this->connect( this->verticalScrollBar(), SIGNAL( valueChanged( int )), this->viewport(), SLOT( update()));
     this->connect( this->horizontalHeader(), SIGNAL( geometriesChanged()), this, SLOT( headerResized()));
 
     for ( int y = 0; y < this->model()->columnCount(); y++ ) {
@@ -51,6 +52,9 @@ TableView::TableView( QWidget *parent ) : QTableView( parent ), m_model( new Con
 
     // enable mouse tracking
     this->setMouseTracking( true );
+
+    // update selection rectangle on scroll bar changes
+    this->connect( this->verticalScrollBar(), SIGNAL( valueChanged( int )), this, SLOT( updateRubberBand()));
 }
 
 /**
@@ -79,23 +83,21 @@ void TableView::setModel( ContainerModel *model ) {
     QTableView::setModel( model );
 }
 
+
+/**
+ * @brief TableView::mousePressEvent
+ */
+void TableView::mousePressEvent( QMouseEvent *e ) {
+    this->model()->processMousePress( e );
+    QTableView::mousePressEvent( e );
+}
+
 /**
  * @brief TableView::mouseReleaseEvent
  * @param e
  */
-void TableView::mouseReleaseEvent( QMouseEvent *e ) {
-    QModelIndex index;
-
-    this->m_selection = false;
-    this->viewport()->update();
-
-    index = this->indexAt( e->pos());
-    if ( e->button() == Qt::RightButton ) {
-        if ( index.isValid())
-            this->model()->processContextMenu( index, this->mapToGlobal( e->pos()));
-        else
-            this->selectionModel()->clear();
-    }
+void TableView::mouseReleaseEvent( QMouseEvent *e ) {    
+    this->model()->processMouseRelease( e );
     QTableView::mouseReleaseEvent( e );
 }
 
@@ -103,86 +105,8 @@ void TableView::mouseReleaseEvent( QMouseEvent *e ) {
  * @brief TableView::mouseMoveEvent
  */
 void TableView::mouseMoveEvent( QMouseEvent *e ) {
-    QPoint point;
-
-    point = this->viewport()->mapFromGlobal( QCursor::pos());
-
-    // ugly scroll fix
-    if ( point.y() < 32 )
-        this->scrollToTop();
-    else if ( point.y() > this->viewport()->height() + 32 )
-        this->scrollToBottom();
-
-    if ( this->m_selection ) {
-        QRect rect;
-        int x0, x1, y0, y1, y, k, delta;
-
-        if ( this->m_startPoint.x() < point.x()) {
-            x0 = this->m_startPoint.x();
-            x1 = point.x();
-        } else {
-            x1 = this->m_startPoint.x();
-            x0 = point.x();
-        }
-
-        if ( this->m_startPoint.y() < point.y()) {
-            y0 = this->m_startPoint.y();
-            y1 = point.y();
-        } else {
-            y1 = this->m_startPoint.y();
-            y0 = point.y();
-        }
-
-        rect.setCoords( x0, y0, x1, y1 );
-        this->m_selectionRect = rect;
-
-        delta = this->m_scrollPosition - this->verticalOffset();
-        if ( this->m_scrollPosition > this->verticalOffset())
-            delta *= -1;
-
-        rect.setY( rect.y() + delta );
-
-        for ( y = 0; y < this->model()->rowCount(); y++ ) {
-            for ( k = 0; k < this->model()->columnCount(); k++ ) {
-                QModelIndex index;
-
-                index = this->model()->index( y, k );
-                if ( rect.intersects( this->visualRect( index ))) {
-                    this->selectionModel()->select( index, QItemSelectionModel::Select | QItemSelectionModel::Rows );
-                    break;
-                } else
-                    this->selectionModel()->select( index, QItemSelectionModel::Deselect );
-            }
-        }
-    }
-
-    // handle hover selections
-    this->model()->processMouseMove( this->indexAt( e->pos()));
-
-    this->viewport()->update();
+    this->model()->processMouseMove( e );
     QTableView::mouseMoveEvent( e );
-}
-
-/**
- * @brief TableView::mousePressEvent
- */
-void TableView::mousePressEvent( QMouseEvent *e ) {
-    QPoint point;
-
-    point = this->viewport()->mapFromGlobal( QCursor::pos());
-
-    if ( e->button() == Qt::LeftButton && this->indexAt( point ).row() == -1 ) {
-        this->selectionModel()->reset();
-        this->viewport()->update();
-        this->m_selection = true;
-        this->m_startPoint = point;
-        this->m_selectionRect = QRect();
-        this->m_scrollPosition = this->verticalOffset();
-    } else {
-        this->m_selection = false;
-    }
-
-    QTableView::mousePressEvent( e );
 }
 
 /**
@@ -201,22 +125,6 @@ void TableView::selectionChanged( const QItemSelection &selected, const QItemSel
  */
 void TableView::paintEvent( QPaintEvent *e ) {
     QTableView::paintEvent( e );
-
-    if ( this->m_selection ) {
-        int delta;
-        QPainter painter( this->viewport());
-        QRect rect( this->m_selectionRect );
-
-        painter.setPen( QPen( QColor::fromRgbF( 0.1647, 0.4980, 0.8314, 1.00 )));
-        painter.setBrush( QBrush( QColor::fromRgbF( 0.1647, 0.4980, 0.8314, 0.25 )));
-
-        delta = this->m_scrollPosition - this->verticalOffset();
-        if ( this->m_scrollPosition > this->verticalOffset())
-            delta *= -1;
-
-        rect.setY( rect.y() + delta );
-        painter.drawRect( rect );
-    }
 }
 
 /**
@@ -228,3 +136,10 @@ void TableView::dropEvent( QDropEvent *e ) {
     e->accept();
 }
 
+/**
+ * @brief TableView::updateRubberBand
+ */
+void TableView::updateRubberBand() {
+    this->model()->setVerticalOffset( this->verticalOffset());
+    this->model()->updateRubberBand();
+}
