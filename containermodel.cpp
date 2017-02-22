@@ -290,6 +290,8 @@ void ContainerModel::processEntries() {
 
         // get display text and height
         text = this->list.at( y )->alias();
+        item.text = text;
+        item.textWidth = fm.width( item.text );
         textHeight = fm.height();
 
         // split text into max 3 lines
@@ -322,18 +324,6 @@ void ContainerModel::processEntries() {
 
         item.textHeight = textHeight;
         this->displayList << item;
-    }
-}
-
-/**
- * @brief ContainerModel::processMousePress
- * @param pos
- */
-void ContainerModel::processMousePress( QMouseEvent *e ) {
-    if ( e->button() == Qt::LeftButton ) {
-        this->selectionOrigin = e->pos();
-        this->rubberBand()->setGeometry( QRect( this->selectionOrigin, QSize()));
-        this->rubberBand()->show();
     }
 }
 
@@ -377,6 +367,19 @@ void ContainerModel::processMouseMove( QMouseEvent *e ) {
         }
 
         this->currentIndex = index;
+    }
+}
+
+/**
+ * @brief ContainerModel::processMousePress
+ * @param pos
+ */
+void ContainerModel::processMousePress( QMouseEvent *e ) {
+    if ( e->button() == Qt::LeftButton ) {
+        this->selectionOrigin = e->pos();
+        this->selectionOrigin.setY( this->selectionOrigin.y() + this->verticalOffset());
+        this->rubberBand()->setGeometry( QRect( this->selectionOrigin, QSize()));
+        this->rubberBand()->show();
     }
 }
 

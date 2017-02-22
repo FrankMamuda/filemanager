@@ -45,6 +45,8 @@ public:
     QStringList lines;
     QList<int> lineWidths;
     int textHeight;
+    QString text;
+    int textWidth;
 };
 Q_DECLARE_METATYPE( ContainerItem )
 

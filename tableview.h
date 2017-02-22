@@ -59,7 +59,6 @@ protected:
     void mouseReleaseEvent( QMouseEvent *e );
     void mouseMoveEvent( QMouseEvent *e );
     void selectionChanged( const QItemSelection &, const QItemSelection & );
-    void paintEvent( QPaintEvent *e );
 
 private:
     ContainerModel *m_model;

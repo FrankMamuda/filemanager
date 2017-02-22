@@ -44,13 +44,16 @@ QSize ListViewDelegate::sizeHint( const QStyleOptionViewItem &option, const QMod
 
     // get view mode
     viewMode = qobject_cast<QListView*>( this->parent())->viewMode();
-    if ( viewMode == QListView::ListMode )
-        return QStyledItemDelegate::sizeHint( option, index );
 
     // calculate proper size for multi-line text
     item = qvariant_cast<ContainerItem>( index.model()->data( index, Qt::UserRole + ContainerModel::DisplayItem ));
     size = QStyledItemDelegate::sizeHint( option, index );
-    size.setHeight( option.decorationSize.height() + item.lines.count() * item.textHeight );
+
+    if ( viewMode == QListView::ListMode ) {
+        size.setWidth( option.decorationSize.width() + item.textWidth + 8 );
+        size.setHeight( option.decorationSize.height());
+    } else
+        size.setHeight( option.decorationSize.height() + item.lines.count() * item.textHeight );
 
     return size;
 }
@@ -66,8 +69,6 @@ void ListViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &opt
 
     // get view mode
     viewMode = qobject_cast<QListView*>( this->parent())->viewMode();
-    if ( viewMode == QListView::ListMode )
-        return QStyledItemDelegate::paint( painter, option, index );
 
     //
     // STAGE 0: display hilight
@@ -109,8 +110,11 @@ void ListViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &opt
 
     // properly position pixmap
     if ( width < pixmapRect.width()) {
-        offset = pixmapRect.width() - width;
-        pixmapRect.setX( pixmapRect.x() + offset / 2 );
+        if ( viewMode == QListView::IconMode ) {
+            offset = pixmapRect.width() - width;
+            pixmapRect.setX( pixmapRect.x() + offset / 2 );
+        }
+
         pixmapRect.setWidth( width );
     }
 
@@ -121,25 +125,35 @@ void ListViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &opt
     //
     // STAGE 3: display text
     //
-    ContainerItem item;
     QRect textRect;
     QTextOption to;
-    int y;
+    ContainerItem item;
 
-    // get pre-calculated display item
     item = qvariant_cast<ContainerItem>( index.model()->data( index, Qt::UserRole + ContainerModel::DisplayItem ));
-    to.setAlignment( Qt::AlignHCenter );
 
-    // init text rectangle
-    textRect = option.rect;
-    textRect.setY( textRect.y() + height - item.textHeight );
+    if ( viewMode == QListView::IconMode ) {
+        int y;
 
-    // display multi-line text
-    for ( y = 0; y < item.lines.count(); y++ ) {
-        textRect.setX( textRect.x() + ( textRect.width() - item.lineWidths.at( y )) / 2 );
-        textRect.setY( textRect.y() + item.textHeight );
-        textRect.setHeight( item.textHeight );
-        textRect.setWidth( item.lineWidths.at( y ));
-        painter->drawText( textRect, item.lines.at( y ), to );
+        // get pre-calculated display item
+        to.setAlignment( Qt::AlignHCenter );
+
+        // init text rectangle
+        textRect = option.rect;
+        textRect.setY( textRect.y() + height - item.textHeight );
+
+        // display multi-line text
+        for ( y = 0; y < item.lines.count(); y++ ) {
+            textRect.setX( textRect.x() + ( textRect.width() - item.lineWidths.at( y )) / 2 );
+            textRect.setY( textRect.y() + item.textHeight );
+            textRect.setHeight( item.textHeight );
+            textRect.setWidth( item.lineWidths.at( y ));
+            painter->drawText( textRect, item.lines.at( y ), to );
+        }
+    } else {
+        to.setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
+        textRect = option.rect;
+        textRect.setX( pixmapRect.x() + pixmapRect.width() + 8 );
+        textRect.setWidth( item.textWidth );
+        painter->drawText( textRect, item.text, to );
     }
 }

@@ -28,13 +28,6 @@
 #include "variable.h"
 #include "main.h"
 
-// TODO: remove dotted outline
-//   transfer selection from QListView
-//   fix jumpy scroll (move to top when cursor is outside widget?)
-//   ignore custom selection event if modifier key is pressed
-//   PROPERLY RESTORE SELECTION: rows not items
-//
-
 /**
  * @brief TableView::TableView
  * @param parent
@@ -83,7 +76,6 @@ void TableView::setModel( ContainerModel *model ) {
     QTableView::setModel( model );
 }
 
-
 /**
  * @brief TableView::mousePressEvent
  */
@@ -117,14 +109,6 @@ void TableView::mouseMoveEvent( QMouseEvent *e ) {
 void TableView::selectionChanged( const QItemSelection &selected, const QItemSelection &deselected ) {
     this->model()->setSelection( this->selectionModel()->selectedIndexes());
     QTableView::selectionChanged( selected, deselected );
-}
-
-/**
- * @brief TableView::paintEvent
- * @param e
- */
-void TableView::paintEvent( QPaintEvent *e ) {
-    QTableView::paintEvent( e );
 }
 
 /**
