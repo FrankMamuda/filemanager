@@ -32,7 +32,7 @@
 /*
 GOALS:
     +/- unix-y file paths with mount points such as /c/smth/smth /d/spam/eggs
-    minimalistic/configurable ui
+    +/- minimalistic/configurable ui
     +/- mime type detection, not reliance extension
       (only if unknown or text/plain to determine if cpp etc.)
       (sort of a hybrid between mime/extension)
@@ -43,7 +43,7 @@ GOALS:
     .desktop file support
     + icon pack support
     scripted right-click context menus
-    usage of cvars
+    +/- usage of cvars
     homedir can be set (pseudo-mounted) at /home (can point to anything)
     tabbled and multiview
     notifications on copy/link/delete etc. (for now use system?)
@@ -59,7 +59,8 @@ GOALS:
         with mime type database and create a list of default programs
     implement QFileSystemWatcher for file updates
     tooltips
-    fix mimetype deletection performance regression
+    +/- fix mimetype deletection performance regression
+    fix crash on app exit while detecting mimetypes
   */
 
 /**
@@ -67,19 +68,23 @@ GOALS:
  * @param parent
  */
 
-MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::MainWindow ), m_currentPath( QDir::currentPath()) {
+MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::MainWindow ), m_currentPath( QDir::currentPath()), m_historyPosition( -1 )
+{
+    ViewModes viewMode;
+
+    // set up ui
     this->ui->setupUi( this );
 
     // set current path
     this->setCurrentPath();
 
     // trigger size change
-    Variable::add( "mainWindow/iconSize/sliderPosition", m.settings, 3 );
+    Variable::add( "mainWindow/iconSize/sliderPosition", m.settings, Medium );
     this->ui->horizontalSlider->setValue( Variable::integer( "mainWindow/iconSize/sliderPosition" ));
     this->on_horizontalSlider_valueChanged( Variable::integer( "mainWindow/iconSize/sliderPosition" ));
 
-    // this->ui->tableView->setSelectionModel( this->ui->listView->selectionModel());
-    this->checkPosition();
+    //
+    this->checkHistoryPosition();
 
     // set icons here (some bug resets icons, when defined in form)
     this->ui->actionBack->setIcon( QIcon::fromTheme( "go-previous" ));
@@ -102,16 +107,15 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->connect( this->actionViewList, SIGNAL( triggered( bool )), this, SLOT( setListView()));
     this->connect( this->actionViewDetails, SIGNAL( triggered( bool )), this, SLOT( setDetailView()));
 
-    //   this->ui->tableView->setSelectionModel( new QItemSelectionModel());
+    // restore view mode
+    Variable::add( "mainWindow/viewMode", m.settings, IconMode );
+    viewMode = static_cast<ViewModes>( Variable::integer( "mainWindow/viewMode" ));
 
-    Variable::add( "mainWindow/viewMode", m.settings, 0 );
-    int value = Variable::integer( "mainWindow/viewMode" );
-
-    if ( value == 0 )
+    if ( viewMode == IconMode )
         this->setGridView();
-    else if ( value == 1 )
+    else if ( viewMode == ListMode )
         this->setListView();
-    else if ( value == 2 )
+    else if ( viewMode == DetailMode )
         this->setDetailView();
 }
 
@@ -131,41 +135,30 @@ void MainWindow::setCurrentPath( const QString &path ) {
         this->ui->tableView->model()->setMode( ContainerModel::SideMode );
         this->ui->pathEdit->setText( "/" );
         this->m_currentPath = "/";
-
-        // HISTORY
-        /*if ( QString::compare( this->history.at( this->m_position ), "/" )) {
-            qDebug() << "insert"  << "/" << "at" << this->position();
-            this->history.insert( this->m_position++, "/" );
-        }*/
-        return;
     } else if ( !QString::compare( path, "trash://" )) {
         this->ui->pathEdit->setText( path );
         this->m_currentPath = "trash://";
         return;
+    } else {
+        windowsPath = PathUtils::toWindowsPath( path );
+        directory.cd( windowsPath );
+
+        if ( !directory.exists( windowsPath )) {
+            qDebug() << path << "doesn't exist";
+            return;
+        }
+
+        unixPath = PathUtils::toUnixPath( path );
+        this->m_currentPath = path;
+        this->ui->pathEdit->setText( unixPath );
+
+        this->ui->listView->model()->setMode( ContainerModel::FileMode );
+        this->ui->tableView->model()->setMode( ContainerModel::FileMode );
+
     }
-
-    windowsPath = PathUtils::toWindowsPath( path );
-    directory.cd( windowsPath );
-
-    if ( !directory.exists( windowsPath )) {
-        qDebug() << path << "doesn't exist";
-        return;
-    }
-
-    unixPath = PathUtils::toUnixPath( path );
-    this->m_currentPath = path;
-    this->ui->pathEdit->setText( unixPath );
-
-    this->ui->listView->model()->setMode( ContainerModel::FileMode );
-    this->ui->tableView->model()->setMode( ContainerModel::FileMode );
 
     this->ui->statusBar->setText( QString( "%1 items" ).arg( this->ui->listView->model()->numItems()));
-
-    // HISTORY
-    /*if ( QString::compare( this->history.at( this->m_position ), unixPath )) {
-        qDebug() << "insert"  << unixPath << "at" << this->position();
-        this->history.insert( this->m_position++, unixPath );
-    }*/
+    this->addToHistory( this->m_currentPath );
 }
 
 /**
@@ -233,39 +226,40 @@ void MainWindow::on_horizontalSlider_valueChanged( int value ) {
  * @brief MainWindow::on_actionBack_triggered
  */
 void MainWindow::on_actionBack_triggered() {
-    if ( this->position() <= 0 || this->history.size() < 1 )
+    /*if ( this->historyPosition() <= 0 || this->history.size() < 1 )
         return;
 
-    this->m_position--;
-    this->setCurrentPath( this->history.at( this->position()));
-    this->checkPosition();
+    this->m_historyPosition--;
+    this->setCurrentPath( this->history.at( this->historyPosition()));
+    this->checkHistoryPosition();*/
 }
 
 /**
  * @brief MainWindow::on_actionForward_triggered
  */
 void MainWindow::on_actionForward_triggered() {
-    if ( this->position() == this->history.size() - 1 || this->history.size() < 1 )
+    /*if ( this->historyPosition() == this->history.size() - 1 || this->history.size() < 1 )
         return;
 
-    this->m_position++;
-    this->setCurrentPath( this->history.at( this->position()));
-    this->checkPosition();
+    this->m_historyPosition++;
+    this->setCurrentPath( this->history.at( this->historyPosition()));
+    this->checkHistoryPosition();*/
 }
 
 /**
- * @brief MainWindow::checkPosition
+ * @brief MainWindow::checkHistoryPosition
  */
-void MainWindow::checkPosition() {
-    /*if ( this->position() <= 0 )
+void MainWindow::checkHistoryPosition() {
+    /*if ( this->historyPosition() == 0 ) {*/
         this->ui->actionBack->setEnabled( false );
-    else if ( this->position() > 0 && this->position() < this->history.size())
-        this->ui->actionBack->setEnabled( true );
-
-    if ( this->position() == this->history.size() - 1 )
         this->ui->actionForward->setEnabled( false );
-    else if ( this->position() < this->history.size() - 1 && this->position() > 0 )
-        this->ui->actionForward->setEnabled( true );*/
+    /*} else {
+        if ( this->historyPosition() != this->history.count() - 1 )
+            this->ui->actionForward->setEnabled( true );
+
+        if ( this->historyPosition() != 0 )
+            this->ui->actionBack->setEnabled( true );
+    }*/
 }
 
 /**
@@ -286,7 +280,7 @@ void MainWindow::setGridView() {
     this->ui->listView->switchDisplayMode( QListView::IconMode );
     this->ui->horizontalSlider->setEnabled( true );
 
-    Variable::setValue( "mainWindow/viewMode", 0 );
+    Variable::setValue( "mainWindow/viewMode", IconMode );
 }
 
 /**
@@ -300,7 +294,7 @@ void MainWindow::setListView() {
     this->ui->listView->switchDisplayMode( QListView::ListMode );
     this->ui->horizontalSlider->setEnabled( true );
 
-    Variable::setValue( "mainWindow/viewMode", 1 );
+    Variable::setValue( "mainWindow/viewMode", ListMode );
 }
 
 /**
@@ -313,5 +307,18 @@ void MainWindow::setDetailView() {
     this->ui->stackedWidget->setCurrentIndex( 1 );
     this->ui->horizontalSlider->setEnabled( false );
 
-    Variable::setValue( "mainWindow/viewMode", 2 );
+    Variable::setValue( "mainWindow/viewMode", DetailMode );
+}
+
+/**
+ * @brief MainWindow::addToHistory
+ * @param path
+ */
+void MainWindow::addToHistory( const QString &path ) {
+    /*this->history.insert( this->historyPosition() + 1, path );
+    this->m_historyPosition++;
+
+    qDebug() << "add" << path << this->historyPosition() << this->history.count();
+
+    this->checkHistoryPosition();*/
 }

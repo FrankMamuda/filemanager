@@ -49,10 +49,9 @@ QSize ListViewDelegate::sizeHint( const QStyleOptionViewItem &option, const QMod
     item = qvariant_cast<ContainerItem>( index.model()->data( index, Qt::UserRole + ContainerModel::DisplayItem ));
     size = QStyledItemDelegate::sizeHint( option, index );
 
-    if ( viewMode == QListView::ListMode ) {
-        size.setWidth( option.decorationSize.width() + item.textWidth + 8 );
+    if ( viewMode == QListView::ListMode )
         size.setHeight( option.decorationSize.height());
-    } else
+    else
         size.setHeight( option.decorationSize.height() + item.lines.count() * item.textHeight );
 
     return size;
@@ -125,16 +124,14 @@ void ListViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &opt
     //
     // STAGE 3: display text
     //
-    QRect textRect;
-    QTextOption to;
-    ContainerItem item;
-
-    item = qvariant_cast<ContainerItem>( index.model()->data( index, Qt::UserRole + ContainerModel::DisplayItem ));
-
     if ( viewMode == QListView::IconMode ) {
         int y;
+        QRect textRect;
+        QTextOption to;
+        ContainerItem item;
 
         // get pre-calculated display item
+        item = qvariant_cast<ContainerItem>( index.model()->data( index, Qt::UserRole + ContainerModel::DisplayItem ));
         to.setAlignment( Qt::AlignHCenter );
 
         // init text rectangle
@@ -150,10 +147,17 @@ void ListViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &opt
             painter->drawText( textRect, item.lines.at( y ), to );
         }
     } else {
-        to.setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
-        textRect = option.rect;
-        textRect.setX( pixmapRect.x() + pixmapRect.width() + 8 );
-        textRect.setWidth( item.textWidth );
-        painter->drawText( textRect, item.text, to );
+        QStyleOptionViewItem optionNoSelection;
+        QStyle::State state;
+
+        // remove hover/selection flags
+        state = option.state;
+        state = state & ( ~QStyle::State_MouseOver );
+        state = state & ( ~QStyle::State_Selected );
+        optionNoSelection = option;
+        optionNoSelection.state = state;
+
+        // paint it exactly the same as before, yet ignoring selections
+        QStyledItemDelegate::paint( painter, optionNoSelection, index );
     }
 }

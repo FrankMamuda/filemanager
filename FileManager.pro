@@ -24,7 +24,8 @@ SOURCES += main.cpp\
     sideview.cpp \
     textutils.cpp \
     variable.cpp \
-    listviewdelegate.cpp
+    listviewdelegate.cpp \
+    tableviewdelegate.cpp
 
 HEADERS  += mainwindow.h \
     pixmapcache.h \
@@ -38,7 +39,8 @@ HEADERS  += mainwindow.h \
     sideview.h \
     textutils.h \
     variable.h \
-    listviewdelegate.h
+    listviewdelegate.h \
+    tableviewdelegate.h
 
 FORMS    += mainwindow.ui \
     properties.ui

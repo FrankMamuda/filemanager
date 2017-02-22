@@ -290,8 +290,6 @@ void ContainerModel::processEntries() {
 
         // get display text and height
         text = this->list.at( y )->alias();
-        item.text = text;
-        item.textWidth = fm.width( item.text );
         textHeight = fm.height();
 
         // split text into max 3 lines
@@ -357,7 +355,7 @@ void ContainerModel::processMouseMove( QMouseEvent *e ) {
     if ( !this->rubberBand()->isVisible()) {
         index = this->listParent()->indexAt( e->pos());
 
-        if ( index.isValid() && this->currentIndex != index && !( QApplication::mouseButtons() & Qt::LeftButton )) {
+        if ( index.isValid() && this->currentIndex.row() != index.row() && !( QApplication::mouseButtons() & Qt::LeftButton )) {
             this->selectionTimer.stop();
 
             if ( !this->listParent()->selectionModel()->isSelected( index ))

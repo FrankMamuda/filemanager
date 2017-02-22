@@ -16,30 +16,24 @@
  *
  */
 
-#ifndef LISTVIEWDELEGATE_H
-#define LISTVIEWDELEGATE_H
+#ifndef TABLEVIEWDELEGATE_H
+#define TABLEVIEWDELEGATE_H
 
 //
 // includes
 //
 #include <QStyledItemDelegate>
 
-//
-// classes
-//
-class ListView;
-
 /**
- * @brief The ListViewDelegate class
+ * @brief The TableViewDelegate class
  */
-class ListViewDelegate : public QStyledItemDelegate {
+class TableViewDelegate : public QStyledItemDelegate {
 public:
-    ListViewDelegate( ListView *parent );
-    ~ListViewDelegate() {}
+    TableViewDelegate( QObject *parent = NULL ) : QStyledItemDelegate( parent ) {}
+    ~TableViewDelegate() {}
 
 protected:
     void paint( QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index ) const;
-    QSize sizeHint( const QStyleOptionViewItem &option, const QModelIndex &index ) const;
 };
 
-#endif // LISTVIEWDELEGATE_H
+#endif // TABLEVIEWDELEGATE_H

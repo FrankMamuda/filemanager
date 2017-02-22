@@ -27,6 +27,7 @@
 #include <QHeaderView>
 #include "variable.h"
 #include "main.h"
+#include "tableviewdelegate.h"
 
 /**
  * @brief TableView::TableView
@@ -45,6 +46,9 @@ TableView::TableView( QWidget *parent ) : QTableView( parent ), m_model( new Con
 
     // enable mouse tracking
     this->setMouseTracking( true );
+
+    // set view delegate
+    this->setItemDelegate( new TableViewDelegate( this ));
 
     // update selection rectangle on scroll bar changes
     this->connect( this->verticalScrollBar(), SIGNAL( valueChanged( int )), this, SLOT( updateRubberBand()));

@@ -65,7 +65,24 @@ public:
     ~MainWindow();
     QString currentPath() const { return this->m_currentPath; }
     Ui::MainWindow *ui;
-    int position() const { return this->m_position; }
+    int historyPosition() const { return this->m_historyPosition; }
+
+    enum IconScale {
+        NoScale = 0,
+        Tiny,
+        Small,
+        Medium,
+        Large
+    };
+    Q_ENUMS( IconScale )
+
+    enum ViewModes {
+        NoMode = -1,
+        IconMode,
+        ListMode,
+        DetailMode
+    };
+    Q_ENUMS( ViewModes )
 
 protected:
     virtual void resizeEvent( QResizeEvent * );
@@ -79,16 +96,17 @@ private slots:
     void on_horizontalSlider_valueChanged(int value);
     void on_actionBack_triggered();
     void on_actionForward_triggered();
-    void checkPosition();
+    void checkHistoryPosition();
     void on_actionViewMode_triggered();
     void setGridView();
     void setListView();
     void setDetailView();
+    void addToHistory( const QString &path );
 
 private:
     QString m_currentPath;
     QStringList history;
-    int m_position;
+    int m_historyPosition;
 
     // view mode widgets
     MenuStyle *menuStyle;
