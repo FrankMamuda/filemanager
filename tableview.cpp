@@ -92,7 +92,7 @@ void TableView::mousePressEvent( QMouseEvent *e ) {
  * @brief TableView::mouseReleaseEvent
  * @param e
  */
-void TableView::mouseReleaseEvent( QMouseEvent *e ) {    
+void TableView::mouseReleaseEvent( QMouseEvent *e ) {
     this->model()->processMouseRelease( e );
     QTableView::mouseReleaseEvent( e );
 }

@@ -68,8 +68,7 @@ GOALS:
  * @param parent
  */
 
-MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::MainWindow ), m_currentPath( QDir::currentPath()), m_historyPosition( -1 )
-{
+MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::MainWindow ), m_currentPath( QDir::currentPath()), m_historyPosition( -1 ) {
     ViewModes viewMode;
 
     // set up ui

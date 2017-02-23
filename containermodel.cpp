@@ -42,10 +42,21 @@
 ContainerModel::ContainerModel( QAbstractItemView *parent, Containers container, ContainerModel::Modes mode, int iconSize ) : m_listParent( parent ), m_container( container ), m_mode( mode ), m_iconSize( iconSize ) {
     this->connect( &this->futureWatcher, SIGNAL( resultReadyAt( int )), this, SLOT( mimeTypeDetected( int )));
     this->connect( this, SIGNAL( stop()), &this->futureWatcher, SLOT( cancel()));
-    this->connect( qApp, SIGNAL( aboutToQuit()), &this->futureWatcher, SLOT( cancel()));
+    this->connect( qApp, SIGNAL( aboutToQuit()), this, SLOT( quit()));
 
     // create rubber band
     this->m_rubberBand = new QRubberBand( QRubberBand::Rectangle, this->listParent()->viewport());
+}
+
+/**
+ * @brief ContainerModel::quit
+ */
+void ContainerModel::quit() {
+    this->disconnect( &this->futureWatcher, SIGNAL( resultReadyAt( int )));
+    this->future.cancel();
+    this->futureWatcher.cancel();
+    this->future.waitForFinished();
+    this->futureWatcher.waitForFinished();
 }
 
 /**

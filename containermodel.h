@@ -126,6 +126,7 @@ private slots:
     void displayProperties();
     void selectCurrent();
     void deselectCurrent();
+    void quit();
 
 private:
     QModelIndexList selection;
