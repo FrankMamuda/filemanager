@@ -25,6 +25,8 @@
 #include <QListView>
 #include <QDropEvent>
 #include <QDragLeaveEvent>
+#include <QMouseEvent>
+#include <QDropEvent>
 
 //
 // classes
@@ -45,8 +47,19 @@ public:
 public slots:
     void setModel( BookmarkModel * );
 
+private slots:
+    void processItemOpen( const QModelIndex &index );
+    void processContextMenu( const QModelIndex &index, const QPoint &pos );
+    void renameBookmark();
+    void changeBookmarkIcon();
+
+protected:
+    void mouseReleaseEvent( QMouseEvent * );
+    void dropEvent( QDropEvent * );
+
 private:
     BookmarkModel *m_model;
+    QModelIndex index;
 };
 
 #endif // STORAGEVIEW_H

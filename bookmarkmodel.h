@@ -38,10 +38,12 @@ public:
     int rowCount( const QModelIndex & = QModelIndex()) const;
     void reset();
     QVariant data( const QModelIndex &index, int role ) const;
-    QAbstractItemView *listParent() const { return this->m_listParent; }
+    Qt::ItemFlags flags( const QModelIndex &index ) const;
+    Qt::DropActions supportedDropActions() const { return Qt::CopyAction | Qt::MoveAction; }
+    Qt::DropActions supportedDragActions() const { return Qt::CopyAction | Qt::MoveAction; }
 
-public slots:
-    void processItemOpen( const QModelIndex &index );
+    // parent widget
+    QAbstractItemView *listParent() const { return this->m_listParent; }
 
 private:
     QAbstractItemView *m_listParent;

@@ -25,6 +25,7 @@
 #include <QListView>
 #include <QDropEvent>
 #include <QDragLeaveEvent>
+#include <QDragMoveEvent>
 
 //
 // classes
@@ -53,6 +54,7 @@ protected:
     void mouseReleaseEvent( QMouseEvent * );
     void selectionChanged( const QItemSelection &, const QItemSelection & );
     void mouseMoveEvent( QMouseEvent *e );
+    void dragMoveEvent( QDragMoveEvent *e );
 
 private slots:
     void updateRubberBand();

@@ -21,9 +21,6 @@
 //
 #include "bookmarkmodel.h"
 #include "bookmark.h"
-#include "main.h"
-#include "mainwindow.h"
-#include <QApplication>
 
 /**
  * @brief BookmarkModel::rowCount
@@ -52,12 +49,14 @@ QVariant BookmarkModel::data( const QModelIndex &modelIndex, int role ) const {
 }
 
 /**
- * @brief Bookmark::processItemOpen
+ * @brief BookmarkModel::flags
  * @param index
+ * @return
  */
-void BookmarkModel::processItemOpen( const QModelIndex &index ) {
-    if ( QApplication::keyboardModifiers() & Qt::ControlModifier )
-        return;
+Qt::ItemFlags BookmarkModel::flags( const QModelIndex &index ) const {
+    if ( index.isValid())
+        return ( Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled );
 
-    m.gui()->setCurrentPath( Bookmark::value( index.row(), Bookmark::Path ));
+    return Qt::ItemIsEnabled;
 }
+

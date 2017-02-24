@@ -23,6 +23,8 @@
 #include "listview.h"
 #include "containermodel.h"
 
+// TODO: remove ugly drag/drop black borders both for List/Table views
+
 /**
  * @brief ListViewDelegate::ListViewDelegate
  * @param parent

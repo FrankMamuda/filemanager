@@ -385,11 +385,16 @@ void ContainerModel::processMouseMove( QMouseEvent *e ) {
  * @param pos
  */
 void ContainerModel::processMousePress( QMouseEvent *e ) {
+    QModelIndex index;
+
+    index = this->listParent()->indexAt( e->pos());
     if ( e->button() == Qt::LeftButton ) {
-        this->selectionOrigin = e->pos();
-        this->selectionOrigin.setY( this->selectionOrigin.y() + this->verticalOffset());
-        this->rubberBand()->setGeometry( QRect( this->selectionOrigin, QSize()));
-        this->rubberBand()->show();
+        if ( !index.isValid()) {
+            this->selectionOrigin = e->pos();
+            this->selectionOrigin.setY( this->selectionOrigin.y() + this->verticalOffset());
+            this->rubberBand()->setGeometry( QRect( this->selectionOrigin, QSize()));
+            this->rubberBand()->show();
+        }
     }
 }
 

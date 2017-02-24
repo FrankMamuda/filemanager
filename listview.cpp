@@ -136,6 +136,15 @@ void ListView::mouseMoveEvent( QMouseEvent *e ) {
 }
 
 /**
+ * @brief ListView::dragMoveEvent
+ * @param e
+ */
+void ListView::dragMoveEvent( QDragMoveEvent *e ) {
+    this->model()->rubberBand()->hide();
+    QListView::dragMoveEvent( e );
+}
+
+/**
  * @brief ListView::updateRubberBand
  */
 void ListView::updateRubberBand() {

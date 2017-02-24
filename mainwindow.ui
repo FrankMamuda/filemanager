@@ -58,16 +58,19 @@
        <set>QAbstractItemView::NoEditTriggers</set>
       </property>
       <property name="showDropIndicator" stdset="0">
-       <bool>false</bool>
+       <bool>true</bool>
       </property>
       <property name="dragEnabled">
        <bool>true</bool>
       </property>
       <property name="dragDropMode">
-       <enum>QAbstractItemView::NoDragDrop</enum>
+       <enum>QAbstractItemView::DragDrop</enum>
       </property>
       <property name="defaultDropAction">
-       <enum>Qt::IgnoreAction</enum>
+       <enum>Qt::MoveAction</enum>
+      </property>
+      <property name="selectionMode">
+       <enum>QAbstractItemView::SingleSelection</enum>
       </property>
       <property name="iconSize">
        <size>
@@ -209,6 +212,9 @@
           </property>
           <property name="wordWrap">
            <bool>true</bool>
+          </property>
+          <property name="selectionRectVisible">
+           <bool>false</bool>
           </property>
          </widget>
         </item>
