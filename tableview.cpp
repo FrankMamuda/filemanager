@@ -36,12 +36,10 @@
 TableView::TableView( QWidget *parent ) : QTableView( parent ), m_model( new ContainerModel( this, ContainerModel::TableContainer, ContainerModel::FileMode, 16 ))/*, m_selection( false )*/ {
     this->setModel( this->m_model );
     this->connect( this, SIGNAL( clicked( QModelIndex )), this->model(), SLOT( processItemOpen( QModelIndex )));
-    this->connect( this->horizontalHeader(), SIGNAL( geometriesChanged()), this, SLOT( headerResized()));
 
     for ( int y = 0; y < this->model()->columnCount(); y++ ) {
-        Variable *var = Variable::add( QString( "tableView/horizontalHeader/sectionSize_%1" ).arg( y ), m.settings, 100 );
-        if ( var != NULL )
-            this->horizontalHeader()->resizeSection( y, var->integer());
+        Variable::add( QString( "tableView/horizontalHeader/sectionSize_%1" ).arg( y ), 100 );
+        this->horizontalHeader()->resizeSection( y, Variable::integer( QString( "tableView/horizontalHeader/sectionSize_%1" ).arg( y )));
     }
 
     // enable mouse tracking
@@ -52,16 +50,22 @@ TableView::TableView( QWidget *parent ) : QTableView( parent ), m_model( new Con
 
     // update selection rectangle on scroll bar changes
     this->connect( this->verticalScrollBar(), SIGNAL( valueChanged( int )), this, SLOT( updateRubberBand()));
+
+    // update header
+    this->connect( this->horizontalHeader(), SIGNAL( geometriesChanged()), this, SLOT( headerResized()));
 }
 
 /**
  * @brief TableView::headerResized
  */
 void TableView::headerResized() {
-    int y = 0;
+    int size, y;
 
-    for ( y = 0; y < this->model()->columnCount(); y++ )
-        Variable::setValue( QString( "tableView/horizontalHeader/sectionSize_%1" ).arg( y ), this->horizontalHeader()->sectionSize( y ));
+    for ( y = 0; y < this->model()->columnCount(); y++ ) {
+        size = this->horizontalHeader()->sectionSize( y );
+        if ( size > 0 )
+            Variable::setValue( QString( "tableView/horizontalHeader/sectionSize_%1" ).arg( y ), size );
+    }
 }
 
 /**

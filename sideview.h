@@ -29,7 +29,7 @@
 //
 // classes
 //
-class ContainerModel;
+class BookmarkModel;
 
 /**
  * @brief The DeviceView class
@@ -40,13 +40,13 @@ class SideView : public QListView {
 public:
     SideView( QWidget * );
     ~SideView();
-    ContainerModel *model() const { return this->m_model; }
+    BookmarkModel *model() const { return this->m_model; }
 
 public slots:
-    void setModel( ContainerModel * );
+    void setModel( BookmarkModel * );
 
 private:
-    ContainerModel *m_model;
+    BookmarkModel *m_model;
 };
 
 #endif // STORAGEVIEW_H

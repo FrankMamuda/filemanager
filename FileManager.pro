@@ -23,9 +23,10 @@ SOURCES += main.cpp\
     listview.cpp \
     sideview.cpp \
     textutils.cpp \
-    variable.cpp \
     listviewdelegate.cpp \
-    tableviewdelegate.cpp
+    tableviewdelegate.cpp \
+    bookmark.cpp \
+    bookmarkmodel.cpp
 
 HEADERS  += mainwindow.h \
     pixmapcache.h \
@@ -40,7 +41,9 @@ HEADERS  += mainwindow.h \
     textutils.h \
     variable.h \
     listviewdelegate.h \
-    tableviewdelegate.h
+    tableviewdelegate.h \
+    bookmark.h \
+    bookmarkmodel.h
 
 FORMS    += mainwindow.ui \
     properties.ui

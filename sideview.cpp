@@ -20,17 +20,17 @@
 // includes
 //
 #include "sideview.h"
-#include "containermodel.h"
+#include "bookmarkmodel.h"
 
 /**
  * @brief SideView::SideView
  * @param parent
  */
-SideView::SideView( QWidget* parent ) : QListView( parent ), m_model( new ContainerModel( this, ContainerModel::ListContainer, ContainerModel::SideMode, 32 )) {
+SideView::SideView( QWidget* parent ) : QListView( parent ), m_model( new BookmarkModel( this )) {
     this->setModel( this->m_model );
-    this->connect( this, SIGNAL( clicked( QModelIndex )), this->model(), SLOT( processItemOpen( QModelIndex )));
     this->setStyleSheet( "background-color: transparent;" );
-    this->model()->buildList();
+
+    this->connect( this, SIGNAL( clicked( QModelIndex )), this->model(), SLOT( processItemOpen( QModelIndex )));
 }
 
 /**
@@ -44,7 +44,7 @@ SideView::~SideView() {
  * @brief SideView::setModel
  * @param model
  */
-void SideView::setModel( ContainerModel *model ) {
+void SideView::setModel( BookmarkModel *model ) {
     this->m_model = model;
     QListView::setModel( model );
 }

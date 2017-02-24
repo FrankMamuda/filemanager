@@ -23,65 +23,34 @@
 //
 // includes
 //
-#include <QObject>
+#include <QString>
 #include <QSettings>
-#include <QTime>
+#include "main.h"
 
 /**
  * @brief The Variable class
  */
-class Variable : public QObject {
-    Q_OBJECT
-    Q_PROPERTY( QString key READ key WRITE setKey )
-    Q_PROPERTY( QVariant defaultValue READ defaultValue WRITE setDefaultValue )
-    Q_PROPERTY( QVariant value READ value WRITE setValue )
-    Q_PROPERTY( int integer READ integer )
-    Q_PROPERTY( bool isEnabled READ isEnabled )
-    Q_PROPERTY( float floatValue READ floatValue() )
-    Q_PROPERTY( QString string READ string )
-    Q_PROPERTY( QTime time READ time )
-    Q_PROPERTY( QString timeString READ timeString )
-    Q_CLASSINFO( "description", "Variable" )
-
+class Variable {
 public:
-    explicit Variable( const QString &key, QSettings *settingsPtr, const QVariant &defaultValue ) { this->setKey( key ); this->s = settingsPtr; this->setDefaultValue( defaultValue ); }
-    QString key() const { return this->m_key; }
-    QVariant defaultValue() const { return this->m_defaultValue; }
-    QVariant value() const { if ( this->s == NULL ) return QVariant(); return this->s->value( this->key(), this->defaultValue()); }
-    int integer() const { return this->value().toInt(); }
-    bool isEnabled() const { return this->value().toBool(); }
-    bool isDisabled() const { return !this->isEnabled(); }
-    float floatValue() const { return this->value().toFloat(); }
-    QString string() const { return this->value().toString(); }
-    QTime time() const { return this->value().toTime(); }
-    QString timeString() const { return this->value().toTime().toString( "hh:mm" ); }
-
-    // static functions
-    static Variable *find( const QString &key );
-    static QVariant defaultValue( const QString &key ) { Variable *cvar = Variable::find( key ); if ( cvar == NULL ) return QVariant(); return cvar->defaultValue(); }
-    static QVariant value( const QString &key )        { Variable *cvar = Variable::find( key ); if ( cvar == NULL ) return QVariant(); return cvar->value(); }
-    static int integer( const QString &key )           { Variable *cvar = Variable::find( key ); if ( cvar == NULL ) return 0; return cvar->integer(); }
-    static bool isEnabled( const QString &key )        { Variable *cvar = Variable::find( key ); if ( cvar == NULL ) return false; return cvar->isEnabled(); }
-    static bool isDisabled( const QString &key )       { Variable *cvar = Variable::find( key ); if ( cvar == NULL ) return true; return cvar->isDisabled(); }
-    static float floatValue( const QString &key )      { Variable *cvar = Variable::find( key ); if ( cvar == NULL ) return 0.0f; return cvar->floatValue(); }
-    static QString string( const QString &key )        { Variable *cvar = Variable::find( key ); if ( cvar == NULL ) return QString::null; return cvar->string(); }
-    static QTime time( const QString &key )            { Variable *cvar = Variable::find( key ); if ( cvar == NULL ) return QTime(); return cvar->time(); }
-    static QString timeString( const QString &key )    { Variable *cvar = Variable::find( key ); if ( cvar == NULL ) return QString::null; return cvar->timeString(); }
-    static void setValue( const QString &key, const QVariant &value ) { Variable *cvar = Variable::find( key ); if ( cvar == NULL ) return; cvar->s->setValue( key, value ); emit cvar->changed(); }
-    static Variable *add( const QString &key, QSettings *settingsPtr, const QVariant &defaultValue = QVariant());
-
-signals:
-    void changed();
-
-public slots:
-    void setKey( const QString &key ) { this->m_key = key; }
-    void setDefaultValue( const QVariant &value ) { this->m_defaultValue = value; }
-    void setValue( const QVariant &value ) { this->s->setValue( this->key(), value ); emit this->changed(); }
-
-private:
-    QString m_key;
-    QVariant m_defaultValue;
-    QSettings *s;
+    template<typename T>
+    static T value( const QString &key, bool defaultValue = false ) { if ( !m.settings->contains( key ) && m.settings->contains( key + "/default" )) defaultValue = true; return qvariant_cast<T>( m.settings->value( defaultValue ? key + "/default" : key )); }
+    template<typename T>
+    static T defaultValue( const QString &key ) { return Variable::value<T>( key, true ); }
+    static int integer( const QString &key, bool defaultValue = false ) { return Variable::value<int>( key, defaultValue ); }
+    static bool isEnabled( const QString &key, bool defaultValue = false ) { return Variable::value<bool>( key, defaultValue ); }
+    static bool isDisabled( const QString &key, bool defaultValue = false ) { return !Variable::isEnabled( key, defaultValue ); }
+    static QString string( const QString &key, bool defaultValue = false ) { return Variable::value<QString>( key, defaultValue ); }
+    template<typename T>
+    static void setValue( const QString &key, const T &value ) { if ( !m.settings->contains( key )) m.settings->setValue( key + "/default", value ); m.settings->setValue( key, value ); }
+    static void setString( const QString &key, const QString &string ) { Variable::setValue<QString>( key, string ); }
+    static void setInteger( const QString &key, int value ) { Variable::setValue<int>( key, value ); }
+    static void enable( const QString &key ) { Variable::setValue<bool>( key, true ); }
+    static void disable( const QString &key ) { Variable::setValue<bool>( key, false ); }
+    template<typename T>
+    static void setDefaultValue( const QString &key, const T &value ) { m.settings->setValue( key + "/default", value ); }
+    template<typename T>
+    static void add( const QString &key, const T &value ) { Variable::setDefaultValue<T>( key, value ); }
+    static void reset( const QString &key ) { if ( m.settings->contains( key )) m.settings->setValue( key, m.settings->value( key + "/default" )); }
 };
 
 #endif // VARIABLE_H

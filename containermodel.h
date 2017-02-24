@@ -147,4 +147,9 @@ private:
     int m_verticalOffset;
 };
 
+Q_DECLARE_METATYPE( ContainerModel::Modes )
+Q_DECLARE_METATYPE( ContainerModel::Containers )
+Q_DECLARE_METATYPE( ContainerModel::Data )
+Q_DECLARE_METATYPE( ContainerModel::Sections )
+
 #endif // CONTAINERMODEL_H

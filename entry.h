@@ -44,7 +44,8 @@ public:
         Root,
         Home,
         Thumbnail,
-        Trash
+        Trash,
+        Bookmark
     };
 
     explicit Entry( EntryTypes type = FileFolder, const QFileInfo &fileInfo = QFileInfo(), ContainerModel *parent = 0 );

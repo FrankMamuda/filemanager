@@ -116,4 +116,7 @@ private:
     QMenu *viewModeMenu;
 };
 
+Q_DECLARE_METATYPE( MainWindow::IconScale )
+Q_DECLARE_METATYPE( MainWindow::ViewModes )
+
 #endif // MAINWINDOW_H

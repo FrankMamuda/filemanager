@@ -28,6 +28,7 @@
 #include <QMenu>
 #include "variable.h"
 #include "main.h"
+#include "bookmark.h"
 
 /*
 GOALS:
@@ -78,7 +79,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->setCurrentPath();
 
     // trigger size change
-    Variable::add( "mainWindow/iconSize/sliderPosition", m.settings, Medium );
+    Variable::add( "mainWindow/iconSize/sliderPosition", Medium );
     this->ui->horizontalSlider->setValue( Variable::integer( "mainWindow/iconSize/sliderPosition" ));
     this->on_horizontalSlider_valueChanged( Variable::integer( "mainWindow/iconSize/sliderPosition" ));
 
@@ -89,6 +90,22 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->ui->actionBack->setIcon( QIcon::fromTheme( "go-previous" ));
     this->ui->actionUp->setIcon( QIcon::fromTheme( "go-up" ));
     this->ui->actionForward->setIcon( QIcon::fromTheme( "go-next" ));
+
+    // get bookmarks
+    if ( !Bookmark::count() ) {
+        QFileInfoList infoList;
+
+        qDebug() << "zero bookmarks";
+
+        Bookmark::add( "Root", "/", "folder-red" );
+        Bookmark::add( "Home", "/home", "user-home" );
+
+        infoList = QDir::drives();
+        foreach ( QFileInfo driveInfo, infoList )
+            Bookmark::add( PathUtils::toUnixPath( driveInfo.absolutePath()), PathUtils::toUnixPath( driveInfo.absolutePath()), "drive-harddisk" );
+
+        Bookmark::add( "Trash", "trash://", "user-trash" );
+    }
 
     // setup view mode list
     this->viewModeMenu = new QMenu();
@@ -107,8 +124,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->connect( this->actionViewDetails, SIGNAL( triggered( bool )), this, SLOT( setDetailView()));
 
     // restore view mode
-    Variable::add( "mainWindow/viewMode", m.settings, IconMode );
-    viewMode = static_cast<ViewModes>( Variable::integer( "mainWindow/viewMode" ));
+    viewMode = Variable::value<ViewModes>( "mainWindow/viewMode", IconMode );
 
     if ( viewMode == IconMode )
         this->setGridView();
@@ -137,7 +153,9 @@ void MainWindow::setCurrentPath( const QString &path ) {
     } else if ( !QString::compare( path, "trash://" )) {
         this->ui->pathEdit->setText( path );
         this->m_currentPath = "trash://";
-        return;
+    } else if ( !QString::compare( path, "bookmarks://" )) {
+        this->ui->pathEdit->setText( path );
+        this->m_currentPath = "bookmarks://";
     } else {
         windowsPath = PathUtils::toWindowsPath( path );
         directory.cd( windowsPath );
@@ -153,7 +171,6 @@ void MainWindow::setCurrentPath( const QString &path ) {
 
         this->ui->listView->model()->setMode( ContainerModel::FileMode );
         this->ui->tableView->model()->setMode( ContainerModel::FileMode );
-
     }
 
     this->ui->statusBar->setText( QString( "%1 items" ).arg( this->ui->listView->model()->numItems()));
@@ -164,6 +181,7 @@ void MainWindow::setCurrentPath( const QString &path ) {
  * @brief MainWindow::~MainWindow
  */
 MainWindow::~MainWindow() {
+    // get rid of ui
     delete ui;
 
     this->viewModeMenu->deleteLater();
@@ -314,6 +332,8 @@ void MainWindow::setDetailView() {
  * @param path
  */
 void MainWindow::addToHistory( const QString &path ) {
+    Q_UNUSED( path )
+
     /*this->history.insert( this->historyPosition() + 1, path );
     this->m_historyPosition++;
 

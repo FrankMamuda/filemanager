@@ -30,6 +30,7 @@
 //
 class MainWindow;
 class Variable;
+class Bookmark;
 
 /**
  * @brief The Main class

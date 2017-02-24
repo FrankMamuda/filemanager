@@ -69,6 +69,5 @@ int main( int argc, char *argv[] ) {
  * @brief Main::Main
  */
 Main::Main() {
-    this->settings = new QSettings( "zvaigznes", "filemanager" );
-    this->settings->setDefaultFormat( QSettings::NativeFormat );
+    this->settings = new QSettings( QDir::homePath() + "/.filemanager/settings.conf", QSettings::IniFormat );
 }

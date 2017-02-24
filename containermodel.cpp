@@ -32,6 +32,7 @@
 #include "mainwindow.h"
 #include "main.h"
 #include "pathutils.h"
+#include "bookmark.h"
 
 /**
  * @brief ContainerModel::ContainerModel
