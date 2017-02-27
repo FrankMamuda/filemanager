@@ -43,7 +43,8 @@ HEADERS  += mainwindow.h \
     listviewdelegate.h \
     tableviewdelegate.h \
     bookmark.h \
-    bookmarkmodel.h
+    bookmarkmodel.h \
+    containerstyle.h
 
 FORMS    += mainwindow.ui \
     properties.ui

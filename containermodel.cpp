@@ -525,6 +525,9 @@ void ContainerModel::processDropEvent( const QModelIndex &index, const QPoint &p
     foreach ( QModelIndex modelIndex, this->selection ) {
         Entry *modelEntry;
 
+        if ( modelIndex.column() > 0 )
+            continue;
+
         modelEntry = this->indexToEntry( modelIndex );
         if ( modelEntry != NULL )
             items << modelEntry->alias();
@@ -628,4 +631,33 @@ void ContainerModel::displayProperties() {
     }
 
     props.exec();
+}
+
+/**
+ * @brief ContainerModel::mimeData
+ * @param indexes
+ * @return
+ */
+QMimeData *ContainerModel::mimeData( const QModelIndexList &indexes ) const {
+    QMimeData *mimeData;
+    Entry *entry;
+    QList<QUrl>urlList;
+
+    mimeData = QAbstractItemModel::mimeData( indexes );
+
+    foreach ( QModelIndex index, indexes ) {
+        if ( index.column() > 0 )
+            continue;
+
+        if ( index.isValid()) {
+            entry = this->indexToEntry( index );
+            if ( entry == NULL )
+                continue;
+
+            urlList << QUrl::fromLocalFile( entry->path());
+        }
+    }
+
+    mimeData->setUrls( urlList );
+    return mimeData;
 }

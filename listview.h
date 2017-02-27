@@ -31,6 +31,7 @@
 // classes
 //
 class ContainerModel;
+class ContainerStyle;
 
 /**
  * @brief The ListView class
@@ -61,6 +62,7 @@ private slots:
 
 private:
     ContainerModel *m_model;
+    ContainerStyle *m_style;
 };
 
 #endif // LISTVIEW_H

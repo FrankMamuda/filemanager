@@ -53,4 +53,17 @@ public:
     static void reset( const QString &key ) { if ( m.settings->contains( key )) m.settings->setValue( key, m.settings->value( key + "/default" )); }
 };
 
+/*
+try a different storage approach
+
+[variableName]
+default="aaa"
+value="bbb"
+flags=4
+
+flags readOnly admin archive temporary nodefault etc.
+
+or move to something other than Qt... like XML?
+*/
+
 #endif // VARIABLE_H

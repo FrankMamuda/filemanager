@@ -23,12 +23,14 @@
 #include "bookmarkmodel.h"
 #include "bookmark.h"
 #include "main.h"
+#include "listviewdelegate.h"
 #include "mainwindow.h"
 #include <QApplication>
 #include <QMenu>
 #include <QDebug>
 #include <QInputDialog>
 #include <QMimeData>
+#include "containerstyle.h"
 
 /**
  * @brief SideView::SideView
@@ -38,6 +40,15 @@ SideView::SideView( QWidget* parent ) : QListView( parent ), m_model( new Bookma
     this->setModel( this->m_model );
     this->setStyleSheet( "background-color: transparent;" );
     this->connect( this, SIGNAL( clicked( QModelIndex )), this, SLOT( processItemOpen( QModelIndex )));
+
+    // set view delegate
+    // TODO: delete me
+    this->setItemDelegate( new ListViewDelegate( this ));
+
+    // NOTE: for some reason drops aren't accepted without the ugly drop indicator
+    // while it is enabled, we do however abstain from painting it
+    this->m_style = new ContainerStyle( this->style());
+    this->setStyle( this->m_style );
 }
 
 /**
@@ -45,6 +56,7 @@ SideView::SideView( QWidget* parent ) : QListView( parent ), m_model( new Bookma
  */
 SideView::~SideView() {
     this->m_model->deleteLater();
+    this->m_style->deleteLater();
 }
 
 /**
@@ -73,7 +85,28 @@ void SideView::mouseReleaseEvent( QMouseEvent *e ) {
  * @brief SideView::dropEvent
  */
 void SideView::dropEvent( QDropEvent *e ) {
-    qDebug() << "dropEvent" << e->mimeData()->text();
+    QList<QUrl> urls = e->mimeData()->urls();
+    QString path;
+    QFileInfo info;
+
+    // TODO: get icon from mimetype? or .dekstop entry?
+
+    if ( urls.count() > 1 ) {
+        qDebug() << "Can add one bookmark at a time";
+        return;
+    } else if ( !urls.count()) {
+        return;
+    }
+
+    path = urls.first().toLocalFile();
+    info.setFile( path );
+    if ( !info.isDir()) {
+        qDebug() << "Cannot add files as bookmarks";
+        return;
+    }
+
+    Bookmark::add( info.fileName(), info.absoluteFilePath(), "inode-directory" );
+    this->model()->reset();
     e->accept();
 }
 
@@ -98,6 +131,8 @@ void SideView::processContextMenu( const QModelIndex &index, const QPoint &pos )
 
     menu.addAction( this->tr( "Rename" ), this, SLOT( renameBookmark()));
     menu.addAction( this->tr( "Change icon" ), this, SLOT( changeBookmarkIcon()));
+    menu.addSeparator();
+    menu.addAction( this->tr( "Remove bookmark" ), this, SLOT( removeBookmark()));
     menu.exec( pos );
 
     this->currentIndex() = index;
@@ -111,8 +146,18 @@ void SideView::renameBookmark() {
     QString alias;
 
     alias = QInputDialog::getText( m.gui(), this->tr( "Rename bookmark" ), this->tr( "New alias:" ), QLineEdit::Normal, Bookmark::value( this->currentIndex().row(), Bookmark::Alias ), &ok );
-    if ( ok && !alias.isEmpty())
+    if ( ok && !alias.isEmpty()) {
         Bookmark::setValue( this->currentIndex().row(), Bookmark::Alias, alias );
+        this->model()->reset();
+        //this->update( this->currentIndex());
+    }
+}
+
+/**
+ * @brief SideView::removeBookmark
+ */
+void SideView::removeBookmark() {
+    qDebug() << "bookmark removal not supported yet";
 }
 
 /**

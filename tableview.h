@@ -33,6 +33,7 @@
 // classes
 //
 class ContainerModel;
+class ContainerStyle;
 
 /**
  * @brief The TableView class
@@ -62,6 +63,7 @@ protected:
 
 private:
     ContainerModel *m_model;
+    ContainerStyle *m_style;
 };
 
 #endif // TABLEVIEW_H

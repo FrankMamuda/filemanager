@@ -57,6 +57,7 @@ Qt::ItemFlags BookmarkModel::flags( const QModelIndex &index ) const {
     if ( index.isValid())
         return ( Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled );
 
-    return Qt::ItemIsEnabled;
+    // allow invalid indexes to put bookmarks "in-between"
+    // TODO: currently not supported
+    return Qt::ItemIsDropEnabled;
 }
-

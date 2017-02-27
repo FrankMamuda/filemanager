@@ -16,33 +16,24 @@
  *
  */
 
-#ifndef LISTVIEWDELEGATE_H
-#define LISTVIEWDELEGATE_H
+#ifndef CONTAINERSTYLE_H
+#define CONTAINERSTYLE_H
 
 //
 // includes
 //
-#include <QStyledItemDelegate>
-#include <QListView>
-
-//
-// classes
-//
-class ListView;
-
-// TODO: this could be universal for all views
+#include <QProxyStyle>
 
 /**
- * @brief The ListViewDelegate class
+ * @brief The ContainerStyle class - hides ugly drop indicator
  */
-class ListViewDelegate : public QStyledItemDelegate {
+class ContainerStyle : public QProxyStyle {
 public:
-    ListViewDelegate( QListView *parent );
-    ~ListViewDelegate() {}
-
-protected:
-    void paint( QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index ) const;
-    QSize sizeHint( const QStyleOptionViewItem &option, const QModelIndex &index ) const;
+    ContainerStyle( QStyle *style = NULL ) : QProxyStyle( style ) {}
+    void drawPrimitive( PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget ) const {
+        if ( element != QStyle::PE_IndicatorItemViewItemDrop )
+            QProxyStyle::drawPrimitive( element, option, painter, widget );
+    }
 };
 
-#endif // LISTVIEWDELEGATE_H
+#endif // CONTAINERSTYLE_H

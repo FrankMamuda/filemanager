@@ -75,6 +75,8 @@ void TableViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &op
     state = state & ( ~QStyle::State_MouseOver );
     state = state & ( ~QStyle::State_Selected );
     state = state & ( ~QStyle::State_HasFocus );
+    state = state & ( ~QStyle::State_FocusAtBorder );
+
     optionNoSelection = option;
     optionNoSelection.state = state;
 

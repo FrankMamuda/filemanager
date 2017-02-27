@@ -36,7 +36,7 @@ public:
 
     // overrides
     int rowCount( const QModelIndex & = QModelIndex()) const;
-    void reset();
+    void reset() { this->beginResetModel(); this->endResetModel(); }
     QVariant data( const QModelIndex &index, int role ) const;
     Qt::ItemFlags flags( const QModelIndex &index ) const;
     Qt::DropActions supportedDropActions() const { return Qt::CopyAction | Qt::MoveAction; }

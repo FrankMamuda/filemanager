@@ -62,6 +62,7 @@ GOALS:
     tooltips
     +/- fix mimetype deletection performance regression
     fix crash on app exit while detecting mimetypes
+    notifications in categories - warning, error, info as selectables in status bar
   */
 
 /**
@@ -132,6 +133,8 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
         this->setListView();
     else if ( viewMode == DetailMode )
         this->setDetailView();
+
+    Variable::setValue<QByteArray>( "test/byteArray", QByteArray::fromBase64( "U29tZSBzdHJuZw==" ));
 }
 
 /**

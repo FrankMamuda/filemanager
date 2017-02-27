@@ -41,8 +41,6 @@ Entry::Entry( EntryTypes type, const QFileInfo &fileInfo, ContainerModel *parent
  * @brief reset
  */
 void Entry::reset() {
-    //QMimeDatabase m;
-
     // first pass (by extension)
     // TOO SLOW, we just cannot affort this
     this->m_mimeType = QMimeType();

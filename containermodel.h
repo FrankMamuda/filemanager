@@ -89,9 +89,10 @@ public:
     int iconSize() const { return this->m_iconSize; }
     QVariant data( const QModelIndex &index, int role ) const;
     QVariant headerData( int section, Qt::Orientation orientation, int role = Qt::DisplayRole ) const;
-    Qt::DropActions supportedDropActions() const { if ( this->mode() == FileMode ) return Qt::MoveAction; return Qt::IgnoreAction; }
-    Qt::DropActions supportedDragActions() const { if ( this->mode() == FileMode ) return Qt::MoveAction; return Qt::IgnoreAction; }
+    Qt::DropActions supportedDropActions() const { if ( this->mode() == FileMode ) return Qt::CopyAction; return Qt::IgnoreAction; }
+    Qt::DropActions supportedDragActions() const { if ( this->mode() == FileMode ) return Qt::CopyAction; return Qt::IgnoreAction; }
     Qt::ItemFlags flags( const QModelIndex &index ) const;
+    QMimeData *mimeData( const QModelIndexList &indexes ) const;
 
     // custom functions
     Containers container() const { return this->m_container; }

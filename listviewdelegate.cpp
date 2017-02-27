@@ -22,6 +22,7 @@
 #include "listviewdelegate.h"
 #include "listview.h"
 #include "containermodel.h"
+#include "sideview.h"
 
 // TODO: remove ugly drag/drop black borders both for List/Table views
 
@@ -29,7 +30,7 @@
  * @brief ListViewDelegate::ListViewDelegate
  * @param parent
  */
-ListViewDelegate::ListViewDelegate( ListView *parent ) {
+ListViewDelegate::ListViewDelegate( QListView *parent ) {
     this->setParent( qobject_cast<QObject*>( parent ));
 }
 
@@ -67,9 +68,20 @@ QSize ListViewDelegate::sizeHint( const QStyleOptionViewItem &option, const QMod
  */
 void ListViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index ) const {
     QListView::ViewMode viewMode;
+    bool bookMarkView = false;
 
     // get view mode
     viewMode = qobject_cast<QListView*>( this->parent())->viewMode();
+    bookMarkView = qobject_cast<SideView*>( this->parent()) != NULL;
+
+
+    // the in-between line
+#if 0
+    if ( bookMarkView ) {
+        int lineY = qobject_cast<SideView*>( this->parent())->mapFromGlobal( QCursor::pos()).y();
+        painter->drawLine( 0, lineY, option.widget->width(), lineY );
+    }
+#endif
 
     //
     // STAGE 0: display hilight
@@ -82,7 +94,9 @@ void ListViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &opt
     painter->setPen( Qt::NoPen );
 
     // selected item
-    if ( option.state & QStyle::State_Selected ) {
+    // NOTE: ignoring selection rect with SideView container
+    // ultimately, we should use a separate delegate to allow drop insertion between items
+    if ( option.state & QStyle::State_Selected && !bookMarkView ) {
         hilightBrush.setColor( QColor::fromRgbF( hilightBrush.color().redF(), hilightBrush.color().greenF(), hilightBrush.color().blueF(), 0.50f ));
         painter->fillRect( option.rect, hilightBrush );
     }
@@ -156,6 +170,9 @@ void ListViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &opt
         state = option.state;
         state = state & ( ~QStyle::State_MouseOver );
         state = state & ( ~QStyle::State_Selected );
+        state = state & ( ~QStyle::State_HasFocus );
+        state = state & ( ~QStyle::State_Active );
+
         optionNoSelection = option;
         optionNoSelection.state = state;
 

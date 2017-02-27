@@ -32,6 +32,7 @@
 // classes
 //
 class BookmarkModel;
+class ContainerStyle;
 
 /**
  * @brief The DeviceView class
@@ -51,6 +52,7 @@ private slots:
     void processItemOpen( const QModelIndex &index );
     void processContextMenu( const QModelIndex &index, const QPoint &pos );
     void renameBookmark();
+    void removeBookmark();
     void changeBookmarkIcon();
 
 protected:
@@ -60,6 +62,7 @@ protected:
 private:
     BookmarkModel *m_model;
     QModelIndex index;
+    ContainerStyle *m_style;
 };
 
 #endif // STORAGEVIEW_H

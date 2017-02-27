@@ -37,7 +37,7 @@ public:
     };
 
     static int count();
-    static void add( const QString &alias = QString::null, const QString &path = QString::null, const QString &iconName = QString::null );
+    static void add( const QString &alias = QString::null, const QString &path = QString::null, const QString &iconName = QString::null, int insert = -1 );
     static void setValue( int index, Bookmark::BookmarkData field, const QString &value );
     static QString value( int index, Bookmark::BookmarkData field );
 };

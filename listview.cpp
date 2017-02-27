@@ -27,6 +27,7 @@
 #include <QItemSelectionModel>
 #include <QScrollBar>
 #include "listviewdelegate.h"
+#include "containerstyle.h"
 
 // TODO: keep selection on update
 
@@ -40,6 +41,7 @@ ListView::ListView( QWidget* parent ) : QListView( parent ), m_model( new Contai
     this->connect( this, SIGNAL( clicked( QModelIndex )), this->model(), SLOT( processItemOpen( QModelIndex )));
 
     // set view delegate
+    // TODO: delete me
     this->setItemDelegate( new ListViewDelegate( this ));
 
     // enable mouse tracking
@@ -47,6 +49,11 @@ ListView::ListView( QWidget* parent ) : QListView( parent ), m_model( new Contai
 
     // update selection rectangle on scroll bar changes
     this->connect( this->verticalScrollBar(), SIGNAL( valueChanged( int )), this, SLOT( updateRubberBand()));
+
+    // NOTE: for some reason drops aren't accepted without the ugly drop indicator
+    // while it is enabled, we do however abstain from painting it
+    this->m_style = new ContainerStyle( this->style());
+    this->setStyle( this->m_style );
 }
 
 /**
@@ -54,6 +61,7 @@ ListView::ListView( QWidget* parent ) : QListView( parent ), m_model( new Contai
  */
 ListView::~ListView() {
     this->m_model->deleteLater();
+    this->m_style->deleteLater();
 }
 
 /**
@@ -122,6 +130,9 @@ void ListView::selectionChanged( const QItemSelection &selected, const QItemSele
  * @param e
  */
 void ListView::dropEvent( QDropEvent *e ) {
+    if ( e->source() != this )
+        return;
+
     this->model()->processDropEvent( this->indexAt( e->pos()), this->mapToGlobal( e->pos()) );
     e->accept();
 }

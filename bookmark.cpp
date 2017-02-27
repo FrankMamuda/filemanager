@@ -59,9 +59,11 @@ int Bookmark::count() {
  * @param path
  * @param iconName
  */
-void Bookmark::add( const QString &alias, const QString &path, const QString &iconName ) {
+void Bookmark::add( const QString &alias, const QString &path, const QString &iconName, int insert ) {
     int count;
     QStringList values;
+
+    Q_UNUSED( insert )
 
     count = Bookmark::count();
     values << alias << path << iconName;

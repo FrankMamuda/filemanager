@@ -28,6 +28,7 @@
 #include "variable.h"
 #include "main.h"
 #include "tableviewdelegate.h"
+#include "containerstyle.h"
 
 /**
  * @brief TableView::TableView
@@ -53,6 +54,11 @@ TableView::TableView( QWidget *parent ) : QTableView( parent ), m_model( new Con
 
     // update header
     this->connect( this->horizontalHeader(), SIGNAL( geometriesChanged()), this, SLOT( headerResized()));
+
+    // NOTE: for some reason drops aren't accepted without the ugly drop indicator
+    // while it is enabled, we do however abstain from painting it
+    this->m_style = new ContainerStyle( this->style());
+    this->setStyle( this->m_style );
 }
 
 /**
@@ -73,6 +79,7 @@ void TableView::headerResized() {
  */
 TableView::~TableView() {
     this->m_model->deleteLater();
+    this->m_style->deleteLater();
 }
 
 /**
@@ -124,6 +131,9 @@ void TableView::selectionChanged( const QItemSelection &selected, const QItemSel
  * @param e
  */
 void TableView::dropEvent( QDropEvent *e ) {
+    if ( e->source() != this )
+        return;
+
     this->model()->processDropEvent( this->indexAt( e->pos()), this->mapToGlobal( e->pos()) );
     e->accept();
 }
