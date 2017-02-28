@@ -65,6 +65,7 @@ void ContainerModel::quit() {
  */
 ContainerModel::~ContainerModel() {
     this->m_rubberBand->deleteLater();
+    qDeleteAll( this->workList );
 }
 
 /**
@@ -79,20 +80,14 @@ int ContainerModel::columnCount( const QModelIndex & ) const {
     return 0;
 }
 
-void ContainerModel::reset() {
+void ContainerModel::reset( bool force ) {
+    if ( !this->listParent()->isVisible() && !force )
+        return;
+
     this->processEntries();
     this->determineMimeTypes();
     this->beginResetModel();
     this->endResetModel();
-}
-
-/**
- * @brief ContainerModel::determineMimeTypes
- */
-void ContainerModel::determineMimeTypes() {
-    emit this->stop();
-    this->future = QtConcurrent::mapped( this->list, determineMimeTypeAsync );
-    this->futureWatcher.setFuture( this->future );
 }
 
 /**
@@ -120,6 +115,9 @@ Entry *ContainerModel::indexToEntry( const QModelIndex &index ) const {
  * @param iconSize
  */
 void ContainerModel::setIconSize( int iconSize ) {
+    if ( this->m_iconSize == iconSize )
+        return;
+
     this->m_iconSize = iconSize;
 
     foreach ( Entry *entry, this->list ) {
@@ -130,6 +128,7 @@ void ContainerModel::setIconSize( int iconSize ) {
     }
 
     // recache images
+    qDebug() << "# ICON SIZE CHANGE";
     this->determineMimeTypes();
 }
 
@@ -452,23 +451,62 @@ void ContainerModel::deselectCurrent() {
 }
 
 /**
+ * @brief ContainerModel::determineMimeTypes
+ */
+void ContainerModel::determineMimeTypes() {
+    int y = 0;
+
+    emit this->stop();
+
+    qDebug() << "#### DETERMINE MIME TYPES";
+
+    foreach ( ASyncWorker *worker, this->workList ) {
+        if ( worker != NULL )
+            delete worker;
+    }
+    this->workList.clear();
+
+    //qDeleteAll( this->workList );
+    foreach ( Entry *entry, this->list ) {
+        if ( entry->type() == Entry::FileFolder )
+            this->workList << new ASyncWorker( entry->info(), y, this->iconSize());
+
+        y++;
+    }
+
+    this->future = QtConcurrent::mapped( this->workList, determineMimeTypeAsync );
+    this->futureWatcher.setFuture( this->future );
+}
+
+/**
  * @brief ContainerModel::mimeTypeDetected
  * @param index
  */
 void ContainerModel::mimeTypeDetected( int index ) {
     Entry *entry;
+    ASyncWorker *worker;
     int y;
+    bool update = false;
 
     // update entry in view with corresponding icon or thumbnail
-    entry = this->list.at( index );
-    if ( entry != NULL ) {
-        if ( entry->updateScheduled()) {
-            if ( this->listParent() != NULL ) {
+    worker = this->workList.at( index );
+    entry = this->list.at( worker->index());
+    if ( worker != NULL && entry != NULL ) {
+        if ( worker->info() == entry->info()) {
+            if ( worker->mimeType() != entry->mimeType()) {
+                 entry->setMimeType( worker->mimeType());
+                 update = true;
+            }
 
+            if ( worker->update()) {
+                entry->setIconName( worker->iconName());
+                entry->setType( Entry::Thumbnail );
+                update = true;
+            }
+
+            if ( this->listParent() != NULL && update ) {
                 for ( y = 0; y < this->columnCount(); y++ )
-                    this->listParent()->update( this->index( index, y ));
-
-                entry->scheduleUpdate( false );
+                    this->listParent()->update( this->index( worker->index(), y ));
             }
         }
     }
@@ -476,35 +514,26 @@ void ContainerModel::mimeTypeDetected( int index ) {
 
 /**
  * @brief ContainerModel::determineMimeTypeAsync
- * @param entry
+ * @param worker
  * @return
  */
-Entry *ContainerModel::determineMimeTypeAsync( Entry *entry ) {
+ASyncWorker *ContainerModel::determineMimeTypeAsync( ASyncWorker *worker ) {
     QMimeDatabase m;
-    QMimeType mimeType;
     QPixmap pm;
 
-    if ( entry->type() != Entry::FileFolder )
-        return entry;
-
     // get mimetype from contents
-    mimeType = m.mimeTypeForFile( entry->info(), QMimeDatabase::MatchContent );
-    if ( entry->type() == Entry::FileFolder && entry->mimeType() != mimeType ) {
-        entry->setMimeType( mimeType );
-        entry->scheduleUpdate();
-    }
+    worker->setMimeType( m.mimeTypeForFile( worker->info(), QMimeDatabase::MatchContent ));
 
     // precache thumbnail
-    if ( entry->mimeType().iconName().startsWith( "image" )) {
-        pm = pixmapCache.pixmap( entry->filePath(), entry->parent()->iconSize(), true );
+    if ( worker->mimeType().iconName().startsWith( "image" )) {
+        pm = pixmapCache.pixmap( worker->info().absolutePath(), worker->iconSize(), true );
         if ( pm.width() && pm.height()) {
-            entry->setType( Entry::Thumbnail );
-            entry->setIconName( entry->filePath());
-            entry->scheduleUpdate();
+            worker->scheduleUpdate();
+            worker->setIconName( worker->info().absoluteFilePath());
         }
     }
 
-    return entry;
+    return worker;
 }
 
 /**
@@ -594,7 +623,7 @@ void ContainerModel::processItemOpen( const QModelIndex &index ) {
         m.gui()->setCurrentPath( entry->path());
     } else {
         if ( this->mode() == ContainerModel::FileMode )
-            QDesktopServices::openUrl( QUrl::fromLocalFile( entry->filePath()));
+            QDesktopServices::openUrl( QUrl::fromLocalFile( entry->path()));
     }
 }
 

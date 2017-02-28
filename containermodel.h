@@ -30,6 +30,8 @@
 #include <QMouseEvent>
 #include <QRubberBand>
 #include <QPoint>
+#include <QFileInfo>
+#include <QMimeType>
 
 //
 // classes
@@ -47,6 +49,34 @@ public:
     int textHeight;
 };
 Q_DECLARE_METATYPE( ContainerItem )
+
+/**
+ * @brief The ASyncWorker class thread safe mime type detection implementation
+ */
+class ASyncWorker {
+public:
+    ASyncWorker( const QFileInfo &fileInfo, int index, int iconSize )
+        : m_info( fileInfo ), m_index( index ), m_iconSize( iconSize ), m_update( false ) {}
+
+    QFileInfo info() const { return this->m_info; }
+    int index() const { return this->m_index; }
+    QMimeType mimeType() const { return this->m_mimeType; }
+    QString iconName() const { return this->m_iconName; }
+    int iconSize() const { return this->m_iconSize; }
+    bool update() const { return this->m_update; }
+
+    void setMimeType( const QMimeType &mimeType ) { this->m_mimeType = mimeType; }
+    void setIconName( const QString &iconName ) { this->m_iconName = iconName; }
+    void scheduleUpdate() { this->m_update = true; }
+
+private:
+    QFileInfo m_info;
+    int m_index;
+    QMimeType m_mimeType;
+    QString m_iconName;
+    int m_iconSize;
+    bool m_update;
+};
 
 /**
  * @brief The ContainerModel class
@@ -85,7 +115,7 @@ public:
     // overrides
     int rowCount( const QModelIndex & = QModelIndex()) const { return this->numItems(); }
     int columnCount( const QModelIndex & = QModelIndex()) const;
-    void reset();
+    void reset( bool force = false );
     int iconSize() const { return this->m_iconSize; }
     QVariant data( const QModelIndex &index, int role ) const;
     QVariant headerData( int section, Qt::Orientation orientation, int role = Qt::DisplayRole ) const;
@@ -136,10 +166,11 @@ private:
     Modes m_mode;
     int m_iconSize;
     QList<Entry*> list;
+    QList<ASyncWorker*> workList;
     QList<ContainerItem>displayList;
-    static Entry *determineMimeTypeAsync( Entry *entry );
-    QFuture<Entry*> future;
-    QFutureWatcher<Entry*> futureWatcher;
+    static ASyncWorker *determineMimeTypeAsync( ASyncWorker *worker );
+    QFuture<ASyncWorker*> future;
+    QFutureWatcher<ASyncWorker*> futureWatcher;
     QModelIndex currentIndex;
     QTimer selectionTimer;
     QRubberBand *m_rubberBand;

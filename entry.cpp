@@ -33,7 +33,7 @@
  * @param parent
  * @param fileInfo
  */
-Entry::Entry( EntryTypes type, const QFileInfo &fileInfo, ContainerModel *parent ) : m_parent( parent ), m_fileInfo( fileInfo ), m_type( type ), m_updateScheduled( false ) {
+Entry::Entry( EntryTypes type, const QFileInfo &fileInfo, ContainerModel *parent ) : m_parent( parent ), m_fileInfo( fileInfo ), m_type( type )/*, m_updateScheduled( false )*/ {
     this->reset();
 }
 
@@ -104,14 +104,13 @@ QString Entry::path() const {
     else if ( this->type() == Trash )
         return "trash://";
 
-    return this->info().absoluteFilePath();
-}
+    if ( this->info().isSymLink()) {
+        QFileInfo target( this->info().symLinkTarget());
 
-/**
- * @brief Entry::filePath
- * @return
- */
-QString Entry::filePath() const {
+        if ( !target.isSymLink())
+            return target.absoluteFilePath();
+    }
+
     return this->info().absoluteFilePath();
 }
 

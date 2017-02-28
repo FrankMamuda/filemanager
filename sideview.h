@@ -52,6 +52,7 @@ private slots:
     void processItemOpen( const QModelIndex &index );
     void processContextMenu( const QModelIndex &index, const QPoint &pos );
     void renameBookmark();
+    void changeBookmarkTarget();
     void removeBookmark();
     void changeBookmarkIcon();
 

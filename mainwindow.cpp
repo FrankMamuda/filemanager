@@ -95,9 +95,6 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     // get bookmarks
     if ( !Bookmark::count() ) {
         QFileInfoList infoList;
-
-        qDebug() << "zero bookmarks";
-
         Bookmark::add( "Root", "/", "folder-red" );
         Bookmark::add( "Home", "/home", "user-home" );
 
@@ -161,6 +158,14 @@ void MainWindow::setCurrentPath( const QString &path ) {
         this->m_currentPath = "bookmarks://";
     } else {
         windowsPath = PathUtils::toWindowsPath( path );
+
+        // handle symlinks
+        QFileInfo info( windowsPath );
+        if ( info.isSymLink()) {
+            QFileInfo target( info.symLinkTarget());
+            if ( !target.isSymLink())
+                windowsPath = target.absoluteFilePath();
+        }
         directory.cd( windowsPath );
 
         if ( !directory.exists( windowsPath )) {
@@ -168,8 +173,8 @@ void MainWindow::setCurrentPath( const QString &path ) {
             return;
         }
 
-        unixPath = PathUtils::toUnixPath( path );
-        this->m_currentPath = path;
+        unixPath = PathUtils::toUnixPath( windowsPath );
+        this->m_currentPath = unixPath;
         this->ui->pathEdit->setText( unixPath );
 
         this->ui->listView->model()->setMode( ContainerModel::FileMode );
@@ -237,6 +242,10 @@ void MainWindow::on_pathEdit_returnPressed() {
 void MainWindow::on_horizontalSlider_valueChanged( int value ) {
     Variable::setValue( "mainWindow/iconSize/sliderPosition", value );
 
+    // TODO: fix view mode switching to avoid too frequent mime type detection
+  //  ..if ( this->ui->stackedWidget->currentIndex() == 1 )
+  // ./     return;
+
     value *= 16;
     this->ui->listView->model()->setIconSize( value );
     this->ui->listView->switchDisplayMode( this->ui->listView->viewMode());
@@ -293,8 +302,17 @@ void MainWindow::on_actionViewMode_triggered() {
  * @brief MainWindow::setGridView
  */
 void MainWindow::setGridView() {
-    if ( this->ui->stackedWidget->currentIndex() == 1 )
+    if ( this->ui->stackedWidget->currentIndex() == 1 ) {
         this->ui->listView->selectionModel()->select( this->ui->tableView->selectionModel()->selection(), QItemSelectionModel::Select );
+    }
+
+    if ( this->ui->listView->isVisible()) {
+        qDebug() << "## SET ICON VIEW";
+        this->ui->listView->model()->reset( true );
+    }
+
+    this->ui->tableView->setHidden( true );
+    this->ui->listView->setVisible( true );
 
     this->ui->stackedWidget->setCurrentIndex( 0 );
     this->ui->listView->switchDisplayMode( QListView::IconMode );
@@ -307,8 +325,17 @@ void MainWindow::setGridView() {
  * @brief MainWindow::setListView
  */
 void MainWindow::setListView() {
-    if ( this->ui->stackedWidget->currentIndex() == 1 )
+    if ( this->ui->stackedWidget->currentIndex() == 1 ) {
         this->ui->listView->selectionModel()->select( this->ui->tableView->selectionModel()->selection(), QItemSelectionModel::Select );
+    }
+
+    if ( this->ui->listView->isVisible()) {
+        qDebug() << "## SET LIST VIEW";
+        this->ui->listView->model()->reset( true );
+    }
+
+    this->ui->tableView->setHidden( true );
+    this->ui->listView->setVisible( true );
 
     this->ui->stackedWidget->setCurrentIndex( 0 );
     this->ui->listView->switchDisplayMode( QListView::ListMode );
@@ -320,9 +347,18 @@ void MainWindow::setListView() {
 /**
  * @brief MainWindow::setDetailView
  */
-void MainWindow::setDetailView() {
-    if ( this->ui->stackedWidget->currentIndex() == 0 )
+void MainWindow::setDetailView() {    
+    if ( this->ui->stackedWidget->currentIndex() == 0 ) {
         this->ui->tableView->selectionModel()->select( this->ui->listView->selectionModel()->selection(), QItemSelectionModel::Select | QItemSelectionModel::Rows );
+    }
+
+    if ( !this->ui->tableView->isVisible()) {
+        qDebug() << "## SET DETAIL VIEW";
+        this->ui->tableView->model()->reset( true );
+    }
+
+    this->ui->listView->setHidden( true );
+    this->ui->tableView->setVisible( true );
 
     this->ui->stackedWidget->setCurrentIndex( 1 );
     this->ui->horizontalSlider->setEnabled( false );

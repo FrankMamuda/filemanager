@@ -55,17 +55,16 @@ public:
     QString alias() const;
     EntryTypes type() const { return this->m_type; }
     QString path() const;
-    QString filePath() const;
     QMimeType mimeType() const { return this->m_mimeType; }
     ContainerModel *parent() const { return this->m_parent; }
-    bool updateScheduled() const { return this->m_updateScheduled; }
+    //bool updateScheduled() const { return this->m_updateScheduled; }
     bool isDirectory() const;
 
 public slots:
     void setMimeType( const QMimeType &mimeType ) { this->m_mimeType = mimeType; this->setIconName( this->mimeType().iconName()); }
     void setType( const EntryTypes type ) { this->m_type = type; }
     void setIconName( const QString &iconName ) { this->m_iconName = iconName; }
-    void scheduleUpdate( bool update = true ) { this->m_updateScheduled = update; }
+    //void scheduleUpdate( bool update = true ) { this->m_updateScheduled = update; }
     void reset();
 
 private:
@@ -74,7 +73,7 @@ private:
     QMimeType m_mimeType;
     QString m_iconName;
     EntryTypes m_type;
-    bool m_updateScheduled;
+    //bool m_updateScheduled;
 };
 
 #endif // ENTRY_H

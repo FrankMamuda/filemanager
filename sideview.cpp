@@ -131,6 +131,7 @@ void SideView::processContextMenu( const QModelIndex &index, const QPoint &pos )
 
     menu.addAction( this->tr( "Rename" ), this, SLOT( renameBookmark()));
     menu.addAction( this->tr( "Change icon" ), this, SLOT( changeBookmarkIcon()));
+    menu.addAction( this->tr( "Change target" ), this, SLOT( changeBookmarkTarget()));
     menu.addSeparator();
     menu.addAction( this->tr( "Remove bookmark" ), this, SLOT( removeBookmark()));
     menu.exec( pos );
@@ -150,6 +151,21 @@ void SideView::renameBookmark() {
         Bookmark::setValue( this->currentIndex().row(), Bookmark::Alias, alias );
         this->model()->reset();
         //this->update( this->currentIndex());
+    }
+}
+
+
+/**
+ * @brief SideView::changeBookmarkTarget
+ */
+void SideView::changeBookmarkTarget() {
+    bool ok;
+    QString target;
+
+    target = QInputDialog::getText( m.gui(), this->tr( "Change bookmark target" ), this->tr( "New path:" ), QLineEdit::Normal, Bookmark::value( this->currentIndex().row(), Bookmark::Path ), &ok );
+    if ( ok && !target.isEmpty()) {
+        Bookmark::setValue( this->currentIndex().row(), Bookmark::Path, target );
+        this->model()->reset();
     }
 }
 
