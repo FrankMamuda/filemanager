@@ -33,6 +33,7 @@
 #include "main.h"
 #include "pathutils.h"
 #include "bookmark.h"
+#include "notificationpanel.h"
 
 /**
  * @brief ContainerModel::ContainerModel
@@ -458,7 +459,7 @@ void ContainerModel::determineMimeTypes() {
 
     emit this->stop();
 
-    qDebug() << "#### DETERMINE MIME TYPES";
+    //qDebug() << "#### DETERMINE MIME TYPES";
 
     foreach ( ASyncWorker *worker, this->workList ) {
         if ( worker != NULL )
@@ -526,7 +527,7 @@ ASyncWorker *ContainerModel::determineMimeTypeAsync( ASyncWorker *worker ) {
 
     // precache thumbnail
     if ( worker->mimeType().iconName().startsWith( "image" )) {
-        pm = pixmapCache.pixmap( worker->info().absolutePath(), worker->iconSize(), true );
+        pm = pixmapCache.pixmap( worker->info().absoluteFilePath(), worker->iconSize(), true );
         if ( pm.width() && pm.height()) {
             worker->scheduleUpdate();
             worker->setIconName( worker->info().absoluteFilePath());
@@ -571,9 +572,9 @@ void ContainerModel::processDropEvent( const QModelIndex &index, const QPoint &p
     // TODO: support executables
     if ( entry != NULL ) {
         if ( !entry->isDirectory())
-            qDebug() << "invalid drop";
+            m.gui()->panel->pushNotification( NotificationPanel::Warning, "Invalid drop", this->tr( "Cannot drop files on '%1'" ).arg( entry->alias()));
         else {
-            qDebug() << "drop " << items.join( " " ) << "on" << entry->alias();
+            m.gui()->panel->pushNotification( NotificationPanel::Information, "Drop", this->tr( "Dropping %1 files on '%2'" ).arg( items.count()).arg( entry->alias()));
             menu.exec( pos );
         }
     }

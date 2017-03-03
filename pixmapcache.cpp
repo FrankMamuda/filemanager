@@ -69,11 +69,11 @@ QPixmap PixmapCache::pixmap( const QString &name, int scale, bool thumbnail ) {
                 else if ( pixmap.width() < pixmap.height())
                     rect = QRect( 0, pixmap.height() / 2 - pixmap.width() / 2, pixmap.width(), pixmap.width());
 
-                pixmap.copy( rect );
+                pixmap = pixmap.copy( rect );
 
                 // fast downsizing if necessary
-                if ( pixmap.width() >= scale * 1.5f )
-                    pixmap = pixmap.copy( rect ).scaled( scale * 2.0f, scale * 2.0f, Qt::IgnoreAspectRatio, Qt::FastTransformation );
+                if ( pixmap.width() >= scale * 2.0f )
+                    pixmap = pixmap.scaled( scale * 2.0f, scale * 2.0f, Qt::IgnoreAspectRatio, Qt::FastTransformation );
 
                 pixmap = pixmap.scaled( scale, scale, Qt::IgnoreAspectRatio, Qt::SmoothTransformation );
             }

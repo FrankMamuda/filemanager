@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>FileManager</string>
+   <string>File Manager</string>
   </property>
   <property name="windowIcon">
    <iconset theme="document-open-folder">
@@ -96,7 +96,7 @@
      </widget>
     </item>
     <item row="3" column="2">
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,1">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,0,0,0,1">
       <item>
        <widget class="QLabel" name="statusBar">
         <property name="text">
@@ -116,6 +116,36 @@
          </size>
         </property>
        </spacer>
+      </item>
+      <item>
+       <widget class="QToolButton" name="notificationInfo">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="autoRaise">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="notificationWarn">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="autoRaise">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="notificationError">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="autoRaise">
+         <bool>true</bool>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QSlider" name="horizontalSlider">

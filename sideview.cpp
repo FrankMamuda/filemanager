@@ -31,6 +31,7 @@
 #include <QInputDialog>
 #include <QMimeData>
 #include "containerstyle.h"
+#include "notificationpanel.h"
 
 /**
  * @brief SideView::SideView
@@ -92,7 +93,7 @@ void SideView::dropEvent( QDropEvent *e ) {
     // TODO: get icon from mimetype? or .dekstop entry?
 
     if ( urls.count() > 1 ) {
-        qDebug() << "Can add one bookmark at a time";
+        m.gui()->panel->pushNotification( NotificationPanel::Error, "Bookmarks", "Can add only one bookmark at a time" );
         return;
     } else if ( !urls.count()) {
         return;
@@ -101,7 +102,7 @@ void SideView::dropEvent( QDropEvent *e ) {
     path = urls.first().toLocalFile();
     info.setFile( path );
     if ( !info.isDir()) {
-        qDebug() << "Cannot add files as bookmarks";
+        m.gui()->panel->pushNotification( NotificationPanel::Error, "Bookmarks", "Cannot add files as bookmarks" );
         return;
     }
 
@@ -173,12 +174,12 @@ void SideView::changeBookmarkTarget() {
  * @brief SideView::removeBookmark
  */
 void SideView::removeBookmark() {
-    qDebug() << "bookmark removal not supported yet";
+    m.gui()->panel->pushNotification( NotificationPanel::Warning, "Bookmarks", "Bookmark removal not supported yet" );
 }
 
 /**
  * @brief SideView::changeBookmarkIcon
  */
 void SideView::changeBookmarkIcon() {
-    qDebug() << "icon change not supported yet";
+    m.gui()->panel->pushNotification( NotificationPanel::Warning, "Bookmarks", "Icon change not supported yet" );
 }

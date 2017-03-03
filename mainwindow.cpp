@@ -29,6 +29,11 @@
 #include "variable.h"
 #include "main.h"
 #include "bookmark.h"
+#include "notificationpanel.h"
+#include <QPropertyAnimation>
+#include <QStatusBar>
+#include <QDockWidget>
+#include "history.h"
 
 /*
 GOALS:
@@ -76,6 +81,11 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     // set up ui
     this->ui->setupUi( this );
 
+    // make history!
+    this->m_historyManager = new History();
+    this->connect( this->historyManager(), SIGNAL( changed()), this, SLOT( checkHistoryPosition()));
+    this->checkHistoryPosition();
+
     // set current path
     this->setCurrentPath();
 
@@ -83,9 +93,6 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     Variable::add( "mainWindow/iconSize/sliderPosition", Medium );
     this->ui->horizontalSlider->setValue( Variable::integer( "mainWindow/iconSize/sliderPosition" ));
     this->on_horizontalSlider_valueChanged( Variable::integer( "mainWindow/iconSize/sliderPosition" ));
-
-    //
-    this->checkHistoryPosition();
 
     // set icons here (some bug resets icons, when defined in form)
     this->ui->actionBack->setIcon( QIcon::fromTheme( "go-previous" ));
@@ -109,9 +116,9 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->viewModeMenu = new QMenu();
     this->menuStyle = new MenuStyle;
     this->viewModeMenu->setStyle( this->menuStyle );
-    this->actionViewGrid = new QAction( QIcon::fromTheme( "preferences-desktop-icons" ), "Grid view" );
-    this->actionViewList = new QAction( QIcon::fromTheme( "view-media-playlist" ), "List view" );
-    this->actionViewDetails = new QAction( QIcon::fromTheme( "x-office-spreadsheet" ), "Detail view" );
+    this->actionViewGrid = new QAction( QIcon::fromTheme( "preferences-desktop-icons" ), this->tr( "Grid view" ));
+    this->actionViewList = new QAction( QIcon::fromTheme( "view-media-playlist" ), this->tr( "List view" ));
+    this->actionViewDetails = new QAction( QIcon::fromTheme( "x-office-spreadsheet" ), this->tr( "Detail view" ));
     this->viewModeMenu->addAction( this->actionViewGrid );
     this->viewModeMenu->addAction( this->actionViewList );
     this->viewModeMenu->addAction( this->actionViewDetails );
@@ -131,7 +138,26 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     else if ( viewMode == DetailMode )
         this->setDetailView();
 
-    Variable::setValue<QByteArray>( "test/byteArray", QByteArray::fromBase64( "U29tZSBzdHJuZw==" ));
+    // notification icons
+    this->ui->notificationInfo->setIcon( QIcon::fromTheme( "dialog-information" ));
+    this->ui->notificationWarn->setIcon( QIcon::fromTheme( "dialog-warning" ));
+    this->ui->notificationError->setIcon( QIcon::fromTheme( "dialog-error" ));
+
+    // notification panel
+    this->panel = new NotificationPanel( this );
+    this->panel->hide();
+
+    // TODO: QDockWidget for sideView?
+}
+
+/**
+ * @brief MainWindow::resizeEvent
+ */
+void MainWindow::resizeEvent( QResizeEvent *e ) {
+    this->ui->listView->model()->reset();
+    this->ui->tableView->model()->reset();
+    this->panel->move( this->geometry().width() - this->panel->geometry().width() - 11, this->geometry().height() - this->panel->geometry().height() - this->ui->statusBar->height() - 4 );
+    QMainWindow::resizeEvent( e );
 }
 
 /**
@@ -140,7 +166,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
  * @param changeDir
  */
 // TODO: make static
-void MainWindow::setCurrentPath( const QString &path ) {
+void MainWindow::setCurrentPath( const QString &path, bool saveToHistory ) {
     QDir directory;
     QString windowsPath, unixPath;
 
@@ -150,13 +176,19 @@ void MainWindow::setCurrentPath( const QString &path ) {
         this->ui->tableView->model()->setMode( ContainerModel::SideMode );
         this->ui->pathEdit->setText( "/" );
         this->m_currentPath = "/";
+        this->ui->actionUp->setDisabled( true );
     } else if ( !QString::compare( path, "trash://" )) {
         this->ui->pathEdit->setText( path );
         this->m_currentPath = "trash://";
+        this->ui->actionUp->setDisabled( true );
     } else if ( !QString::compare( path, "bookmarks://" )) {
         this->ui->pathEdit->setText( path );
         this->m_currentPath = "bookmarks://";
+        this->ui->actionUp->setDisabled( true );
     } else {
+        this->ui->actionUp->setEnabled( true );
+
+
         windowsPath = PathUtils::toWindowsPath( path );
 
         // handle symlinks
@@ -169,7 +201,7 @@ void MainWindow::setCurrentPath( const QString &path ) {
         directory.cd( windowsPath );
 
         if ( !directory.exists( windowsPath )) {
-            qDebug() << path << "doesn't exist";
+            this->panel->pushNotification( NotificationPanel::Error, "Error", "Path does not exist" );
             return;
         }
 
@@ -181,8 +213,10 @@ void MainWindow::setCurrentPath( const QString &path ) {
         this->ui->tableView->model()->setMode( ContainerModel::FileMode );
     }
 
-    this->ui->statusBar->setText( QString( "%1 items" ).arg( this->ui->listView->model()->numItems()));
-    this->addToHistory( this->m_currentPath );
+    this->ui->statusBar->setText( this->tr( "%1 items" ).arg( this->ui->listView->model()->numItems()));
+
+    if ( saveToHistory )
+        this->historyManager()->addItem( this->m_currentPath );
 }
 
 /**
@@ -192,6 +226,9 @@ MainWindow::~MainWindow() {
     // get rid of ui
     delete ui;
 
+    this->disconnect( this->historyManager(), SIGNAL( changed()));
+    this->m_historyManager->deleteLater();
+
     this->viewModeMenu->deleteLater();
     this->menuStyle->deleteLater();
     this->actionViewGrid->deleteLater();
@@ -200,14 +237,8 @@ MainWindow::~MainWindow() {
     this->disconnect( this->actionViewGrid, SIGNAL( triggered( bool )));
     this->disconnect( this->actionViewList, SIGNAL( triggered( bool )));
     this->disconnect( this->actionViewDetails, SIGNAL( triggered( bool )));
-}
 
-/**
- * @brief MainWindow::resizeEvent
- */
-void MainWindow::resizeEvent( QResizeEvent * ) {
-    this->ui->listView->model()->reset();
-    this->ui->tableView->model()->reset();
+    this->panel->deleteLater();
 }
 
 /**
@@ -255,40 +286,27 @@ void MainWindow::on_horizontalSlider_valueChanged( int value ) {
  * @brief MainWindow::on_actionBack_triggered
  */
 void MainWindow::on_actionBack_triggered() {
-    /*if ( this->historyPosition() <= 0 || this->history.size() < 1 )
-        return;
-
-    this->m_historyPosition--;
-    this->setCurrentPath( this->history.at( this->historyPosition()));
-    this->checkHistoryPosition();*/
+    this->historyManager()->back();
+    this->setCurrentPath( this->historyManager()->current(), false );
 }
 
 /**
  * @brief MainWindow::on_actionForward_triggered
  */
 void MainWindow::on_actionForward_triggered() {
-    /*if ( this->historyPosition() == this->history.size() - 1 || this->history.size() < 1 )
-        return;
-
-    this->m_historyPosition++;
-    this->setCurrentPath( this->history.at( this->historyPosition()));
-    this->checkHistoryPosition();*/
+    this->historyManager()->forward();
+    this->setCurrentPath( this->historyManager()->current(), false );
 }
 
 /**
  * @brief MainWindow::checkHistoryPosition
  */
 void MainWindow::checkHistoryPosition() {
-    /*if ( this->historyPosition() == 0 ) {*/
-        this->ui->actionBack->setEnabled( false );
-        this->ui->actionForward->setEnabled( false );
-    /*} else {
-        if ( this->historyPosition() != this->history.count() - 1 )
-            this->ui->actionForward->setEnabled( true );
+    qDebug() << "check" << this->historyManager()->position() << this->historyManager()->count();
+    qDebug() << "     " << this->historyManager()->isBackEnabled() << this->historyManager()->isForwardEnabled();
 
-        if ( this->historyPosition() != 0 )
-            this->ui->actionBack->setEnabled( true );
-    }*/
+    this->ui->actionBack->setEnabled( this->historyManager()->isBackEnabled());
+    this->ui->actionForward->setEnabled( this->historyManager()->isForwardEnabled());
 }
 
 /**
@@ -379,4 +397,14 @@ void MainWindow::addToHistory( const QString &path ) {
     qDebug() << "add" << path << this->historyPosition() << this->history.count();
 
     this->checkHistoryPosition();*/
+}
+
+/**
+ * @brief MainWindow::on_notificationInfo_clicked
+ */
+void MainWindow::on_notificationInfo_clicked() {
+    this->panel->move( this->geometry().width() - this->panel->geometry().width() - 11,
+                       this->geometry().height() - this->panel->geometry().height() - this->ui->statusBar->height() - 4 );
+
+    this->panel->pushNotification( NotificationPanel::Information, "INFO", "aaaa\n" );
 }

@@ -26,7 +26,9 @@ SOURCES += main.cpp\
     listviewdelegate.cpp \
     tableviewdelegate.cpp \
     bookmark.cpp \
-    bookmarkmodel.cpp
+    bookmarkmodel.cpp \
+    notificationpanel.cpp \
+    history.cpp
 
 HEADERS  += mainwindow.h \
     pixmapcache.h \
@@ -44,10 +46,13 @@ HEADERS  += mainwindow.h \
     tableviewdelegate.h \
     bookmark.h \
     bookmarkmodel.h \
-    containerstyle.h
+    containerstyle.h \
+    notificationpanel.h \
+    history.h
 
 FORMS    += mainwindow.ui \
-    properties.ui
+    properties.ui \
+    notificationpanel.ui
 
 RESOURCES += \
     resources.qrc
