@@ -572,9 +572,9 @@ void ContainerModel::processDropEvent( const QModelIndex &index, const QPoint &p
     // TODO: support executables
     if ( entry != NULL ) {
         if ( !entry->isDirectory())
-            m.gui()->panel->pushNotification( NotificationPanel::Warning, "Invalid drop", this->tr( "Cannot drop files on '%1'" ).arg( entry->alias()));
+            m.notifications()->push( NotificationPanel::Warning, "Invalid drop", this->tr( "Cannot drop files on '%1'" ).arg( entry->alias()));
         else {
-            m.gui()->panel->pushNotification( NotificationPanel::Information, "Drop", this->tr( "Dropping %1 files on '%2'" ).arg( items.count()).arg( entry->alias()));
+            m.notifications()->push( NotificationPanel::Information, "Drop", this->tr( "Dropping %1 files on '%2'" ).arg( items.count()).arg( entry->alias()));
             menu.exec( pos );
         }
     }

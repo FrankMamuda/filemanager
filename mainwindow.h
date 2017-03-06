@@ -67,7 +67,6 @@ public:
     ~MainWindow();
     QString currentPath() const { return this->m_currentPath; }
     Ui::MainWindow *ui;
-    int historyPosition() const { return this->m_historyPosition; }
     History *historyManager() const { return this->m_historyManager; }
 
     enum IconScale {
@@ -87,9 +86,6 @@ public:
     };
     Q_ENUMS( ViewModes )
 
-    // TODO: move to private
-    NotificationPanel *panel;
-
 protected:
     virtual void resizeEvent( QResizeEvent * );
 
@@ -107,13 +103,11 @@ private slots:
     void setGridView();
     void setListView();
     void setDetailView();
-    void addToHistory( const QString &path );
     void on_notificationInfo_clicked();
 
 private:
     QString m_currentPath;
-    QStringList history;
-    int m_historyPosition;
+    History *m_historyManager;
 
     // view mode widgets
     MenuStyle *menuStyle;
@@ -121,8 +115,6 @@ private:
     QAction *actionViewList;
     QAction *actionViewDetails;
     QMenu *viewModeMenu;
-
-    History *m_historyManager;
 };
 
 Q_DECLARE_METATYPE( MainWindow::IconScale )

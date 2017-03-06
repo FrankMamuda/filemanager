@@ -31,6 +31,7 @@
 class MainWindow;
 class Variable;
 class Bookmark;
+class NotificationPanel;
 
 /**
  * @brief The Main class
@@ -38,14 +39,17 @@ class Bookmark;
 class Main {
 public:
     Main();
-    ~Main() { delete this->settings; }
+    ~Main();
     MainWindow *gui() const { return this->m_gui; }
+    NotificationPanel *notifications() { return this->m_notifications; }
     void setGui( MainWindow *gui ) { this->m_gui = gui; }
+    void setNotifications( NotificationPanel *notify ) { this->m_notifications = notify; }
     QList <Variable*>varList;
     QSettings *settings;
 
 private:
     MainWindow *m_gui;
+    NotificationPanel *m_notifications;
 };
 
 extern class Main m;

@@ -29,16 +29,23 @@
 #include <QIcon>
 #include <QPixmap>
 #include <QDebug>
+#include "main.h"
+#include "mainwindow.h"
+#include "history.h"
+
+
+//#define SLIDE_OUT_ANIMATION
+
 
 /**
  * @brief NotificationPanel::NotificationPanel
  * @param parent
  */
-NotificationPanel::NotificationPanel( QWidget *parent ) : QWidget( parent ), ui( new Ui::NotificationPanel ) {
+NotificationPanel::NotificationPanel( QWidget *parent ) : QWidget( parent ), ui( new Ui::NotificationPanel ), m_opacity( 0.75f ) {
     this->ui->setupUi( this );
     this->setWindowFlags( Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint );
     this->opacityEffect = new QGraphicsOpacityEffect( this );
-    this->opacityEffect->setOpacity( 0.75f );
+    this->opacityEffect->setOpacity( this->opacity());
     this->setGraphicsEffect( this->opacityEffect );
     this->setAutoFillBackground( true );
 
@@ -46,10 +53,21 @@ NotificationPanel::NotificationPanel( QWidget *parent ) : QWidget( parent ), ui(
     this->ui->nextButton->setIcon( QIcon::fromTheme( "go-next" ));
     this->ui->prevButton->setIcon( QIcon::fromTheme( "go-previous" ));
 
-    this->ui->messageLabel->setText( "has\nfailed\nmiserably\nyet\nagain" );
-
     this->timer.setSingleShot( true );
-    this->timer.connect( &this->timer, SIGNAL( timeout()), this, SLOT( close()));
+    this->timer.connect( &this->timer, SIGNAL( timeout()), this, SLOT( on_closeButton_clicked()));
+
+    this->m_historyManager = new History( History::Insert );
+    this->connect( this->historyManager(), SIGNAL( changed()), this, SLOT( checkHistoryPosition()));
+    this->checkHistoryPosition();
+
+#ifdef SLIDE_OUT_ANIMATION
+    this->m_animation = new QPropertyAnimation( this, "geometry" );
+#else
+    this->m_animation = new QPropertyAnimation( this, "opacity" );
+    this->connect( this->animation(), SIGNAL( finished()), this, SLOT( hide()));
+    this->animation()->setEasingCurve( QEasingCurve::Linear );
+#endif
+    this->animation()->setDuration( 250 );
 }
 
 /**
@@ -58,6 +76,12 @@ NotificationPanel::NotificationPanel( QWidget *parent ) : QWidget( parent ), ui(
 NotificationPanel::~NotificationPanel() {
     delete ui;
     this->opacityEffect->deleteLater();
+
+    if ( this->historyManager() != NULL )
+        delete this->m_historyManager;
+
+    if ( this->animation() != NULL )
+        delete this->m_animation;
 }
 
 /**
@@ -94,24 +118,34 @@ void NotificationPanel::paintEvent( QPaintEvent *event ) {
 }
 
 /**
- * @brief NotificationPanel::showNotifications
+ * @brief NotificationPanel::raise
  * @param timeOut
  */
-void NotificationPanel::showNotifications( int timeOut ) {
+void NotificationPanel::raise( int timeOut ) {
     if ( timeOut != -1 ) {
         this->timer.setInterval( timeOut );
         this->timer.start();
+    } else {
+        this->timer.stop();
     }
 
-    this->show();
+    this->move( m.gui()->geometry().width() - this->geometry().width() - 11,
+                m.gui()->geometry().height() - this->geometry().height() - 26 );
+
+    if ( this->isHidden())
+        this->show();
+
+#ifndef SLIDE_OUT_ANIMATION
+    this->setOpacity( 0.75f );
+#endif
 }
 
 /**
- * @brief NotificationPanel::pushNotification
+ * @brief NotificationPanel::push
  * @param msg
  * @param timeOut
  */
-void NotificationPanel::pushNotification( Types type, const QString &title, const QString &msg, int timeOut ) {
+void NotificationPanel::push( Types type, const QString &title, const QString &msg, int timeOut, bool fromHistory ) {
     this->timer.stop();
 
     switch ( type ) {
@@ -130,24 +164,68 @@ void NotificationPanel::pushNotification( Types type, const QString &title, cons
 
     this->ui->titleLabel->setText( title );
     this->ui->messageLabel->setText( msg );
-    this->showNotifications( timeOut );
+
+    if ( !fromHistory ) {
+        Notification item( type, title, msg, timeOut );
+        QVariant v;
+        v.setValue( item );
+        this->historyManager()->addItem( v );
+    }
+
+    this->raise( timeOut );
 }
 
 /**
  * @brief NotificationPanel::on_closeButton_clicked
  */
-#include <QPropertyAnimation>
 void NotificationPanel::on_closeButton_clicked() {
-
-    qDebug() << "close";
-
-    QPropertyAnimation animation( this, "geometry" );
-    animation.setDuration( 3000 );
-    animation.setStartValue( this->geometry());
+#ifdef SLIDE_OUT_ANIMATION
     QRect end;
-    end = this->geometry();
-    end.setX( end.x() + end.width() + 11 );
-    animation.setEndValue( end );
 
-    animation.start();
+    end = this->geometry();
+    end.moveTop( end.y() + end.height() + 26 );
+
+    this->animation()->setStartValue( this->geometry());
+    this->animation()->setEndValue( end );
+    this->animation()->start();
+#else
+    this->animation()->setStartValue( 0.75f );
+    this->animation()->setEndValue( 0.0f );
+
+    this->animation()->start();
+#endif
+}
+
+/**
+ * @brief NotificationPanel::on_prevButton_clicked
+ */
+void NotificationPanel::on_prevButton_clicked() {
+    Notification notification;
+
+    this->historyManager()->back();
+    this->timer.stop();
+
+    notification = qvariant_cast<Notification>( this->historyManager()->current());
+    this->push( notification.type(), notification.title(), notification.message(), notification.timeout(), true );
+}
+
+/**
+ * @brief NotificationPanel::on_nextButton_clicked
+ */
+void NotificationPanel::on_nextButton_clicked() {
+    Notification notification;
+
+    this->historyManager()->forward();
+    this->timer.stop();
+
+    notification = qvariant_cast<Notification>( this->historyManager()->current());
+    this->push( notification.type(), notification.title(), notification.message(), notification.timeout(), true );
+}
+
+/**
+ * @brief NotificationPanel::checkHistoryPosition
+ */
+void NotificationPanel::checkHistoryPosition() {
+    this->ui->prevButton->setEnabled( this->historyManager()->isBackEnabled());
+    this->ui->nextButton->setEnabled( this->historyManager()->isForwardEnabled());
 }

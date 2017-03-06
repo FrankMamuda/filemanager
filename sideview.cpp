@@ -93,7 +93,7 @@ void SideView::dropEvent( QDropEvent *e ) {
     // TODO: get icon from mimetype? or .dekstop entry?
 
     if ( urls.count() > 1 ) {
-        m.gui()->panel->pushNotification( NotificationPanel::Error, "Bookmarks", "Can add only one bookmark at a time" );
+        m.notifications()->push( NotificationPanel::Error, "Bookmarks", "Can add only one bookmark at a time" );
         return;
     } else if ( !urls.count()) {
         return;
@@ -102,7 +102,7 @@ void SideView::dropEvent( QDropEvent *e ) {
     path = urls.first().toLocalFile();
     info.setFile( path );
     if ( !info.isDir()) {
-        m.gui()->panel->pushNotification( NotificationPanel::Error, "Bookmarks", "Cannot add files as bookmarks" );
+        m.notifications()->push( NotificationPanel::Error, "Bookmarks", "Cannot add files as bookmarks" );
         return;
     }
 
@@ -174,12 +174,12 @@ void SideView::changeBookmarkTarget() {
  * @brief SideView::removeBookmark
  */
 void SideView::removeBookmark() {
-    m.gui()->panel->pushNotification( NotificationPanel::Warning, "Bookmarks", "Bookmark removal not supported yet" );
+    m.notifications()->push( NotificationPanel::Warning, "Bookmarks", "Bookmark removal not supported yet" );
 }
 
 /**
  * @brief SideView::changeBookmarkIcon
  */
 void SideView::changeBookmarkIcon() {
-    m.gui()->panel->pushNotification( NotificationPanel::Warning, "Bookmarks", "Icon change not supported yet" );
+    m.notifications()->push( NotificationPanel::Warning, "Bookmarks", "Icon change not supported yet" );
 }

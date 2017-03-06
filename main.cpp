@@ -28,6 +28,9 @@
 #include "main.h"
 #include "mainwindow.h"
 #include "pixmapcache.h"
+#include "notificationpanel.h"
+
+#include <QWidget>
 
 //
 // classes
@@ -43,6 +46,7 @@ class Main m;
 int main( int argc, char *argv[] ) {
     QApplication a( argc, argv );
     MainWindow w;
+    NotificationPanel *notify;
     QDir iconDir( QDir::currentPath() + "/icons" );
 
     // set up icon theme
@@ -52,6 +56,11 @@ int main( int argc, char *argv[] ) {
     // display app
     m.setGui( &w );
     w.show();
+
+    // create notification widget
+    notify = new NotificationPanel( &w );
+    notify->hide();
+    m.setNotifications( notify );
 
     // failsafe
     if ( !iconDir.exists())
@@ -70,4 +79,11 @@ int main( int argc, char *argv[] ) {
  */
 Main::Main() {
     this->settings = new QSettings( QDir::homePath() + "/.filemanager/settings.conf", QSettings::IniFormat );
+}
+
+/**
+ * @brief Main::~Main
+ */
+Main::~Main() {
+    delete this->settings;
 }

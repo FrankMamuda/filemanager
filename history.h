@@ -6,7 +6,7 @@
 // includes
 //
 #include <QObject>
-#include <QString>
+#include <QVariant>
 
 /**
  * @brief The History class
@@ -19,21 +19,28 @@ signals:
     void changed();
 
 public:
-    History( QObject *parent = 0 ) : QObject( parent ), m_position( -1 ) {}
+    enum Modes {
+        Trim,
+        Insert
+    };
+    Q_ENUMS( Modes )
+
+    History( Modes mode = Trim ) : m_position( -1 ), m_mode( Trim ) { this->m_mode = mode; }
     ~History() {}
 
     int position() const { return this->m_position; }
-    QStringList history() const { return this->m_history; }
-    QString current() const { return this->itemAt( this->position()); }
+    QVariantList history() const { return this->m_history; }
+    QVariant current() const { return this->itemAt( this->position()); }
     bool isEmpty() const { return this->history().isEmpty(); }
-    QString itemAt( int index ) const;
+    QVariant itemAt( int index ) const;
     bool isBackEnabled() const;
     bool isForwardEnabled() const;
     int count() const { return this->history().count(); }
+    Modes mode() const { return this->m_mode; }
 
 public slots:
     void clear();
-    void addItem( const QString &item );
+    void addItem( const QVariant &item );
     void setPosition( int pos ) { this->m_position = pos; }
     void back() { if ( this->m_position > 0 ) { this->m_position--; emit this->changed(); }}
     void forward() { if ( this->m_position < this->count() - 1 ) { this->m_position++; emit this->changed(); }}
@@ -41,7 +48,8 @@ public slots:
 private:
     int m_limit;
     int m_position;
-    QStringList m_history;
+    Modes m_mode;
+    QVariantList m_history;
 };
 
 #endif // HISTORY_H

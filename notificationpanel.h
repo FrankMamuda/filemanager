@@ -26,6 +26,7 @@
 #include <QGraphicsOpacityEffect>
 #include <QPaintEvent>
 #include <QTimer>
+#include <QPropertyAnimation>
 
 /**
  *
@@ -34,18 +35,15 @@ namespace Ui {
 class NotificationPanel;
 }
 
-/*
-class Notification {
-    Types type;
-    QString title;
-    QString message;
-};*/
+// classes
+class History;
 
 /**
  * @brief The NotificationPanel class
  */
 class NotificationPanel : public QWidget {
     Q_OBJECT
+    Q_PROPERTY( float opacity READ opacity WRITE setOpacity )
 
 public:
     explicit NotificationPanel( QWidget *parent = 0 );
@@ -57,16 +55,23 @@ public:
         Warning,
         Error
     };
+    History *historyManager() const { return this->m_historyManager; }
+    QPropertyAnimation *animation() const { return this->m_animation; }
+    float opacity() const { return this->m_opacity; }
 
 protected:
     void paintEvent( QPaintEvent *event );
 
 public slots:
-    void showNotifications( int timeOut = -1 );
-    void pushNotification( Types type, const QString &title, const QString &msg, int timeOut = 5000 );
+    void raise( int timeOut = -1 );
+    void push( Types type, const QString &title, const QString &msg, int timeOut = 5000 , bool fromHistory = false );
+    void setOpacity( float opacity ) { this->m_opacity = opacity; this->opacityEffect->setOpacity( opacity ); }
 
 private slots:
     void on_closeButton_clicked();
+    void on_prevButton_clicked();
+    void on_nextButton_clicked();
+    void checkHistoryPosition();
 
 private:
     Ui::NotificationPanel *ui;
@@ -74,7 +79,33 @@ private:
     QTimer timer;
 
     // use message stack in future
-    //QList<Notification*> messages;
+    History *m_historyManager;
+
+    QPropertyAnimation *m_animation;
+    float m_opacity;
 };
+
+/**
+ * @brief The Notification class
+ */
+class Notification {
+public:
+    Notification( NotificationPanel::Types type = NotificationPanel::Information,
+                  const QString &title = QString::null, const QString &message = QString::null,
+                  int timeout = 5000 ) :
+        m_type( type ), m_title( title ), m_message( message ), m_timeout( timeout ) {}
+
+    NotificationPanel::Types type() const { return this->m_type; }
+    QString title() const { return this->m_title; }
+    QString message() const { return this->m_message; }
+    int timeout() const { return this->m_timeout; }
+
+private:
+    NotificationPanel::Types m_type;
+    QString m_title;
+    QString m_message;
+    int m_timeout;
+};
+Q_DECLARE_METATYPE( Notification )
 
 #endif // NOTIFICATIONPANEL_H

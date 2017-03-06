@@ -21,22 +21,26 @@
 //
 #include "history.h"
 
+// TODO: use QVariant for dynamic storage
+
 /**
  * @brief History::addItem
  * @param item
  */
-void History::addItem( const QString &item ) {
+void History::addItem( const QVariant &item ) {
     int trim;
 
     // avoid duplicates
-    if ( QString::compare( this->current(), item ))
+    if (( this->current() == item ) && ( this->count() > 0 ))
          return;
 
-    // trim list
-    trim = this->count() - this->position() - 1;
-    while ( trim ) {
-        this->m_history.takeLast();
-        trim--;
+    if ( this->mode() == Trim ) {
+        // trim list
+        trim = this->count() - this->position() - 1;
+        while ( trim ) {
+            this->m_history.takeLast();
+            trim--;
+        }
     }
 
     // add a new entry
@@ -52,9 +56,9 @@ void History::addItem( const QString &item ) {
  * @param index
  * @return
  */
-QString History::itemAt( int index ) const {
+QVariant History::itemAt( int index ) const {
     if ( this->position() == -1 || this->isEmpty() || this->position() >= this->history().count())
-        return QString::null;
+        return QVariant();
 
     return this->history().at( index );
 }

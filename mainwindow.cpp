@@ -75,7 +75,7 @@ GOALS:
  * @param parent
  */
 
-MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::MainWindow ), m_currentPath( QDir::currentPath()), m_historyPosition( -1 ) {
+MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::MainWindow ), m_currentPath( QDir::currentPath()) {
     ViewModes viewMode;
 
     // set up ui
@@ -144,9 +144,6 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->ui->notificationError->setIcon( QIcon::fromTheme( "dialog-error" ));
 
     // notification panel
-    this->panel = new NotificationPanel( this );
-    this->panel->hide();
-
     // TODO: QDockWidget for sideView?
 }
 
@@ -156,7 +153,6 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
 void MainWindow::resizeEvent( QResizeEvent *e ) {
     this->ui->listView->model()->reset();
     this->ui->tableView->model()->reset();
-    this->panel->move( this->geometry().width() - this->panel->geometry().width() - 11, this->geometry().height() - this->panel->geometry().height() - this->ui->statusBar->height() - 4 );
     QMainWindow::resizeEvent( e );
 }
 
@@ -201,7 +197,7 @@ void MainWindow::setCurrentPath( const QString &path, bool saveToHistory ) {
         directory.cd( windowsPath );
 
         if ( !directory.exists( windowsPath )) {
-            this->panel->pushNotification( NotificationPanel::Error, "Error", "Path does not exist" );
+            m.notifications()->push( NotificationPanel::Error, "Error", "Path does not exist" );
             return;
         }
 
@@ -237,8 +233,6 @@ MainWindow::~MainWindow() {
     this->disconnect( this->actionViewGrid, SIGNAL( triggered( bool )));
     this->disconnect( this->actionViewList, SIGNAL( triggered( bool )));
     this->disconnect( this->actionViewDetails, SIGNAL( triggered( bool )));
-
-    this->panel->deleteLater();
 }
 
 /**
@@ -287,7 +281,7 @@ void MainWindow::on_horizontalSlider_valueChanged( int value ) {
  */
 void MainWindow::on_actionBack_triggered() {
     this->historyManager()->back();
-    this->setCurrentPath( this->historyManager()->current(), false );
+    this->setCurrentPath( this->historyManager()->current().toString(), false );
 }
 
 /**
@@ -295,16 +289,13 @@ void MainWindow::on_actionBack_triggered() {
  */
 void MainWindow::on_actionForward_triggered() {
     this->historyManager()->forward();
-    this->setCurrentPath( this->historyManager()->current(), false );
+    this->setCurrentPath( this->historyManager()->current().toString(), false );
 }
 
 /**
  * @brief MainWindow::checkHistoryPosition
  */
 void MainWindow::checkHistoryPosition() {
-    qDebug() << "check" << this->historyManager()->position() << this->historyManager()->count();
-    qDebug() << "     " << this->historyManager()->isBackEnabled() << this->historyManager()->isForwardEnabled();
-
     this->ui->actionBack->setEnabled( this->historyManager()->isBackEnabled());
     this->ui->actionForward->setEnabled( this->historyManager()->isForwardEnabled());
 }
@@ -385,26 +376,8 @@ void MainWindow::setDetailView() {
 }
 
 /**
- * @brief MainWindow::addToHistory
- * @param path
- */
-void MainWindow::addToHistory( const QString &path ) {
-    Q_UNUSED( path )
-
-    /*this->history.insert( this->historyPosition() + 1, path );
-    this->m_historyPosition++;
-
-    qDebug() << "add" << path << this->historyPosition() << this->history.count();
-
-    this->checkHistoryPosition();*/
-}
-
-/**
  * @brief MainWindow::on_notificationInfo_clicked
  */
 void MainWindow::on_notificationInfo_clicked() {
-    this->panel->move( this->geometry().width() - this->panel->geometry().width() - 11,
-                       this->geometry().height() - this->panel->geometry().height() - this->ui->statusBar->height() - 4 );
-
-    this->panel->pushNotification( NotificationPanel::Information, "INFO", "aaaa\n" );
+    m.notifications()->raise();
 }
