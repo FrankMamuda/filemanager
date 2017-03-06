@@ -57,6 +57,7 @@ private slots:
     void changeBookmarkIcon();
 
 protected:
+    // overrides
     void mouseReleaseEvent( QMouseEvent * );
     void dropEvent( QDropEvent * );
 

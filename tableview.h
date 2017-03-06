@@ -54,6 +54,7 @@ private slots:
     void updateRubberBand();
 
 protected:
+    // overrides
     void dropEvent( QDropEvent *e );
     void dragLeaveEvent( QDragLeaveEvent *e ) { e->accept(); }
     void mousePressEvent( QMouseEvent *e );

@@ -83,6 +83,10 @@ private:
  */
 class ContainerModel : public QAbstractTableModel {
     Q_OBJECT
+    Q_PROPERTY( int iconSize READ iconSize WRITE setIconSize )
+    Q_PROPERTY( Containers container READ container )
+    Q_PROPERTY( Modes mode READ mode WRITE setMode )
+    Q_PROPERTY( int verticalOffset READ verticalOffset WRITE setVerticalOffset )
 
 public:
     enum Modes {
@@ -90,16 +94,19 @@ public:
         FileMode,
         SideMode
     };
+    Q_ENUMS( Modes )
 
     enum Containers {
         NoConatainer = -1,
         ListContainer,
         TableContainer
     };
+    Q_ENUMS( Containers )
 
     enum Data {
         DisplayItem = 0
     };
+    Q_ENUMS( Data )
 
     enum Sections {
         SectionName = 0,
@@ -107,6 +114,7 @@ public:
         SectionMimetype,
         SectionSize
     };
+    Q_ENUMS( Sections )
 
     // constructor
     explicit ContainerModel( QAbstractItemView *parent, Containers container = ListContainer, Modes mode = FileMode, int iconSize = 64 );
@@ -115,8 +123,7 @@ public:
     // overrides
     int rowCount( const QModelIndex & = QModelIndex()) const { return this->numItems(); }
     int columnCount( const QModelIndex & = QModelIndex()) const;
-    void reset( bool force = false );
-    int iconSize() const { return this->m_iconSize; }
+    void reset( bool force = false );    
     QVariant data( const QModelIndex &index, int role ) const;
     QVariant headerData( int section, Qt::Orientation orientation, int role = Qt::DisplayRole ) const;
     Qt::DropActions supportedDropActions() const { if ( this->mode() == FileMode ) return Qt::CopyAction; return Qt::IgnoreAction; }
@@ -124,36 +131,49 @@ public:
     Qt::ItemFlags flags( const QModelIndex &index ) const;
     QMimeData *mimeData( const QModelIndexList &indexes ) const;
 
-    // custom functions
+    // properties
+    int iconSize() const { return this->m_iconSize; }
     Containers container() const { return this->m_container; }
     Modes mode() const { return this->m_mode; }
+    int verticalOffset() const { return this->m_verticalOffset; }
+
+    // custom functions
     Entry *indexToEntry( const QModelIndex &index ) const;
     int numItems() const { return this->list.count(); }
     QAbstractItemView *listParent() const { return this->m_listParent; }
     QRubberBand *rubberBand() const { return this->m_rubberBand; }
-    int verticalOffset() const { return this->m_verticalOffset; }
 
 signals:
     void stop();
 
 public slots:
+    // properties
     void setIconSize( int iconSize = 64 );
     void setMode( Modes mode = FileMode );
-    void buildList( const QString &path = QString::null );
+    void setVerticalOffset( int offset ) { this->m_verticalOffset = offset; }
+
+    // mime type detection related
     void mimeTypeDetected( int index );
+
+    // custom slots
+    void buildList( const QString &path = QString::null );
+    void setSelection( const QModelIndexList &selection ) { this->selectionTimer.stop(); this->selection = selection; }
+    void processEntries();
+    void updateRubberBand();
+
+    // conatiner event handlers
     void processDropEvent( const QModelIndex &index, const QPoint &pos );
     void processContextMenu( const QModelIndex &index, const QPoint &pos );
     void processItemOpen( const QModelIndex &index );
-    void setSelection( const QModelIndexList &selection ) { this->selectionTimer.stop(); this->selection = selection; }
-    void processEntries();
     void processMousePress( QMouseEvent *e );
     void processMouseRelease( QMouseEvent *e );
     void processMouseMove( QMouseEvent *e );
-    void updateRubberBand();
-    void setVerticalOffset( int offset ) { this->m_verticalOffset = offset; }
 
 private slots:
+    // mime type detection related
     void determineMimeTypes();
+
+    // other slots
     void displayProperties();
     void selectCurrent();
     void deselectCurrent();
@@ -162,20 +182,24 @@ private slots:
 private:
     QModelIndexList selection;
     QAbstractItemView *m_listParent;
-    Containers m_container;
-    Modes m_mode;
-    int m_iconSize;
     QList<Entry*> list;
-    QList<ASyncWorker*> workList;
-    QList<ContainerItem>displayList;
-    static ASyncWorker *determineMimeTypeAsync( ASyncWorker *worker );
-    QFuture<ASyncWorker*> future;
-    QFutureWatcher<ASyncWorker*> futureWatcher;
     QModelIndex currentIndex;
     QTimer selectionTimer;
     QRubberBand *m_rubberBand;
     QPoint selectionOrigin;
     QPoint currentMousePos;
+
+    // mime type detection related
+    QList<ASyncWorker*> workList;
+    QList<ContainerItem>displayList;
+    static ASyncWorker *determineMimeTypeAsync( ASyncWorker *worker );
+    QFuture<ASyncWorker*> future;
+    QFutureWatcher<ASyncWorker*> futureWatcher;
+
+    // properties
+    Containers m_container;
+    Modes m_mode;
+    int m_iconSize;
     int m_verticalOffset;
 };
 

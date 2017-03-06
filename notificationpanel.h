@@ -46,8 +46,11 @@ class NotificationPanel : public QWidget {
     Q_PROPERTY( float opacity READ opacity WRITE setOpacity )
 
 public:
+    // constructor/destructor
     explicit NotificationPanel( QWidget *parent = 0 );
     ~NotificationPanel();
+
+    // other members
     void setPixmap( const QPixmap &pixmap );
 
     enum Types {
@@ -55,11 +58,16 @@ public:
         Warning,
         Error
     };
+    Q_ENUMS( Types )
+
     History *historyManager() const { return this->m_historyManager; }
     QPropertyAnimation *animation() const { return this->m_animation; }
+
+    // properties
     float opacity() const { return this->m_opacity; }
 
 protected:
+    // overrides
     void paintEvent( QPaintEvent *event );
 
 public slots:
@@ -77,13 +85,15 @@ private:
     Ui::NotificationPanel *ui;
     QGraphicsOpacityEffect *opacityEffect;
     QTimer timer;
+    QPropertyAnimation *m_animation;
 
-    // use message stack in future
+    // TODO: separate info/warning/error messages
     History *m_historyManager;
 
-    QPropertyAnimation *m_animation;
+    // properties
     float m_opacity;
 };
+Q_DECLARE_METATYPE( NotificationPanel::Types )
 
 /**
  * @brief The Notification class
@@ -95,6 +105,7 @@ public:
                   int timeout = 5000 ) :
         m_type( type ), m_title( title ), m_message( message ), m_timeout( timeout ) {}
 
+    // properties
     NotificationPanel::Types type() const { return this->m_type; }
     QString title() const { return this->m_title; }
     QString message() const { return this->m_message; }

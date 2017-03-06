@@ -48,11 +48,11 @@ class MainWindow;
  */
 class MenuStyle : public QProxyStyle {
 public:
-    int pixelMetric( PixelMetric m, const QStyleOption *option = 0, const QWidget *widget = 0 ) const{
-        if ( m == QStyle::PM_SmallIconSize )
+    int pixelMetric( PixelMetric pm, const QStyleOption *option = 0, const QWidget *widget = 0 ) const{
+        if ( pm == QStyle::PM_SmallIconSize )
             return 32;
         else
-            return QProxyStyle::pixelMetric( m, option, widget );
+            return QProxyStyle::pixelMetric( pm, option, widget );
     }
 };
 
@@ -61,12 +61,15 @@ public:
  */
 class MainWindow : public QMainWindow {
     Q_OBJECT
+    Q_PROPERTY( QString currentPath READ currentPath WRITE setCurrentPath )
 
 public:
+    // constructor/destructor
     explicit MainWindow( QWidget *parent = 0 );
     ~MainWindow();
+
+    // path related
     QString currentPath() const { return this->m_currentPath; }
-    Ui::MainWindow *ui;
     History *historyManager() const { return this->m_historyManager; }
 
     enum IconScale {
@@ -78,6 +81,7 @@ public:
     };
     Q_ENUMS( IconScale )
 
+    // view modes - icon grid, list, detail table
     enum ViewModes {
         NoMode = -1,
         IconMode,
@@ -93,19 +97,25 @@ public slots:
     void setCurrentPath( const QString &path = QDir::currentPath(), bool saveToHistory = true );
 
 private slots:
+    // ui slots
     void on_actionUp_triggered();
-    void on_pathEdit_returnPressed();
-    void on_horizontalSlider_valueChanged(int value);
     void on_actionBack_triggered();
     void on_actionForward_triggered();
-    void checkHistoryPosition();
     void on_actionViewMode_triggered();
+    void on_notificationInfo_clicked();
+    void on_pathEdit_returnPressed();
+    void on_horizontalSlider_valueChanged( int value );
+
+    // custom slots
     void setGridView();
     void setListView();
     void setDetailView();
-    void on_notificationInfo_clicked();
+    void checkHistoryPosition();
 
 private:
+    Ui::MainWindow *ui;
+
+    // path related
     QString m_currentPath;
     History *m_historyManager;
 

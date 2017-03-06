@@ -49,9 +49,8 @@ public slots:
 
 private slots:
     void on_buttonBox_accepted();
-    void setDeviceUsage( const QString &path );
-
     void on_buttonBox_rejected();
+    void setDeviceUsage( const QString &path );
 
 private:
     Ui::Properties *ui;

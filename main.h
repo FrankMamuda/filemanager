@@ -29,8 +29,6 @@
 // classes
 //
 class MainWindow;
-class Variable;
-class Bookmark;
 class NotificationPanel;
 
 /**
@@ -38,13 +36,15 @@ class NotificationPanel;
  */
 class Main {
 public:
+    // constructor destructor
     Main();
     ~Main();
+
+    // other members
     MainWindow *gui() const { return this->m_gui; }
     NotificationPanel *notifications() { return this->m_notifications; }
     void setGui( MainWindow *gui ) { this->m_gui = gui; }
     void setNotifications( NotificationPanel *notify ) { this->m_notifications = notify; }
-    QList <Variable*>varList;
     QSettings *settings;
 
 private:

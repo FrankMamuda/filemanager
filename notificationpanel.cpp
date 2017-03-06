@@ -33,33 +33,45 @@
 #include "mainwindow.h"
 #include "history.h"
 
-
+//
+// includes
+//
 //#define SLIDE_OUT_ANIMATION
 
+//
+// TODO: sort notifications
+//
 
 /**
  * @brief NotificationPanel::NotificationPanel
  * @param parent
  */
 NotificationPanel::NotificationPanel( QWidget *parent ) : QWidget( parent ), ui( new Ui::NotificationPanel ), m_opacity( 0.75f ) {
+    // set up ui
     this->ui->setupUi( this );
     this->setWindowFlags( Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint );
+
+    // set up window opacity
     this->opacityEffect = new QGraphicsOpacityEffect( this );
     this->opacityEffect->setOpacity( this->opacity());
     this->setGraphicsEffect( this->opacityEffect );
     this->setAutoFillBackground( true );
 
+    // set up buttons
     this->ui->closeButton->setIcon( QIcon::fromTheme( "dialog-ok" ));
     this->ui->nextButton->setIcon( QIcon::fromTheme( "go-next" ));
     this->ui->prevButton->setIcon( QIcon::fromTheme( "go-previous" ));
 
+    // set up animation timer
     this->timer.setSingleShot( true );
     this->timer.connect( &this->timer, SIGNAL( timeout()), this, SLOT( on_closeButton_clicked()));
 
+    // set up message history
     this->m_historyManager = new History( History::Insert );
     this->connect( this->historyManager(), SIGNAL( changed()), this, SLOT( checkHistoryPosition()));
     this->checkHistoryPosition();
 
+    // set up animation (either slide or fade out)
 #ifdef SLIDE_OUT_ANIMATION
     this->m_animation = new QPropertyAnimation( this, "geometry" );
 #else
@@ -98,22 +110,27 @@ void NotificationPanel::setPixmap( const QPixmap &pixmap ) {
  */
 void NotificationPanel::paintEvent( QPaintEvent *event ) {
     QPainter painter( this );
-
     QRect rect;
-
     QPen pen;
-    QColor color = qApp->palette().color( QPalette::Background );
+    QColor color;
+
+    // create a color slightly darker than current background
+    color = qApp->palette().color( QPalette::Background );
     color = color.darker( 200 );
+
+    // equip painter
     pen.setColor( color );
     painter.save();
     painter.setPen( pen );
 
+    // draw border
     rect = this->rect();
     rect.setWidth( rect.width() - 1 );
     rect.setHeight( rect.height() - 1 );
     painter.drawRect( rect );
-    painter.restore();
 
+    // restore and draw the rest
+    painter.restore();
     QWidget::paintEvent( event );
 }
 
@@ -129,12 +146,15 @@ void NotificationPanel::raise( int timeOut ) {
         this->timer.stop();
     }
 
+    // move back into place
     this->move( m.gui()->geometry().width() - this->geometry().width() - 11,
                 m.gui()->geometry().height() - this->geometry().height() - 26 );
 
+    // show if hidden
     if ( this->isHidden())
         this->show();
 
+    // restore opacity
 #ifndef SLIDE_OUT_ANIMATION
     this->setOpacity( 0.75f );
 #endif
@@ -148,6 +168,7 @@ void NotificationPanel::raise( int timeOut ) {
 void NotificationPanel::push( Types type, const QString &title, const QString &msg, int timeOut, bool fromHistory ) {
     this->timer.stop();
 
+    // determine message type
     switch ( type ) {
     case Information:
         this->ui->pixmapLabel->setPixmap( QIcon::fromTheme( "dialog-information" ).pixmap( 16, 16 ));
@@ -162,9 +183,11 @@ void NotificationPanel::push( Types type, const QString &title, const QString &m
         break;
     }
 
+    // update labels
     this->ui->titleLabel->setText( title );
     this->ui->messageLabel->setText( msg );
 
+    // add to message history if required
     if ( !fromHistory ) {
         Notification item( type, title, msg, timeOut );
         QVariant v;
@@ -172,6 +195,7 @@ void NotificationPanel::push( Types type, const QString &title, const QString &m
         this->historyManager()->addItem( v );
     }
 
+    // raise notification panel
     this->raise( timeOut );
 }
 
@@ -191,7 +215,6 @@ void NotificationPanel::on_closeButton_clicked() {
 #else
     this->animation()->setStartValue( 0.75f );
     this->animation()->setEndValue( 0.0f );
-
     this->animation()->start();
 #endif
 }

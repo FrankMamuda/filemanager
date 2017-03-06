@@ -20,7 +20,6 @@
 // includes
 //
 #include "bookmark.h"
-#include <QApplication>
 #include "main.h"
 
 /**

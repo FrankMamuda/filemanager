@@ -36,6 +36,13 @@ class ContainerModel;
  */
 class Entry : public QObject {
     Q_OBJECT
+    Q_PROPERTY( QString iconName READ iconName WRITE setIconName )
+    Q_PROPERTY( QFileInfo info READ info )
+    Q_PROPERTY( QString alias READ alias )
+    Q_PROPERTY( EntryTypes type READ type WRITE setType )
+    Q_PROPERTY( QMimeType mimeType READ mimeType WRITE setMimeType )
+    Q_PROPERTY( QString path READ path )
+    Q_PROPERTY( bool directory READ isDirectory )
 
 public:
     enum EntryTypes {
@@ -47,33 +54,43 @@ public:
         Trash,
         Bookmark
     };
+    Q_ENUMS( EntryTypes )
 
+    // constructor
     explicit Entry( EntryTypes type = FileFolder, const QFileInfo &fileInfo = QFileInfo(), ContainerModel *parent = 0 );
+
+    // properties
     QFileInfo info() const { return this->m_fileInfo; }
     QString iconName() const { return this->m_iconName; }
-    QPixmap pixmap( int scale ) const;
     QString alias() const;
     EntryTypes type() const { return this->m_type; }
     QString path() const;
     QMimeType mimeType() const { return this->m_mimeType; }
-    ContainerModel *parent() const { return this->m_parent; }
-    //bool updateScheduled() const { return this->m_updateScheduled; }
     bool isDirectory() const;
 
+    // other functions
+    QPixmap pixmap( int scale ) const;
+    ContainerModel *parent() const { return this->m_parent; }
+
 public slots:
+    // properties
     void setMimeType( const QMimeType &mimeType ) { this->m_mimeType = mimeType; this->setIconName( this->mimeType().iconName()); }
     void setType( const EntryTypes type ) { this->m_type = type; }
     void setIconName( const QString &iconName ) { this->m_iconName = iconName; }
-    //void scheduleUpdate( bool update = true ) { this->m_updateScheduled = update; }
+
+    // other slots
     void reset();
 
 private:
     ContainerModel *m_parent;
+
+    // properties
     QFileInfo m_fileInfo;
     QMimeType m_mimeType;
     QString m_iconName;
     EntryTypes m_type;
-    //bool m_updateScheduled;
 };
+
+Q_DECLARE_METATYPE( Entry::EntryTypes )
 
 #endif // ENTRY_H

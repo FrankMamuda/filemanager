@@ -21,16 +21,11 @@
 //
 #include <QApplication>
 #include <QDir>
-#include <QFile>
-#include <QTextStream>
 #include <QMessageBox>
-#include "pathutils.h"
 #include "main.h"
 #include "mainwindow.h"
 #include "pixmapcache.h"
 #include "notificationpanel.h"
-
-#include <QWidget>
 
 //
 // classes

@@ -21,8 +21,6 @@
 //
 #include "history.h"
 
-// TODO: use QVariant for dynamic storage
-
 /**
  * @brief History::addItem
  * @param item

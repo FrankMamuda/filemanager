@@ -19,8 +19,6 @@
 //
 // includes
 //
-#include <QRegularExpression>
-#include <QRegularExpressionMatch>
 #include <QMimeDatabase>
 #include "entry.h"
 #include "pixmapcache.h"

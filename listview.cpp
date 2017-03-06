@@ -24,7 +24,6 @@
 #include <QStandardItemModel>
 #include "entry.h"
 #include <QApplication>
-#include <QItemSelectionModel>
 #include <QScrollBar>
 #include "listviewdelegate.h"
 #include "containerstyle.h"

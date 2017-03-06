@@ -45,10 +45,12 @@ public:
     ContainerModel *model() const { return this->m_model; }
 
 public slots:
+    // overrides
     void setModel( ContainerModel * );
     void switchDisplayMode( ViewMode viewMode );
 
 protected:
+    // overrides
     void dropEvent( QDropEvent * );
     void dragLeaveEvent( QDragLeaveEvent *e ) { e->accept(); }
     void mousePressEvent( QMouseEvent * );

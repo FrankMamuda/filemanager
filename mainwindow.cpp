@@ -30,9 +30,7 @@
 #include "main.h"
 #include "bookmark.h"
 #include "notificationpanel.h"
-#include <QPropertyAnimation>
 #include <QStatusBar>
-#include <QDockWidget>
 #include "history.h"
 
 /*
@@ -66,15 +64,14 @@ GOALS:
     implement QFileSystemWatcher for file updates
     tooltips
     +/- fix mimetype deletection performance regression
-    fix crash on app exit while detecting mimetypes
-    notifications in categories - warning, error, info as selectables in status bar
+    + fix crash on app exit while detecting mimetypes
+    +/- notifications in categories - warning, error, info as selectables in status bar
   */
 
 /**
  * @brief MainWindow::MainWindow
  * @param parent
  */
-
 MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::MainWindow ), m_currentPath( QDir::currentPath()) {
     ViewModes viewMode;
 

@@ -22,7 +22,6 @@
 #include "tableviewdelegate.h"
 #include <QPainter>
 #include <QTableView>
-#include <QHeaderView>
 
 /**
  * @brief TableViewDelegate::paint - similiar behaviour to ListViewDelegate::paint, tailored to QTableView
