@@ -53,24 +53,26 @@ Q_DECLARE_METATYPE( ContainerItem )
 /**
  * @brief The ASyncWorker class thread safe mime type detection implementation
  */
-class ASyncWorker {
-public:
-    ASyncWorker( const QFileInfo &fileInfo, int index, int iconSize )
-        : m_info( fileInfo ), m_index( index ), m_iconSize( iconSize ), m_update( false ) {}
+class ASyncWorker : public QObject {
+    Q_OBJECT
 
-    QFileInfo info() const { return this->m_info; }
+public:
+    ASyncWorker( const QString &path, int index, int iconSize )
+        : m_path( path ), m_index( index ), m_iconSize( iconSize ), m_update( false ) {}
+
+    QString path() const { return this->m_path; }
     int index() const { return this->m_index; }
     QMimeType mimeType() const { return this->m_mimeType; }
     QString iconName() const { return this->m_iconName; }
     int iconSize() const { return this->m_iconSize; }
     bool update() const { return this->m_update; }
-
-    void setMimeType( const QMimeType &mimeType ) { this->m_mimeType = mimeType; }
-    void setIconName( const QString &iconName ) { this->m_iconName = iconName; }
-    void scheduleUpdate() { this->m_update = true; }
+    void setMimeType( const QMimeType &mimeType ) { QMutexLocker locker( &mutex ); this->m_mimeType = mimeType; }
+    void setIconName( const QString &iconName ) { QMutexLocker locker( &mutex ); this->m_iconName = iconName; }
+    void scheduleUpdate() { QMutexLocker locker( &mutex ); this->m_update = true; }
 
 private:
-    QFileInfo m_info;
+    mutable QMutex mutex;
+    QString m_path;
     int m_index;
     QMimeType m_mimeType;
     QString m_iconName;
@@ -87,6 +89,7 @@ class ContainerModel : public QAbstractTableModel {
     Q_PROPERTY( Containers container READ container )
     Q_PROPERTY( Modes mode READ mode WRITE setMode )
     Q_PROPERTY( int verticalOffset READ verticalOffset WRITE setVerticalOffset )
+    Q_PROPERTY( bool selectionLocked READ selectionLocked )
 
 public:
     enum Modes {
@@ -123,7 +126,8 @@ public:
     // overrides
     int rowCount( const QModelIndex & = QModelIndex()) const { return this->numItems(); }
     int columnCount( const QModelIndex & = QModelIndex()) const;
-    void reset( bool force = false );    
+    void reset( bool force = false );
+    void softReset();
     QVariant data( const QModelIndex &index, int role ) const;
     QVariant headerData( int section, Qt::Orientation orientation, int role = Qt::DisplayRole ) const;
     Qt::DropActions supportedDropActions() const { if ( this->mode() == FileMode ) return Qt::CopyAction; return Qt::IgnoreAction; }
@@ -136,6 +140,7 @@ public:
     Containers container() const { return this->m_container; }
     Modes mode() const { return this->m_mode; }
     int verticalOffset() const { return this->m_verticalOffset; }
+    bool selectionLocked() const { return this->m_selectionLocked; }
 
     // custom functions
     Entry *indexToEntry( const QModelIndex &index ) const;
@@ -157,7 +162,7 @@ public slots:
 
     // custom slots
     void buildList( const QString &path = QString::null );
-    void setSelection( const QModelIndexList &selection ) { this->selectionTimer.stop(); this->selection = selection; }
+    void setSelection( const QModelIndexList &selection );
     void processEntries();
     void updateRubberBand();
 
@@ -178,11 +183,13 @@ private slots:
     void selectCurrent();
     void deselectCurrent();
     void quit();
+    void restoreSelection();
 
 private:
     QModelIndexList selection;
     QAbstractItemView *m_listParent;
     QList<Entry*> list;
+    QList<Entry*> selectionList;
     QModelIndex currentIndex;
     QTimer selectionTimer;
     QRubberBand *m_rubberBand;
@@ -201,6 +208,7 @@ private:
     Modes m_mode;
     int m_iconSize;
     int m_verticalOffset;
+    bool m_selectionLocked;
 };
 
 Q_DECLARE_METATYPE( ContainerModel::Modes )

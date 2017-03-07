@@ -26,6 +26,7 @@
 #include <QDropEvent>
 #include <QDragLeaveEvent>
 #include <QDragMoveEvent>
+#include <QResizeEvent>
 
 //
 // classes
@@ -58,6 +59,7 @@ protected:
     void selectionChanged( const QItemSelection &, const QItemSelection & );
     void mouseMoveEvent( QMouseEvent *e );
     void dragMoveEvent( QDragMoveEvent *e );
+    void resizeEvent( QResizeEvent *e );
 
 private slots:
     void updateRubberBand();

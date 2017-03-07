@@ -30,6 +30,8 @@
 #include "tableviewdelegate.h"
 #include "containerstyle.h"
 
+// TODO: implement SHIFT selection
+
 /**
  * @brief TableView::TableView
  * @param parent
@@ -124,6 +126,17 @@ void TableView::mouseMoveEvent( QMouseEvent *e ) {
 void TableView::selectionChanged( const QItemSelection &selected, const QItemSelection &deselected ) {
     this->model()->setSelection( this->selectionModel()->selectedIndexes());
     QTableView::selectionChanged( selected, deselected );
+}
+
+/**
+ * @brief TableView::resizeEvent
+ * @param event
+ */
+void TableView::resizeEvent( QResizeEvent *e ) {
+    QTableView::resizeEvent( e );
+
+    if ( this->model() != NULL )
+        this->model()->softReset();
 }
 
 /**

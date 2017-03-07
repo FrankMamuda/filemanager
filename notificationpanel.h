@@ -56,7 +56,8 @@ public:
     enum Types {
         Information = 0,
         Warning,
-        Error
+        Error,
+        Progress
     };
     Q_ENUMS( Types )
 

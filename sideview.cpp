@@ -39,7 +39,7 @@
  */
 SideView::SideView( QWidget* parent ) : QListView( parent ), m_model( new BookmarkModel( this )) {
     this->setModel( this->m_model );
-    this->setStyleSheet( "background-color: transparent;" );
+    this->setStyleSheet( "QListView { background-color: transparent; }" );
     this->connect( this, SIGNAL( clicked( QModelIndex )), this, SLOT( processItemOpen( QModelIndex )));
 
     // set view delegate

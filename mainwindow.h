@@ -105,6 +105,8 @@ private slots:
     void on_notificationInfo_clicked();
     void on_pathEdit_returnPressed();
     void on_horizontalSlider_valueChanged( int value );
+    void on_actionBookmarks_toggled( bool toggled );
+    void on_actionInfo_toggled( bool toggled );
 
     // custom slots
     void setGridView();

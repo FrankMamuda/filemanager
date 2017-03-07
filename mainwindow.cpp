@@ -21,7 +21,6 @@
 //
 #include <QDebug>
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
 #include "pathutils.h"
 #include "entry.h"
 #include "containermodel.h"
@@ -65,7 +64,7 @@ GOALS:
     tooltips
     +/- fix mimetype deletection performance regression
     + fix crash on app exit while detecting mimetypes
-    +/- notifications in categories - warning, error, info as selectables in status bar
+    - notifications in categories - warning, error, info in status bar - not implementing this
   */
 
 /**
@@ -77,6 +76,11 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
 
     // set up ui
     this->ui->setupUi( this );
+
+    // style docks
+    this->setStyleSheet( "QDockWidget::title { background-color: transparent; text-align: center; }" );
+    this->ui->dockPath->setTitleBarWidget( new QWidget());
+    this->ui->dockStatus->setTitleBarWidget( new QWidget());
 
     // make history!
     this->m_historyManager = new History();
@@ -137,20 +141,27 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
 
     // notification icons
     this->ui->notificationInfo->setIcon( QIcon::fromTheme( "dialog-information" ));
-    this->ui->notificationWarn->setIcon( QIcon::fromTheme( "dialog-warning" ));
-    this->ui->notificationError->setIcon( QIcon::fromTheme( "dialog-error" ));
 
-    // notification panel
-    // TODO: QDockWidget for sideView?
+    // handle actions
+    this->ui->actionBookmarks->setIcon( QIcon::fromTheme( "folder-bookmark" ));
+    this->ui->actionInfo->setIcon( QIcon::fromTheme( "dialog-information" ));
+    Variable::add( "mainWindow/bookmarkPanelVisible", true );
+    Variable::add( "mainWindow/infoPanelVisible", true );
+
+    // TODO: fix - a little messy
+    this->ui->actionBookmarks->setChecked( Variable::isEnabled( "mainWindow/bookmarkPanelVisible" ));
+    this->ui->actionInfo->setChecked( Variable::isEnabled( "mainWindow/infoPanelVisible" ));
+    this->on_actionBookmarks_toggled( Variable::isEnabled( "mainWindow/bookmarkPanelVisible" ));
+    this->on_actionInfo_toggled( Variable::isEnabled( "mainWindow/infoPanelVisible" ));
 }
 
 /**
  * @brief MainWindow::resizeEvent
  */
 void MainWindow::resizeEvent( QResizeEvent *e ) {
-    this->ui->listView->model()->reset();
-    this->ui->tableView->model()->reset();
     QMainWindow::resizeEvent( e );
+    this->ui->dockPath->setMaximumHeight( this->ui->dockPath->geometry().height());
+    this->ui->dockStatus->setMaximumHeight( this->ui->dockStatus->geometry().height());
 }
 
 /**
@@ -304,6 +315,11 @@ void MainWindow::on_actionViewMode_triggered() {
     this->ui->actionViewMode->menu()->exec( QCursor::pos());
 }
 
+
+//
+// TODO USE SOFT RESET???
+//
+
 /**
  * @brief MainWindow::setGridView
  */
@@ -377,4 +393,30 @@ void MainWindow::setDetailView() {
  */
 void MainWindow::on_notificationInfo_clicked() {
     m.notifications()->raise();
+}
+
+/**
+ * @brief MainWindow::on_actionBookmarks_toggled
+ * @param arg1
+ */
+void MainWindow::on_actionBookmarks_toggled( bool toggled ) {
+    if ( toggled )
+        this->ui->dockBookmarks->show();
+    else
+        this->ui->dockBookmarks->close();
+
+    Variable::setValue( "mainWindow/bookmarkPanelVisible", toggled );
+}
+
+/**
+ * @brief MainWindow::on_actionInfo_toggled
+ * @param arg1
+ */
+void MainWindow::on_actionInfo_toggled( bool toggled ) {
+    if ( toggled )
+        this->ui->dockInfo->show();
+    else
+        this->ui->dockInfo->close();
+
+    Variable::setValue( "mainWindow/infoPanelVisible", toggled );
 }

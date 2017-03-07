@@ -35,13 +35,17 @@
 #include "bookmark.h"
 #include "notificationpanel.h"
 
+//
+// FIXME: crash on ASyncWorker during resize event
+//
+
 /**
  * @brief ContainerModel::ContainerModel
  * @param parent
  * @param mode
  * @param iconSize
  */
-ContainerModel::ContainerModel( QAbstractItemView *parent, Containers container, ContainerModel::Modes mode, int iconSize ) : m_listParent( parent ), m_container( container ), m_mode( mode ), m_iconSize( iconSize ) {
+ContainerModel::ContainerModel( QAbstractItemView *parent, Containers container, ContainerModel::Modes mode, int iconSize ) : m_listParent( parent ), m_container( container ), m_mode( mode ), m_iconSize( iconSize ), m_selectionLocked( false ) {
     this->connect( &this->futureWatcher, SIGNAL( resultReadyAt( int )), this, SLOT( mimeTypeDetected( int )));
     this->connect( this, SIGNAL( stop()), &this->futureWatcher, SLOT( cancel()));
     this->connect( qApp, SIGNAL( aboutToQuit()), this, SLOT( quit()));
@@ -70,7 +74,8 @@ ContainerModel::~ContainerModel() {
 }
 
 /**
- * @brief ContainerModel::reset
+ * @brief ContainerModel::columnCount
+ * @return
  */
 int ContainerModel::columnCount( const QModelIndex & ) const {
     if ( this->container() == ListContainer )
@@ -81,6 +86,10 @@ int ContainerModel::columnCount( const QModelIndex & ) const {
     return 0;
 }
 
+/**
+ * @brief ContainerModel::reset
+ * @param force
+ */
 void ContainerModel::reset( bool force ) {
     if ( !this->listParent()->isVisible() && !force )
         return;
@@ -89,6 +98,37 @@ void ContainerModel::reset( bool force ) {
     this->determineMimeTypes();
     this->beginResetModel();
     this->endResetModel();
+    this->restoreSelection();
+}
+
+/**
+ * @brief ContainerModel::softReset
+ */
+void ContainerModel::softReset() {
+    // do as little as possible
+    this->beginResetModel();
+    this->endResetModel();
+    this->restoreSelection();
+}
+
+/**
+ * @brief ContainerModel::restoreSelection
+ */
+void ContainerModel::restoreSelection() {
+    int y;
+
+    this->m_selectionLocked = true;
+
+    // restore selection
+    foreach ( Entry *entry, this->list ) {
+        foreach ( Entry *selectedEntry, this->selectionList ) {
+            if ( entry == selectedEntry )
+                for ( y = 0; y < this->columnCount(); y++ )
+                    this->listParent()->selectionModel()->select( this->index( this->list.indexOf( entry ), y ), QItemSelectionModel::Select );
+        }
+    }
+
+    this->m_selectionLocked = false;
 }
 
 /**
@@ -269,6 +309,28 @@ void ContainerModel::buildList( const QString &path ) {
 
     // reset view
     this->reset();
+}
+
+/**
+ * @brief ContainerModel::setSelection
+ * @param selection
+ * @param onReset
+ */
+void ContainerModel::setSelection( const QModelIndexList &selection ) {
+    this->selectionTimer.stop();
+    this->selection = selection;
+
+    // update selection list
+    if ( !this->selectionLocked()) {
+        this->selectionList.clear();
+        foreach ( QModelIndex index, selection ) {
+            Entry *entry;
+
+            entry = this->indexToEntry( index );
+            if ( entry != NULL )
+                this->selectionList << entry;
+        }
+    }
 }
 
 /**
@@ -459,18 +521,24 @@ void ContainerModel::determineMimeTypes() {
 
     emit this->stop();
 
-    //qDebug() << "#### DETERMINE MIME TYPES";
+    this->future.cancel();
+    this->futureWatcher.cancel();
+    this->future.waitForFinished();
+    this->futureWatcher.waitForFinished();
 
     foreach ( ASyncWorker *worker, this->workList ) {
         if ( worker != NULL )
-            delete worker;
+            worker->deleteLater();
     }
     this->workList.clear();
+
+    if ( this->mode() != FileMode )
+        return;
 
     //qDeleteAll( this->workList );
     foreach ( Entry *entry, this->list ) {
         if ( entry->type() == Entry::FileFolder )
-            this->workList << new ASyncWorker( entry->info(), y, this->iconSize());
+            this->workList << new ASyncWorker( entry->info().absoluteFilePath(), y, this->iconSize());
 
         y++;
     }
@@ -493,10 +561,10 @@ void ContainerModel::mimeTypeDetected( int index ) {
     worker = this->workList.at( index );
     entry = this->list.at( worker->index());
     if ( worker != NULL && entry != NULL ) {
-        if ( worker->info() == entry->info()) {
+        if ( worker->path() == entry->info().absoluteFilePath()) {
             if ( worker->mimeType() != entry->mimeType()) {
-                 entry->setMimeType( worker->mimeType());
-                 update = true;
+                entry->setMimeType( worker->mimeType());
+                update = true;
             }
 
             if ( worker->update()) {
@@ -520,17 +588,22 @@ void ContainerModel::mimeTypeDetected( int index ) {
  */
 ASyncWorker *ContainerModel::determineMimeTypeAsync( ASyncWorker *worker ) {
     QMimeDatabase m;
+    QMimeType mimeType;
     QPixmap pm;
 
     // get mimetype from contents
-    worker->setMimeType( m.mimeTypeForFile( worker->info(), QMimeDatabase::MatchContent ));
+    mimeType = m.mimeTypeForFile( QFileInfo( worker->path()), QMimeDatabase::MatchContent );
+    if ( mimeType.isValid())
+        worker->setMimeType( mimeType );
+    else
+        return worker;
 
     // precache thumbnail
     if ( worker->mimeType().iconName().startsWith( "image" )) {
-        pm = pixmapCache.pixmap( worker->info().absoluteFilePath(), worker->iconSize(), true );
+        pm = pixmapCache.pixmap( worker->path(), worker->iconSize(), true );
         if ( pm.width() && pm.height()) {
             worker->scheduleUpdate();
-            worker->setIconName( worker->info().absoluteFilePath());
+            worker->setIconName( worker->path());
         }
     }
 

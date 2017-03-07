@@ -38,10 +38,6 @@
 //
 //#define SLIDE_OUT_ANIMATION
 
-//
-// TODO: sort notifications
-//
-
 /**
  * @brief NotificationPanel::NotificationPanel
  * @param parent
@@ -146,6 +142,10 @@ void NotificationPanel::raise( int timeOut ) {
         this->timer.stop();
     }
 
+    // abort on no messages
+    if ( !this->historyManager()->count())
+        return;
+
     // move back into place
     this->move( m.gui()->geometry().width() - this->geometry().width() - 11,
                 m.gui()->geometry().height() - this->geometry().height() - 26 );
@@ -180,6 +180,10 @@ void NotificationPanel::push( Types type, const QString &title, const QString &m
 
     case Error:
         this->ui->pixmapLabel->setPixmap( QIcon::fromTheme( "dialog-error" ).pixmap( 16, 16 ));
+        break;
+
+    case Progress:
+    default:
         break;
     }
 

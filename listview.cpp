@@ -161,3 +161,14 @@ void ListView::updateRubberBand() {
     this->model()->setVerticalOffset( this->verticalOffset());
     this->model()->updateRubberBand();
 }
+
+/**
+ * @brief ListView::resizeEvent
+ * @param event
+ */
+void ListView::resizeEvent( QResizeEvent *e ) {
+    QListView::resizeEvent( e );
+
+    if ( this->model() != NULL )
+        this->model()->softReset();
+}

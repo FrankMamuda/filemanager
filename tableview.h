@@ -28,6 +28,7 @@
 #include <QPaintEvent>
 #include <QWheelEvent>
 #include <QScrollArea>
+#include <QResizeEvent>
 
 //
 // classes
@@ -61,6 +62,7 @@ protected:
     void mouseReleaseEvent( QMouseEvent *e );
     void mouseMoveEvent( QMouseEvent *e );
     void selectionChanged( const QItemSelection &, const QItemSelection & );
+    void resizeEvent( QResizeEvent *e );
 
 private:
     ContainerModel *m_model;
