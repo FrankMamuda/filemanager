@@ -561,7 +561,7 @@ void ContainerModel::mimeTypeDetected( int index ) {
     worker = this->workList.at( index );
     entry = this->list.at( worker->index());
     if ( worker != NULL && entry != NULL ) {
-        if ( worker->path() == entry->info().absoluteFilePath()) {
+        if ( !QString::compare( worker->path(), entry->info().absoluteFilePath())) {
             if ( worker->mimeType() != entry->mimeType()) {
                 entry->setMimeType( worker->mimeType());
                 update = true;
@@ -590,9 +590,14 @@ ASyncWorker *ContainerModel::determineMimeTypeAsync( ASyncWorker *worker ) {
     QMimeDatabase m;
     QMimeType mimeType;
     QPixmap pm;
+    QFileInfo info( worker->path());
 
     // get mimetype from contents
-    mimeType = m.mimeTypeForFile( QFileInfo( worker->path()), QMimeDatabase::MatchContent );
+    if ( info.isSymLink())
+        mimeType = m.mimeTypeForFile( QFileInfo( info.symLinkTarget()), QMimeDatabase::MatchContent );
+    else
+        mimeType = m.mimeTypeForFile( QFileInfo( worker->path()), QMimeDatabase::MatchContent );
+
     if ( mimeType.isValid())
         worker->setMimeType( mimeType );
     else

@@ -39,10 +39,12 @@ Entry::Entry( EntryTypes type, const QFileInfo &fileInfo, ContainerModel *parent
  * @brief reset
  */
 void Entry::reset() {
+    //QMimeDatabase m;
+
     // first pass (by extension)
     // TOO SLOW, we just cannot affort this
     this->m_mimeType = QMimeType();
-   //this->setMimeType( m.mimeTypeForFile( this->info(), QMimeDatabase::MatchExtension ));
+    //this->setMimeType( m.mimeTypeForFile( this->info(), QMimeDatabase::MatchExtension ));
 
     if ( this->isDirectory()) {
         switch ( this->type()) {

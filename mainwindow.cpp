@@ -73,6 +73,7 @@ GOALS:
  */
 MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::MainWindow ), m_currentPath( QDir::currentPath()) {
     ViewModes viewMode;
+    QSize size;
 
     // set up ui
     this->ui->setupUi( this );
@@ -94,6 +95,12 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     Variable::add( "mainWindow/iconSize/sliderPosition", Medium );
     this->ui->horizontalSlider->setValue( Variable::integer( "mainWindow/iconSize/sliderPosition" ));
     this->on_horizontalSlider_valueChanged( Variable::integer( "mainWindow/iconSize/sliderPosition" ));
+
+    // get geometry
+    Variable::add( "mainWindow/size", this->size());
+    size = Variable::value<QSize>( "mainWindow/size" );
+    if ( size != this->size())
+        this->resize( size );
 
     // set icons here (some bug resets icons, when defined in form)
     this->ui->actionBack->setIcon( QIcon::fromTheme( "go-previous" ));
@@ -153,6 +160,9 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->ui->actionInfo->setChecked( Variable::isEnabled( "mainWindow/infoPanelVisible" ));
     this->on_actionBookmarks_toggled( Variable::isEnabled( "mainWindow/bookmarkPanelVisible" ));
     this->on_actionInfo_toggled( Variable::isEnabled( "mainWindow/infoPanelVisible" ));
+
+    // update info panel
+    this->updateInfoPanel();
 }
 
 /**
@@ -162,6 +172,49 @@ void MainWindow::resizeEvent( QResizeEvent *e ) {
     QMainWindow::resizeEvent( e );
     this->ui->dockPath->setMaximumHeight( this->ui->dockPath->geometry().height());
     this->ui->dockStatus->setMaximumHeight( this->ui->dockStatus->geometry().height());
+}
+
+/**
+ * @brief MainWindow::updateInfoPanel
+ */
+#include <QMimeDatabase>
+void MainWindow::updateInfoPanel() {
+    ContainerModel *model;
+
+    if ( this->ui->stackedWidget->currentIndex() == 0 )
+        model = this->ui->listView->model();
+    else
+        model = this->ui->tableView->model();
+
+
+  //  this->ui->labelFileName->setWordWrap();
+   // this->ui->labelFileName->setMaximumWidth( this->ui->dockInfo->width() - 20 );
+
+    if ( model->selectionList.isEmpty()) {
+        qDebug() << "display current dir";
+        QFileInfo info( PathUtils::toWindowsPath( this->currentPath()));
+
+        QMimeDatabase mdb;
+        QDir directory( info.absoluteFilePath());
+        QMimeType mimeType;
+
+        mimeType = mdb.mimeTypeForFile( info );
+
+        this->ui->labelPixmap->setPixmap( QIcon::fromTheme( mimeType.iconName()).pixmap( 64, 64 ));
+        this->ui->labelFileName->setText( info.fileName());
+        this->ui->valueType->setText( mimeType.iconName());
+        this->ui->valueSize->setText( QString( "%1 items" ).arg( directory.entryList( QDir::NoDotAndDotDot | QDir::AllEntries, QDir::IgnoreCase | QDir::DirsFirst ).count()));
+
+
+    }
+}
+
+/**
+ * @brief MainWindow::closeEvent
+ */
+void MainWindow::closeEvent( QCloseEvent *e ) {
+    Variable::setValue( "mainWindow/size", this->size());
+    QMainWindow::closeEvent( e );
 }
 
 /**
@@ -276,8 +329,8 @@ void MainWindow::on_horizontalSlider_valueChanged( int value ) {
     Variable::setValue( "mainWindow/iconSize/sliderPosition", value );
 
     // TODO: fix view mode switching to avoid too frequent mime type detection
-  //  ..if ( this->ui->stackedWidget->currentIndex() == 1 )
-  // ./     return;
+    //  ..if ( this->ui->stackedWidget->currentIndex() == 1 )
+    // ./     return;
 
     value *= 16;
     this->ui->listView->model()->setIconSize( value );

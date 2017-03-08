@@ -36,7 +36,7 @@ class Main m;
 //
 // defines
 //
-#define DARK_PALETTE
+//#define DARK_PALETTE
 
 /**
  * @brief qMain

@@ -21,6 +21,7 @@
 //
 #include "pixmapcache.h"
 #include <QIcon>
+#include <QFileInfo>
 
 //
 // class: PixmapCache
@@ -39,14 +40,21 @@ QPixmap PixmapCache::pixmap( const QString &name, int scale, bool thumbnail ) {
     // make unique pixmaps for different sizes
     cache = QString( "%1_%2" ).arg( name ).arg( scale );
 
+
     // search in hash table
     if ( !this->pixmapCache.contains( cache )) {
         // jpeg/png/etc. generate square thunbnails from the actual images
         // other file use icons based on the mime-type
         if ( !thumbnail )
             pixmap = QIcon::fromTheme( name ).pixmap( scale, scale );
-        else
-            pixmap.load( name );
+        else {
+            QFileInfo info( name );
+
+            if ( info.isSymLink())
+                pixmap.load( info.symLinkTarget());
+            else
+                pixmap.load( name );
+        }
 
         // handle missing icons
         if ( pixmap.width() == 0 ) {

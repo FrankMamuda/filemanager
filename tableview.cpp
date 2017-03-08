@@ -32,6 +32,10 @@
 
 // TODO: implement SHIFT selection
 
+//
+// TODO: reuse same model? there is no reason to keep two isntances of ContainerModel
+//
+
 /**
  * @brief TableView::TableView
  * @param parent

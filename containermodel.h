@@ -69,6 +69,7 @@ public:
     void setMimeType( const QMimeType &mimeType ) { QMutexLocker locker( &mutex ); this->m_mimeType = mimeType; }
     void setIconName( const QString &iconName ) { QMutexLocker locker( &mutex ); this->m_iconName = iconName; }
     void scheduleUpdate() { QMutexLocker locker( &mutex ); this->m_update = true; }
+    void setPath( const QString &path ) { this->m_path = path; }
 
 private:
     mutable QMutex mutex;
@@ -148,6 +149,9 @@ public:
     QAbstractItemView *listParent() const { return this->m_listParent; }
     QRubberBand *rubberBand() const { return this->m_rubberBand; }
 
+    // TODO: make private?
+    QList<Entry*> selectionList;
+
 signals:
     void stop();
 
@@ -189,7 +193,6 @@ private:
     QModelIndexList selection;
     QAbstractItemView *m_listParent;
     QList<Entry*> list;
-    QList<Entry*> selectionList;
     QModelIndex currentIndex;
     QTimer selectionTimer;
     QRubberBand *m_rubberBand;

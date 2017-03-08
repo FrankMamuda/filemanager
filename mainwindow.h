@@ -24,6 +24,7 @@
 //
 #include <QMainWindow>
 #include <QDir>
+#include <QCloseEvent>
 #include <QComboBox>
 #include <QProxyStyle>
 #include "ui_mainwindow.h"
@@ -91,7 +92,8 @@ public:
     Q_ENUMS( ViewModes )
 
 protected:
-    virtual void resizeEvent( QResizeEvent * );
+    void resizeEvent( QResizeEvent * );
+    void closeEvent( QCloseEvent * );
 
 public slots:
     void setCurrentPath( const QString &path = QDir::currentPath(), bool saveToHistory = true );
@@ -113,6 +115,7 @@ private slots:
     void setListView();
     void setDetailView();
     void checkHistoryPosition();
+    void updateInfoPanel();
 
 private:
     Ui::MainWindow *ui;

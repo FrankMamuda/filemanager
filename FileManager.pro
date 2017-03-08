@@ -28,7 +28,8 @@ SOURCES += main.cpp\
     bookmark.cpp \
     bookmarkmodel.cpp \
     notificationpanel.cpp \
-    history.cpp
+    history.cpp \
+    filenamelabel.cpp
 
 HEADERS  += mainwindow.h \
     pixmapcache.h \
@@ -48,7 +49,8 @@ HEADERS  += mainwindow.h \
     bookmarkmodel.h \
     containerstyle.h \
     notificationpanel.h \
-    history.h
+    history.h \
+    filenamelabel.h
 
 FORMS    += mainwindow.ui \
     properties.ui \
