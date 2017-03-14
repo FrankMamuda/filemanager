@@ -45,13 +45,17 @@
  * @param mode
  * @param iconSize
  */
-ContainerModel::ContainerModel( QAbstractItemView *parent, Containers container, ContainerModel::Modes mode, int iconSize ) : m_listParent( parent ), m_container( container ), m_mode( mode ), m_iconSize( iconSize ), m_selectionLocked( false ) {
+ContainerModel::ContainerModel( QAbstractItemView *view, ContainerModel::Modes mode, Containers container ) : m_parent( view ), m_mode( mode ), m_iconSize( Common::DefaultListIconSize ), m_selectionLocked( false ), m_container( container ) {
     this->connect( &this->futureWatcher, SIGNAL( resultReadyAt( int )), this, SLOT( mimeTypeDetected( int )));
     this->connect( this, SIGNAL( stop()), &this->futureWatcher, SLOT( cancel()));
     this->connect( qApp, SIGNAL( aboutToQuit()), this, SLOT( quit()));
 
     // create rubber band
-    this->m_rubberBand = new QRubberBand( QRubberBand::Rectangle, this->listParent()->viewport());
+    if ( this->parent() != NULL )
+        this->m_rubberBand = new QRubberBand( QRubberBand::Rectangle, this->parent()->viewport());
+
+    // create selection model
+    this->m_selectionModel = new QItemSelectionModel( this );
 }
 
 /**
@@ -70,6 +74,7 @@ void ContainerModel::quit() {
  */
 ContainerModel::~ContainerModel() {
     this->m_rubberBand->deleteLater();
+    this->m_selectionModel->deleteLater();
     qDeleteAll( this->workList );
 }
 
@@ -91,7 +96,10 @@ int ContainerModel::columnCount( const QModelIndex & ) const {
  * @param force
  */
 void ContainerModel::reset( bool force ) {
-    if ( !this->listParent()->isVisible() && !force )
+    if ( this->parent() == NULL )
+        return;
+
+    if ( !this->parent()->isVisible() && !force )
         return;
 
     this->processEntries();
@@ -124,7 +132,7 @@ void ContainerModel::restoreSelection() {
         foreach ( Entry *selectedEntry, this->selectionList ) {
             if ( entry == selectedEntry )
                 for ( y = 0; y < this->columnCount(); y++ )
-                    this->listParent()->selectionModel()->select( this->index( this->list.indexOf( entry ), y ), QItemSelectionModel::Select );
+                    this->selectionModel()->select( this->index( this->list.indexOf( entry ), y ), QItemSelectionModel::Select );
         }
     }
 
@@ -156,8 +164,10 @@ Entry *ContainerModel::indexToEntry( const QModelIndex &index ) const {
  * @param iconSize
  */
 void ContainerModel::setIconSize( int iconSize ) {
-    if ( this->m_iconSize == iconSize )
-        return;
+    /*
+    FIXME
+    *if ( this->m_iconSize == iconSize )
+        return;*/
 
     this->m_iconSize = iconSize;
 
@@ -185,6 +195,15 @@ void ContainerModel::setMode( ContainerModel::Modes mode ) {
     else
         this->buildList( QDir::currentPath());
 }
+
+/**
+ * @brief ContainerModel::setActiveContainer
+ * @param container
+ */
+/*void ContainerModel::setActiveContainer( ContainerModel::Containers container ) {
+    this->m_container = container;
+    this->m_rubberBand->setParent( this->parent());
+}*/
 
 /**
  * @brief ContainerModel::flags
@@ -339,6 +358,9 @@ void ContainerModel::setSelection( const QModelIndexList &selection ) {
 void ContainerModel::processEntries() {
     int y;
 
+    if ( this->parent() == NULL )
+        return;
+
     // this is only needed for list containers
     if ( this->container() != ListContainer )
         return;
@@ -355,7 +377,7 @@ void ContainerModel::processEntries() {
         ContainerItem item;
 
         // get parent listview
-        view = qobject_cast<QListView*>( this->listParent());
+        view = qobject_cast<QListView*>( this->parent());
         if ( view == NULL )
             return;
 
@@ -405,14 +427,17 @@ void ContainerModel::processEntries() {
 void ContainerModel::processMouseRelease( QMouseEvent *e ) {
     QModelIndex index;
 
+    if ( this->parent() == NULL )
+        return;
+
     this->rubberBand()->hide();
 
-    index = this->listParent()->indexAt( e->pos());
+    index = this->parent()->indexAt( e->pos());
     if ( e->button() == Qt::RightButton ) {
         if ( index.isValid())
-            this->processContextMenu( index, this->listParent()->mapToGlobal( e->pos()) );
+            this->processContextMenu( index, this->parent()->mapToGlobal( e->pos()) );
         else
-            this->listParent()->selectionModel()->clear();
+            this->selectionModel()->clear();
     }
 }
 
@@ -423,16 +448,19 @@ void ContainerModel::processMouseRelease( QMouseEvent *e ) {
 void ContainerModel::processMouseMove( QMouseEvent *e ) {
     QModelIndex index;
 
+    if ( this->parent() == NULL )
+        return;
+
     this->currentMousePos = e->pos();
     this->updateRubberBand();
 
     if ( !this->rubberBand()->isVisible()) {
-        index = this->listParent()->indexAt( e->pos());
+        index = this->parent()->indexAt( e->pos());
 
         if ( index.isValid() && this->currentIndex.row() != index.row() && !( QApplication::mouseButtons() & Qt::LeftButton )) {
             this->selectionTimer.stop();
 
-            if ( !this->listParent()->selectionModel()->isSelected( index ))
+            if ( !this->selectionModel()->isSelected( index ))
                 this->selectionTimer.singleShot( 500, this, SLOT( selectCurrent()));
             else
                 this->selectionTimer.singleShot( 500, this, SLOT( deselectCurrent()));
@@ -449,7 +477,10 @@ void ContainerModel::processMouseMove( QMouseEvent *e ) {
 void ContainerModel::processMousePress( QMouseEvent *e ) {
     QModelIndex index;
 
-    index = this->listParent()->indexAt( e->pos());
+    if ( this->parent() == NULL )
+        return;
+
+    index = this->parent()->indexAt( e->pos());
     if ( e->button() == Qt::LeftButton ) {
         if ( !index.isValid()) {
             this->selectionOrigin = e->pos();
@@ -467,6 +498,9 @@ void ContainerModel::updateRubberBand() {
     QPoint origin;
     int y, k;
 
+    if ( this->parent() == NULL )
+        return;
+
     if ( !this->rubberBand()->isHidden()) {
         origin = this->selectionOrigin;
         origin.setY( this->selectionOrigin.y() - this->verticalOffset());
@@ -478,10 +512,10 @@ void ContainerModel::updateRubberBand() {
                 QModelIndex index;
 
                 index = this->index( y, k );
-                if ( this->rubberBand()->geometry().intersects( this->listParent()->visualRect( index )))
-                    this->listParent()->selectionModel()->select( index, QItemSelectionModel::Select | QItemSelectionModel::Rows );
+                if ( this->rubberBand()->geometry().intersects( this->parent()->visualRect( index )))
+                    this->selectionModel()->select( index, QItemSelectionModel::Select | QItemSelectionModel::Rows );
                 else
-                    this->listParent()->selectionModel()->select( index, QItemSelectionModel::Deselect | QItemSelectionModel::Rows );
+                    this->selectionModel()->select( index, QItemSelectionModel::Deselect | QItemSelectionModel::Rows );
             }
         }
     }
@@ -491,26 +525,32 @@ void ContainerModel::updateRubberBand() {
  * @brief ContainerModel::selectCurrent
  */
 void ContainerModel::selectCurrent() {
-    if ( !this->currentIndex.isValid() || !this->listParent()->underMouse())
+    if ( this->parent() == NULL )
+        return;
+
+    if ( !this->currentIndex.isValid() || !this->parent()->underMouse())
         return;
 
     if ( !( QApplication::keyboardModifiers() & Qt::ControlModifier ))
-        this->listParent()->selectionModel()->clearSelection();
+        this->selectionModel()->clearSelection();
 
-    this->listParent()->selectionModel()->select( this->currentIndex, QItemSelectionModel::Select | QItemSelectionModel::Rows );
+    this->selectionModel()->select( this->currentIndex, QItemSelectionModel::Select | QItemSelectionModel::Rows );
 }
 
 /**
  * @brief ContainerModel::deselectCurrent
  */
 void ContainerModel::deselectCurrent() {
-    if ( !this->listParent()->underMouse())
+    if ( this->parent() == NULL )
         return;
 
-    if ( this->listParent()->selectionModel()->selectedIndexes().contains( this->currentIndex ) && !( QApplication::keyboardModifiers() & Qt::ControlModifier ))
+    if ( !this->parent()->underMouse())
         return;
 
-    this->listParent()->selectionModel()->select( this->currentIndex, QItemSelectionModel::Deselect | QItemSelectionModel::Rows );
+    if ( this->selectionModel()->selectedIndexes().contains( this->currentIndex ) && !( QApplication::keyboardModifiers() & Qt::ControlModifier ))
+        return;
+
+    this->selectionModel()->select( this->currentIndex, QItemSelectionModel::Deselect | QItemSelectionModel::Rows );
 }
 
 /**
@@ -557,6 +597,9 @@ void ContainerModel::mimeTypeDetected( int index ) {
     int y;
     bool update = false;
 
+    if ( this->parent() == NULL )
+        return;
+
     // update entry in view with corresponding icon or thumbnail
     worker = this->workList.at( index );
     entry = this->list.at( worker->index());
@@ -573,9 +616,9 @@ void ContainerModel::mimeTypeDetected( int index ) {
                 update = true;
             }
 
-            if ( this->listParent() != NULL && update ) {
+            if ( this->parent() != NULL && update ) {
                 for ( y = 0; y < this->columnCount(); y++ )
-                    this->listParent()->update( this->index( worker->index(), y ));
+                    this->parent()->update( this->index( worker->index(), y ));
             }
         }
     }
@@ -768,4 +811,15 @@ QMimeData *ContainerModel::mimeData( const QModelIndexList &indexes ) const {
 
     mimeData->setUrls( urlList );
     return mimeData;
+}
+
+/**
+ * @brief ContainerModel::iconSize
+ * @return
+ */
+int ContainerModel::iconSize() const {
+    if ( this->container() == TableContainer )
+        return Common::DefaultTableIconSize;
+
+    return this->m_iconSize;
 }

@@ -32,11 +32,14 @@
 #include <QPoint>
 #include <QFileInfo>
 #include <QMimeType>
+#include <QItemSelectionModel>
+#include "common.h"
 
 //
 // classes
 //
 class ListView;
+class TableView;
 class Entry;
 
 /**
@@ -101,7 +104,7 @@ public:
     Q_ENUMS( Modes )
 
     enum Containers {
-        NoConatainer = -1,
+        NoContainer = -1,
         ListContainer,
         TableContainer
     };
@@ -121,7 +124,7 @@ public:
     Q_ENUMS( Sections )
 
     // constructor
-    explicit ContainerModel( QAbstractItemView *parent, Containers container = ListContainer, Modes mode = FileMode, int iconSize = 64 );
+    explicit ContainerModel( QAbstractItemView *view, Modes mode = FileMode, Containers container = ListContainer );
     ~ContainerModel();
 
     // overrides
@@ -137,7 +140,7 @@ public:
     QMimeData *mimeData( const QModelIndexList &indexes ) const;
 
     // properties
-    int iconSize() const { return this->m_iconSize; }
+    int iconSize() const;
     Containers container() const { return this->m_container; }
     Modes mode() const { return this->m_mode; }
     int verticalOffset() const { return this->m_verticalOffset; }
@@ -146,8 +149,9 @@ public:
     // custom functions
     Entry *indexToEntry( const QModelIndex &index ) const;
     int numItems() const { return this->list.count(); }
-    QAbstractItemView *listParent() const { return this->m_listParent; }
+    QAbstractItemView *parent() const { return this->m_parent; }
     QRubberBand *rubberBand() const { return this->m_rubberBand; }
+    QItemSelectionModel *selectionModel() { return this->m_selectionModel; }
 
     // TODO: make private?
     QList<Entry*> selectionList;
@@ -157,9 +161,10 @@ signals:
 
 public slots:
     // properties
-    void setIconSize( int iconSize = 64 );
+    void setIconSize( int iconSize = Common::DefaultListIconSize );
     void setMode( Modes mode = FileMode );
     void setVerticalOffset( int offset ) { this->m_verticalOffset = offset; }
+//    void setActiveContainer( Containers container );
 
     // mime type detection related
     void mimeTypeDetected( int index );
@@ -191,13 +196,14 @@ private slots:
 
 private:
     QModelIndexList selection;
-    QAbstractItemView *m_listParent;
+    QAbstractItemView *m_parent;
     QList<Entry*> list;
     QModelIndex currentIndex;
     QTimer selectionTimer;
     QRubberBand *m_rubberBand;
     QPoint selectionOrigin;
     QPoint currentMousePos;
+    QItemSelectionModel *m_selectionModel;
 
     // mime type detection related
     QList<ASyncWorker*> workList;
@@ -207,11 +213,11 @@ private:
     QFutureWatcher<ASyncWorker*> futureWatcher;
 
     // properties
-    Containers m_container;
     Modes m_mode;
     int m_iconSize;
     int m_verticalOffset;
     bool m_selectionLocked;
+    Containers m_container;
 };
 
 Q_DECLARE_METATYPE( ContainerModel::Modes )

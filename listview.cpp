@@ -27,6 +27,8 @@
 #include <QScrollBar>
 #include "listviewdelegate.h"
 #include "containerstyle.h"
+//#include "main.h"
+//#include "mainwindow.h"
 
 // TODO: keep selection on update
 
@@ -34,7 +36,7 @@
  * @brief ListView::ListView
  * @param parent
  */
-ListView::ListView( QWidget* parent ) : QListView( parent ), m_model( new ContainerModel( this, ContainerModel::ListContainer )) {
+ListView::ListView( QWidget* parent ) : QListView( parent ), m_model( new ContainerModel( this, ContainerModel::FileMode, ContainerModel::ListContainer )) {
     // set model
     this->setModel( this->m_model );
     this->connect( this, SIGNAL( clicked( QModelIndex )), this->model(), SLOT( processItemOpen( QModelIndex )));

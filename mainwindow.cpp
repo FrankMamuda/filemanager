@@ -31,6 +31,9 @@
 #include "notificationpanel.h"
 #include <QStatusBar>
 #include "history.h"
+#include <QMimeDatabase>
+#include "textutils.h"
+#include "pixmapcache.h"
 
 /*
 GOALS:
@@ -77,6 +80,10 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
 
     // set up ui
     this->ui->setupUi( this );
+
+    // set up selection models
+    this->ui->listView->setSelectionModel( this->ui->listView->model()->selectionModel());
+    this->ui->tableView->setSelectionModel( this->ui->tableView->model()->selectionModel());
 
     // style docks
     this->setStyleSheet( "QDockWidget::title { background-color: transparent; text-align: center; }" );
@@ -161,8 +168,15 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->on_actionBookmarks_toggled( Variable::isEnabled( "mainWindow/bookmarkPanelVisible" ));
     this->on_actionInfo_toggled( Variable::isEnabled( "mainWindow/infoPanelVisible" ));
 
+    // FIXME/TODO: not universal
+    // TODO: disconnect
+    this->connect( this->ui->listView->selectionModel(), SIGNAL( selectionChanged( QItemSelection, QItemSelection )), this, SLOT( updateInfoPanel()));
+    this->connect( this->ui->tableView->selectionModel(), SIGNAL( selectionChanged( QItemSelection, QItemSelection )), this, SLOT( updateInfoPanel()));
+
     // update info panel
     this->updateInfoPanel();
+    this->ui->editFileName->setAlignment( Qt::AlignCenter );
+    this->ui->editFileName->setWordWrapMode( QTextOption::WrapAnywhere );
 }
 
 /**
@@ -172,26 +186,30 @@ void MainWindow::resizeEvent( QResizeEvent *e ) {
     QMainWindow::resizeEvent( e );
     this->ui->dockPath->setMaximumHeight( this->ui->dockPath->geometry().height());
     this->ui->dockStatus->setMaximumHeight( this->ui->dockStatus->geometry().height());
+
+    // must update on resize, otherwise icon is not visible
+    // FIXME: Qt bug?
+    this->updateInfoPanel();
 }
 
 /**
  * @brief MainWindow::updateInfoPanel
  */
-#include <QMimeDatabase>
 void MainWindow::updateInfoPanel() {
     ContainerModel *model;
+    Entry *entry;
+    QPixmap pixmap;
+    QString fileName, typeString, sizeString;
 
     if ( this->ui->stackedWidget->currentIndex() == 0 )
         model = this->ui->listView->model();
     else
         model = this->ui->tableView->model();
 
-
-  //  this->ui->labelFileName->setWordWrap();
-   // this->ui->labelFileName->setMaximumWidth( this->ui->dockInfo->width() - 20 );
+    if ( model->mode() != ContainerModel::FileMode )
+        return;
 
     if ( model->selectionList.isEmpty()) {
-        qDebug() << "display current dir";
         QFileInfo info( PathUtils::toWindowsPath( this->currentPath()));
 
         QMimeDatabase mdb;
@@ -200,13 +218,55 @@ void MainWindow::updateInfoPanel() {
 
         mimeType = mdb.mimeTypeForFile( info );
 
-        this->ui->labelPixmap->setPixmap( QIcon::fromTheme( mimeType.iconName()).pixmap( 64, 64 ));
-        this->ui->labelFileName->setText( info.fileName());
-        this->ui->valueType->setText( mimeType.iconName());
-        this->ui->valueSize->setText( QString( "%1 items" ).arg( directory.entryList( QDir::NoDotAndDotDot | QDir::AllEntries, QDir::IgnoreCase | QDir::DirsFirst ).count()));
+        pixmap = pixmapCache.pixmap( mimeType.iconName(), 64 );
+        fileName = info.fileName();
+        typeString = mimeType.iconName();
+        sizeString = QString( "%1 items" ).arg( directory.entryList( QDir::NoDotAndDotDot | QDir::AllEntries, QDir::IgnoreCase | QDir::DirsFirst ).count());
+    } else {
+        if ( model->selectionList.count() == 1 ) {
+            entry = model->selectionList.first();
+
+            if ( entry->type() == Entry::Thumbnail  )
+                pixmap = entry->pixmap( 64 );
+            else
+                pixmap = pixmapCache.pixmap( entry->iconName(), 64 );
 
 
+            fileName = entry->alias();
+            typeString = entry->mimeType().iconName();
+            sizeString = TextUtils::sizeToText( entry->info().size());
+        } else {
+            pixmap = pixmapCache.pixmap( "document-multiple", 64 );
+
+            /*int count = 0;
+            foreach ( QModelIndex index, model->selectionList )
+                if ( index.column() == 0 )
+                    count++;*/
+
+            // TODO: use COLUMN COUNT
+
+            if ( model->container() == ContainerModel::ListContainer )
+                fileName = QString( "%1 files" ).arg( model->selectionList.count());
+            else
+                fileName = QString( "%1 files" ).arg( model->selectionList.count() / 4 );
+
+            typeString = QString( "Multiple files" );
+
+            quint64 bytes = 0;
+            foreach ( entry, model->selectionList )
+                bytes += entry->info().size();
+
+            if ( model->container() == ContainerModel::ListContainer )
+                sizeString = TextUtils::sizeToText( bytes );
+            else
+                sizeString = TextUtils::sizeToText( bytes / 4 );
+        }
     }
+
+    this->ui->labelPixmap->setPixmap( pixmap );
+    this->ui->editFileName->setHtml( QString( "<center>%1</center>" ).arg( fileName ));
+    this->ui->valueType->setText( typeString );
+    this->ui->valueSize->setText( sizeString );
 }
 
 /**
@@ -400,6 +460,8 @@ void MainWindow::setGridView() {
  * @brief MainWindow::setListView
  */
 void MainWindow::setListView() {
+    // this->ui->listView->model()->setActiveContainer( ContainerModel::ListContainer );
+
     if ( this->ui->stackedWidget->currentIndex() == 1 ) {
         this->ui->listView->selectionModel()->select( this->ui->tableView->selectionModel()->selection(), QItemSelectionModel::Select );
     }
@@ -422,7 +484,9 @@ void MainWindow::setListView() {
 /**
  * @brief MainWindow::setDetailView
  */
-void MainWindow::setDetailView() {    
+void MainWindow::setDetailView() {
+    // this->ui->listView->model()->setActiveContainer( ContainerModel::TableContainer );
+
     if ( this->ui->stackedWidget->currentIndex() == 0 ) {
         this->ui->tableView->selectionModel()->select( this->ui->listView->selectionModel()->selection(), QItemSelectionModel::Select | QItemSelectionModel::Rows );
     }

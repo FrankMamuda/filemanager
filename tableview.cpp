@@ -40,7 +40,7 @@
  * @brief TableView::TableView
  * @param parent
  */
-TableView::TableView( QWidget *parent ) : QTableView( parent ), m_model( new ContainerModel( this, ContainerModel::TableContainer, ContainerModel::FileMode, 16 ))/*, m_selection( false )*/ {
+TableView::TableView( QWidget *parent ) : QTableView( parent ), m_model( new ContainerModel( this, ContainerModel::FileMode, ContainerModel::TableContainer ))/*, m_selection( false )*/ {
     this->setModel( this->m_model );
     this->connect( this, SIGNAL( clicked( QModelIndex )), this->model(), SLOT( processItemOpen( QModelIndex )));
 
