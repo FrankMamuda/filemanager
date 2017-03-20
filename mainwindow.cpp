@@ -60,7 +60,9 @@ GOALS:
     text previews just read the first few bytes
     compressed file browsing
     on first run match:
-        HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.1\OpenWithList
+        HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.EXT\OpenWithList
+        and math
+        HKEY_CLASSES_ROOT\Applications\APPNAME.exe\shell\open\command
         to
         with mime type database and create a list of default programs
     implement QFileSystemWatcher for file updates
@@ -175,8 +177,8 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
 
     // update info panel
     this->updateInfoPanel();
-    this->ui->editFileName->setAlignment( Qt::AlignCenter );
-    this->ui->editFileName->setWordWrapMode( QTextOption::WrapAnywhere );
+
+    this->ui->valueType->setAlignment( Qt::AlignCenter );
 }
 
 /**
@@ -186,9 +188,6 @@ void MainWindow::resizeEvent( QResizeEvent *e ) {
     QMainWindow::resizeEvent( e );
     this->ui->dockPath->setMaximumHeight( this->ui->dockPath->geometry().height());
     this->ui->dockStatus->setMaximumHeight( this->ui->dockStatus->geometry().height());
-
-    // must update on resize, otherwise icon is not visible
-    // FIXME: Qt bug?
     this->updateInfoPanel();
 }
 
@@ -209,6 +208,8 @@ void MainWindow::updateInfoPanel() {
     if ( model->mode() != ContainerModel::FileMode )
         return;
 
+
+    // FIXME/TODO: update info panel on mime type detection?
     if ( model->selectionList.isEmpty()) {
         QFileInfo info( PathUtils::toWindowsPath( this->currentPath()));
 
@@ -217,20 +218,22 @@ void MainWindow::updateInfoPanel() {
         QMimeType mimeType;
 
         mimeType = mdb.mimeTypeForFile( info );
-
         pixmap = pixmapCache.pixmap( mimeType.iconName(), 64 );
         fileName = info.fileName();
         typeString = mimeType.iconName();
-        sizeString = QString( "%1 items" ).arg( directory.entryList( QDir::NoDotAndDotDot | QDir::AllEntries, QDir::IgnoreCase | QDir::DirsFirst ).count());
+        sizeString = this->tr( "%1 items" ).arg( directory.entryList( QDir::NoDotAndDotDot | QDir::AllEntries, QDir::IgnoreCase | QDir::DirsFirst ).count());
     } else {
         if ( model->selectionList.count() == 1 ) {
             entry = model->selectionList.first();
 
-            if ( entry->type() == Entry::Thumbnail  )
-                pixmap = entry->pixmap( 64 );
-            else
+            // TODO/FIXME: auto resolve symlinks by pointing absoluteFilePath to target?
+            if ( entry->type() == Entry::Thumbnail ) {
+                if ( entry->info().isSymLink())
+                    pixmap = QPixmap( entry->info().symLinkTarget());
+                else
+                    pixmap = QPixmap( entry->info().absoluteFilePath());
+            } else
                 pixmap = pixmapCache.pixmap( entry->iconName(), 64 );
-
 
             fileName = entry->alias();
             typeString = entry->mimeType().iconName();
@@ -238,19 +241,13 @@ void MainWindow::updateInfoPanel() {
         } else {
             pixmap = pixmapCache.pixmap( "document-multiple", 64 );
 
-            /*int count = 0;
-            foreach ( QModelIndex index, model->selectionList )
-                if ( index.column() == 0 )
-                    count++;*/
-
-            // TODO: use COLUMN COUNT
-
+            // TODO: use COLUMN COUNT as global constant
             if ( model->container() == ContainerModel::ListContainer )
-                fileName = QString( "%1 files" ).arg( model->selectionList.count());
+                fileName = this->tr( "%1 files" ).arg( model->selectionList.count());
             else
-                fileName = QString( "%1 files" ).arg( model->selectionList.count() / 4 );
+                fileName = this->tr( "%1 files" ).arg( model->selectionList.count() / 4 );
 
-            typeString = QString( "Multiple files" );
+            typeString = this->tr( "Multiple files" );
 
             quint64 bytes = 0;
             foreach ( entry, model->selectionList )
@@ -263,8 +260,8 @@ void MainWindow::updateInfoPanel() {
         }
     }
 
-    this->ui->labelPixmap->setPixmap( pixmap );
-    this->ui->editFileName->setHtml( QString( "<center>%1</center>" ).arg( fileName ));
+    this->ui->infoPixmap->setPixmap( pixmap );
+    this->ui->editFileName->setText( fileName );
     this->ui->valueType->setText( typeString );
     this->ui->valueSize->setText( sizeString );
 }
@@ -318,7 +315,7 @@ void MainWindow::setCurrentPath( const QString &path, bool saveToHistory ) {
         directory.cd( windowsPath );
 
         if ( !directory.exists( windowsPath )) {
-            m.notifications()->push( NotificationPanel::Error, "Error", "Path does not exist" );
+            m.notifications()->push( NotificationPanel::Error, this->tr( "Error" ), this->tr( "Path does not exist" ));
             return;
         }
 
@@ -428,11 +425,6 @@ void MainWindow::on_actionViewMode_triggered() {
     this->ui->actionViewMode->menu()->exec( QCursor::pos());
 }
 
-
-//
-// TODO USE SOFT RESET???
-//
-
 /**
  * @brief MainWindow::setGridView
  */
@@ -460,8 +452,6 @@ void MainWindow::setGridView() {
  * @brief MainWindow::setListView
  */
 void MainWindow::setListView() {
-    // this->ui->listView->model()->setActiveContainer( ContainerModel::ListContainer );
-
     if ( this->ui->stackedWidget->currentIndex() == 1 ) {
         this->ui->listView->selectionModel()->select( this->ui->tableView->selectionModel()->selection(), QItemSelectionModel::Select );
     }
@@ -485,8 +475,6 @@ void MainWindow::setListView() {
  * @brief MainWindow::setDetailView
  */
 void MainWindow::setDetailView() {
-    // this->ui->listView->model()->setActiveContainer( ContainerModel::TableContainer );
-
     if ( this->ui->stackedWidget->currentIndex() == 0 ) {
         this->ui->tableView->selectionModel()->select( this->ui->listView->selectionModel()->selection(), QItemSelectionModel::Select | QItemSelectionModel::Rows );
     }

@@ -46,6 +46,7 @@ public:
 public slots:
     void setEntry( Entry *entry );
     void setEntries( QList<Entry *> entries );
+    void resizeMe();
 
 private slots:
     void on_buttonBox_accepted();

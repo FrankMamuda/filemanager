@@ -189,6 +189,12 @@ private slots:
 
     // other slots
     void displayProperties();
+    void copy();
+    void paste();
+    void openWith();
+    void cut();
+    void open();
+    void rename();
     void selectCurrent();
     void deselectCurrent();
     void quit();

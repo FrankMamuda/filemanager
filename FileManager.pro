@@ -48,7 +48,8 @@ HEADERS  += mainwindow.h \
     bookmarkmodel.h \
     containerstyle.h \
     notificationpanel.h \
-    history.h
+    history.h \
+    textlabel.h
     common.h
 
 FORMS    += mainwindow.ui \

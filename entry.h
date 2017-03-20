@@ -43,6 +43,7 @@ class Entry : public QObject {
     Q_PROPERTY( QMimeType mimeType READ mimeType WRITE setMimeType )
     Q_PROPERTY( QString path READ path )
     Q_PROPERTY( bool directory READ isDirectory )
+    Q_PROPERTY( bool cut WRITE setCut READ isCut )
 
 public:
     enum EntryTypes {
@@ -67,6 +68,7 @@ public:
     QString path() const;
     QMimeType mimeType() const { return this->m_mimeType; }
     bool isDirectory() const;
+    bool isCut() const { return this->m_cut; }
 
     // other functions
     QPixmap pixmap( int scale ) const;
@@ -77,6 +79,7 @@ public slots:
     void setMimeType( const QMimeType &mimeType ) { this->m_mimeType = mimeType; this->setIconName( this->mimeType().iconName()); }
     void setType( const EntryTypes type ) { this->m_type = type; }
     void setIconName( const QString &iconName ) { this->m_iconName = iconName; }
+    void setCut( bool cut = true ) { this->m_cut = cut; }
 
     // other slots
     void reset();
@@ -89,6 +92,7 @@ private:
     QMimeType m_mimeType;
     QString m_iconName;
     EntryTypes m_type;
+    bool m_cut;
 };
 
 Q_DECLARE_METATYPE( Entry::EntryTypes )

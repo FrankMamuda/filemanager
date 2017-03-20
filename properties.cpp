@@ -26,14 +26,17 @@
 #include "pixmapcache.h"
 #include "pathutils.h"
 #include "textutils.h"
+#include <QTimer>
 
 /**
  * @brief Properties::Properties
  * @param parent
  */
 Properties::Properties( QWidget *parent ) : QDialog( parent ), ui( new Ui::Properties ) {
-    ui->setupUi( this );
-    this->ui->path->setWordWrap( true );
+    this->ui->setupUi( this );
+
+    // FIXME: ultra-ugly
+    QTimer::singleShot( 50, this, SLOT( resizeMe()));
 }
 
 /**
@@ -64,9 +67,9 @@ void Properties::setEntry( Entry *entry ) {
 
     this->setWindowIcon( QIcon( entry->pixmap( 48 )));
     this->ui->labelIcon->setPixmap( entry->pixmap( 48 ));
-    this->ui->size->setText( TextUtils::sizeToText( entry->info().size()));
-    this->ui->path->setText( PathUtils::toUnixPath( entry->path()));
-    this->ui->type->setText( entry->mimeType().iconName());
+    this->ui->size->setText( TextUtils::sizeToText( entry->info().size()), false );
+    this->ui->path->setText( PathUtils::toUnixPath( entry->info().absolutePath()), false);
+    this->ui->type->setText( entry->mimeType().iconName(), false );
     this->ui->fileName->setText( entry->info().fileName());
 
     this->setDeviceUsage( entry->path());
@@ -86,13 +89,18 @@ void Properties::setEntries( QList<Entry *> entries ) {
         size += entry->info().size();
 
     this->setWindowIcon( icon );
-    this->ui->path->setText( PathUtils::toUnixPath( entries.first()->path()));
+    this->ui->path->setText( PathUtils::toUnixPath( entries.first()->path()), false );
     this->ui->labelIcon->setPixmap( pixmapCache.pixmap( "document-multiple", 48 ));
-    this->ui->type->setText( "multiple entries");
+    this->ui->type->setText( "multiple entries", false );
     this->ui->fileName->setText( QString( "%1 item(s)" ).arg( entries.count()));
-    this->ui->size->setText( TextUtils::sizeToText( size ));
+    this->ui->size->setText( TextUtils::sizeToText( size ), false );
 
     this->setDeviceUsage( entries.first()->path());
+}
+
+void Properties::resizeMe()
+{
+    this->resize( this->width(), this->minimumSizeHint().height());
 }
 
 /**

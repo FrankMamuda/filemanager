@@ -116,9 +116,11 @@ void ListViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &opt
     QRect pixmapRect;
     QPixmap pixmap;
     int width, height, offset;
+    bool isCut;
 
     // get pixmap and its dimensions
     pixmap = qvariant_cast<QPixmap>( index.model()->data( index, Qt::DecorationRole ));
+    isCut = index.model()->data( index, Qt::UserRole + 1 ).toBool();
     pixmapRect = option.rect;
     width = option.decorationSize.width();
     height = option.decorationSize.height();
@@ -133,9 +135,15 @@ void ListViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &opt
         pixmapRect.setWidth( width );
     }
 
+    if ( isCut )
+        painter->setOpacity( 0.5f );
+
     // draw pixmap
     pixmapRect.setHeight( height );
     painter->drawPixmap( pixmapRect, pixmap );
+
+    if ( isCut )
+        painter->setOpacity( 1.0f );
 
     //
     // STAGE 3: display text

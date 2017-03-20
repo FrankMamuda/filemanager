@@ -31,7 +31,7 @@
  * @param parent
  * @param fileInfo
  */
-Entry::Entry( EntryTypes type, const QFileInfo &fileInfo, ContainerModel *parent ) : m_parent( parent ), m_fileInfo( fileInfo ), m_type( type )/*, m_updateScheduled( false )*/ {
+Entry::Entry( EntryTypes type, const QFileInfo &fileInfo, ContainerModel *parent ) : m_parent( parent ), m_fileInfo( fileInfo ), m_type( type ), m_cut( false ) {
     this->reset();
 }
 

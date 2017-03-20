@@ -34,10 +34,7 @@
 #include "pathutils.h"
 #include "bookmark.h"
 #include "notificationpanel.h"
-
-//
-// FIXME: crash on ASyncWorker during resize event
-//
+#include <QInputDialog>
 
 /**
  * @brief ContainerModel::ContainerModel
@@ -238,10 +235,19 @@ QVariant ContainerModel::data( const QModelIndex &modelIndex, int role ) const {
             item = this->displayList.at( modelIndex.row());
     }
 
+    // transparency
+    if ( role == Qt::UserRole + 1 )
+        return entry->isCut();
+
     if ( modelIndex.column() == 0 ) {
         switch ( role )  {
         case Qt::DecorationRole:
-            return entry->pixmap( this->iconSize());
+        {
+           // if ( entry->isCut())
+          //      return entry->pixmap( this->iconSize()).tr;
+            //else
+                return entry->pixmap( this->iconSize());
+        }
 
         case Qt::DisplayRole:
             return entry->alias();
@@ -716,14 +722,16 @@ void ContainerModel::processContextMenu( const QModelIndex &index, const QPoint 
 
     // a dummy menu for now
     QMenu menu;
-    menu.addAction( "Open" );
-    menu.addAction( "Open With" );
+    menu.addAction( "Open", this, SLOT( open()));
+    menu.addAction( "Open With", this, SLOT( openWith()));
     menu.addSeparator();
-    menu.addAction( "Cut" );
-    menu.addAction( "Copy" );
+    menu.addAction( "Cut", this, SLOT( cut()));
+    menu.addAction( "Copy", this, SLOT( copy()));
+    menu.addAction( "Paste", this, SLOT( paste()));
     menu.addSeparator();
-    menu.addAction( "Properties" );
-    this->connect( &menu, SIGNAL( triggered( QAction*)), SLOT( displayProperties()));
+    menu.addAction( "Rename", this, SLOT( rename()));
+    menu.addSeparator();
+    menu.addAction( "Properties", this, SLOT( displayProperties()));
     menu.exec( pos );
 }
 
@@ -782,6 +790,70 @@ void ContainerModel::displayProperties() {
     }
 
     props.exec();
+    //props.resize( props.width(), props.minimumSizeHint().height());
+}
+
+/**
+ * @brief ContainerModel::copy
+ */
+void ContainerModel::copy() {
+    qDebug() << "copy";
+}
+
+/**
+ * @brief ContainerModel::paste
+ */
+void ContainerModel::paste() {
+    qDebug() << "paste";
+}
+
+/**
+ * @brief ContainerModel::open
+ */
+void ContainerModel::open() {
+    qDebug() << "open";
+    this->processItemOpen( this->currentIndex );
+
+    //foreach ( Entry *entry, this->selectionList )
+    //    ();
+}
+
+/**
+ * @brief ContainerModel::rename
+ */
+void ContainerModel::rename() {
+    bool ok;
+    QString fileName;
+    QString current;
+
+    // currently one selection
+    if ( this->selectionList.count() > 1 )
+        return;
+
+    current = this->selectionList.first()->alias();
+    fileName = QInputDialog::getText( m.gui(), this->tr( "Rename file" ), this->tr( "New filename:" ), QLineEdit::Normal, current, &ok );
+    if ( ok && !fileName.isEmpty() && QString::compare( current, fileName )) {
+        qDebug() << "rename simulation from" << current << "to" << fileName;
+    }
+}
+
+/**
+ * @brief ContainerModel::openWith
+ */
+void ContainerModel::openWith() {
+    qDebug() << "openWith";
+}
+
+/**
+ * @brief ContainerModel::cut
+ */
+void ContainerModel::cut() {
+    foreach ( Entry *entry, this->list )
+        entry->setCut( false );
+
+    // FIXME/NOTE: must store differently because entry list is rebuild on every dir change
+    foreach ( Entry *entry, this->selectionList )
+        entry->setCut();
 }
 
 /**
