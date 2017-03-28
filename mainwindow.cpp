@@ -70,6 +70,12 @@ GOALS:
     +/- fix mimetype deletection performance regression
     + fix crash on app exit while detecting mimetypes
     - notifications in categories - warning, error, info in status bar - not implementing this
+    extract windows icon from executables
+    cache to disk (crc32?):
+        mimetype
+        thumbnail (+extracted icon)
+        (introduce a reasonable file size limit)
+            larger than that goes through non-content matching
   */
 
 /**
@@ -208,7 +214,6 @@ void MainWindow::updateInfoPanel() {
     if ( model->mode() != ContainerModel::FileMode )
         return;
 
-
     // FIXME/TODO: update info panel on mime type detection?
     if ( model->selectionList.isEmpty()) {
         QFileInfo info( PathUtils::toWindowsPath( this->currentPath()));
@@ -223,7 +228,7 @@ void MainWindow::updateInfoPanel() {
         typeString = mimeType.iconName();
         sizeString = this->tr( "%1 items" ).arg( directory.entryList( QDir::NoDotAndDotDot | QDir::AllEntries, QDir::IgnoreCase | QDir::DirsFirst ).count());
     } else {
-        if ( model->selectionList.count() == 1 ) {
+        if ( model->selectionList.count() == 1 || ( model->container() == ContainerModel::TableContainer && model->selectionList.count() == 4 )) {
             entry = model->selectionList.first();
 
             // TODO/FIXME: auto resolve symlinks by pointing absoluteFilePath to target?

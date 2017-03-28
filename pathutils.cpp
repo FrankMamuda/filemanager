@@ -112,7 +112,7 @@ QString PathUtils::toUnixPath(const QString &path, bool homePath ) {
  * @param path
  * @return
  */
-QString PathUtils::toWindowsPath( const QString &path ) {
+QString PathUtils::toWindowsPathE( const QString &path ) {
     QRegularExpression re( "^\\/([A-z]+)[\\/|\\\\]?(.+)?" );
     QRegularExpressionMatch m;
     QString mount, dir;

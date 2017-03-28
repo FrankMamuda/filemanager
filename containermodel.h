@@ -69,10 +69,13 @@ public:
     QString iconName() const { return this->m_iconName; }
     int iconSize() const { return this->m_iconSize; }
     bool update() const { return this->m_update; }
+    QPixmap pixmap() const { return this->m_pixmap; }
+
     void setMimeType( const QMimeType &mimeType ) { QMutexLocker locker( &mutex ); this->m_mimeType = mimeType; }
     void setIconName( const QString &iconName ) { QMutexLocker locker( &mutex ); this->m_iconName = iconName; }
     void scheduleUpdate() { QMutexLocker locker( &mutex ); this->m_update = true; }
     void setPath( const QString &path ) { this->m_path = path; }
+    void setPixmap( const QPixmap &pixmap ) { QMutexLocker locker( &mutex ); this->m_pixmap = pixmap; }
 
 private:
     mutable QMutex mutex;
@@ -82,6 +85,7 @@ private:
     QString m_iconName;
     int m_iconSize;
     bool m_update;
+    QPixmap m_pixmap;
 };
 
 /**

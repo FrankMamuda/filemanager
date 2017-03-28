@@ -7,10 +7,9 @@
 QT       += core gui concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-
+QT += winextras
 TARGET = FileManager
 TEMPLATE = app
-
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -28,7 +27,9 @@ SOURCES += main.cpp\
     bookmark.cpp \
     bookmarkmodel.cpp \
     notificationpanel.cpp \
-    history.cpp
+    history.cpp \
+    extractor.cpp \
+    cache.cpp
 
 HEADERS  += mainwindow.h \
     pixmapcache.h \
@@ -49,7 +50,8 @@ HEADERS  += mainwindow.h \
     containerstyle.h \
     notificationpanel.h \
     history.h \
-    textlabel.h
+    textlabel.h \
+    cache.h
     common.h
 
 FORMS    += mainwindow.ui \

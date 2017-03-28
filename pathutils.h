@@ -23,6 +23,7 @@
 // includes
 //
 #include <QString>
+#include <QDir>
 
 /**
  * @brief The PathUtils class
@@ -32,7 +33,8 @@ public:
     PathUtils() {}
     static bool isUnixPath( const QString &path );
     static QString toUnixPath( const QString &path, bool homePath = false );
-    static QString toWindowsPath( const QString &path );
+    static QString toWindowsPathE( const QString &path );
+    static QString toWindowsPath( const QString &path ) { return QDir::toNativeSeparators( toWindowsPathE( path )); }
     static bool isWindowsDevicePath( const QString &path );
     static QString windowsDevicePath( const QString &path );
 };

@@ -36,6 +36,12 @@
 #include "notificationpanel.h"
 #include <QInputDialog>
 
+#include <QtWin>
+#include <QSysInfo>
+#include <commctrl.h>
+#include <commoncontrols.h>
+#include <shellapi.h>
+
 /**
  * @brief ContainerModel::ContainerModel
  * @param parent
@@ -171,7 +177,7 @@ void ContainerModel::setIconSize( int iconSize ) {
     foreach ( Entry *entry, this->list ) {
         entry->reset();
 
-        if ( entry->type() == Entry::Thumbnail )
+        if ( entry->type() == Entry::Thumbnail || entry->type() == Entry::Executable )
             entry->setType( Entry::FileFolder );
     }
 
@@ -243,10 +249,7 @@ QVariant ContainerModel::data( const QModelIndex &modelIndex, int role ) const {
         switch ( role )  {
         case Qt::DecorationRole:
         {
-           // if ( entry->isCut())
-          //      return entry->pixmap( this->iconSize()).tr;
-            //else
-                return entry->pixmap( this->iconSize());
+            return entry->pixmap( this->iconSize());
         }
 
         case Qt::DisplayRole:
@@ -617,8 +620,14 @@ void ContainerModel::mimeTypeDetected( int index ) {
             }
 
             if ( worker->update()) {
-                entry->setIconName( worker->iconName());
-                entry->setType( Entry::Thumbnail );
+                if ( worker->pixmap().isNull()) {
+                    entry->setIconName( worker->iconName());
+                    entry->setType( Entry::Thumbnail );
+                } else {
+                    entry->setIconPixmap( worker->pixmap());
+                    entry->setType( Entry::Executable );
+                }
+
                 update = true;
             }
 
@@ -628,6 +637,41 @@ void ContainerModel::mimeTypeDetected( int index ) {
             }
         }
     }
+}
+
+/**
+ * @brief extractPixmap
+ * @param path
+ * @return
+ */
+static QPixmap extractPixmap( const QString &path ) {
+    SHFILEINFO shellInfo;
+    QPixmap pixmap;
+
+    memset( &shellInfo, 0, sizeof( SHFILEINFO ));
+    if ( SUCCEEDED( SHGetFileInfo( reinterpret_cast<const wchar_t *>( PathUtils::toWindowsPath( path ).utf16()), 0, &shellInfo, sizeof( SHFILEINFO ), SHGFI_ICON | SHGFI_SYSICONINDEX | SHGFI_ICONLOCATION | SHGFI_USEFILEATTRIBUTES | SHGFI_LARGEICON ))) {
+        if ( shellInfo.hIcon ) {
+            if ( QSysInfo::windowsVersion() >= QSysInfo::WV_VISTA ) {
+                IImageList *imageList = NULL;
+
+                if ( SUCCEEDED( SHGetImageList( 0x2, { 0x46eb5926, 0x582e, 0x4017, { 0x9f, 0xdf, 0xe8, 0x99, 0x8d, 0xaa, 0x9, 0x50 }}, reinterpret_cast<void **>( &imageList )))) {
+                    HICON hIcon;
+
+                    if ( SUCCEEDED( imageList->GetIcon( shellInfo.iIcon, ILD_TRANSPARENT, &hIcon ))) {
+                        pixmap = QtWin::fromHICON(hIcon);
+                        DestroyIcon( hIcon );
+
+                        if ( !pixmap.isNull())
+                            return pixmap;
+                    }
+                }
+            }
+
+            pixmap = QtWin::fromHICON( shellInfo.hIcon );
+            DestroyIcon( shellInfo.hIcon );
+        }
+    }
+    return pixmap;
 }
 
 /**
@@ -658,6 +702,17 @@ ASyncWorker *ContainerModel::determineMimeTypeAsync( ASyncWorker *worker ) {
         if ( pm.width() && pm.height()) {
             worker->scheduleUpdate();
             worker->setIconName( worker->path());
+        }
+    }
+
+    if ( !QString::compare( worker->mimeType().iconName(), "application-x-ms-dos-executable" )) {
+        qDebug() << "Extract" << worker->path();
+
+        // TODO: symlinks!!! (in entry path maybe?)
+        pm = extractPixmap( worker->path());
+        if ( pm.width() && pm.height()) {
+            worker->scheduleUpdate();
+            worker->setPixmap( pm );
         }
     }
 

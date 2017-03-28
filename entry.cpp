@@ -20,10 +20,51 @@
 // includes
 //
 #include <QMimeDatabase>
+#include <QtWin>
+#include <QSysInfo>
 #include "entry.h"
 #include "pixmapcache.h"
 #include "containermodel.h"
 #include "pathutils.h"
+#include <commctrl.h>
+#include <commoncontrols.h>
+#include <shellapi.h>
+
+/**
+ * @brief Entry::extractIcon
+ */
+/*
+void Entry::extractIcon() {
+    SHFILEINFO shellInfo;
+
+    memset( &shellInfo, 0, sizeof( SHFILEINFO ));
+    if ( SUCCEEDED( SHGetFileInfo( reinterpret_cast<const wchar_t *>( PathUtils::toWindowsPath( this->path()).utf16()), 0, &shellInfo, sizeof( SHFILEINFO ), SHGFI_ICON | SHGFI_SYSICONINDEX | SHGFI_ICONLOCATION | SHGFI_USEFILEATTRIBUTES | SHGFI_LARGEICON ))) {
+        if ( shellInfo.hIcon ) {
+            if ( QSysInfo::windowsVersion() >= QSysInfo::WV_VISTA ) {
+                IImageList *imageList = NULL;
+
+                if ( SUCCEEDED( SHGetImageList( 0x2, { 0x46eb5926, 0x582e, 0x4017, { 0x9f, 0xdf, 0xe8, 0x99, 0x8d, 0xaa, 0x9, 0x50 }}, reinterpret_cast<void **>( &imageList )))) {
+                    HICON hIcon;
+
+                    if ( SUCCEEDED( imageList->GetIcon( shellInfo.iIcon, ILD_TRANSPARENT, &hIcon ))) {
+                        QPixmap pixmap;
+                        pixmap = QtWin::fromHICON(hIcon);
+                        DestroyIcon( hIcon );
+
+                        if ( !pixmap.isNull()) {
+                            this->icon = pixmap;
+                            return;
+                        }
+                    }
+                }
+            }
+
+            this->icon = QtWin::fromHICON( shellInfo.hIcon );
+            DestroyIcon( shellInfo.hIcon );
+        }
+    }
+}
+*/
 
 /**
  * @brief Entry::Entry
@@ -33,6 +74,18 @@
  */
 Entry::Entry( EntryTypes type, const QFileInfo &fileInfo, ContainerModel *parent ) : m_parent( parent ), m_fileInfo( fileInfo ), m_type( type ), m_cut( false ) {
     this->reset();
+
+    //if ( fileInfo.fileName().endsWith( ".exe" )) {
+    //    this->extractIcon();
+
+        //this->shellIcons = extractlIcon( fileInfo.absoluteFilePath());
+        //qDebug() << "extracted" << this->shellIcons.count() << "shell icons";
+
+        //foreach ( PixmapEntry pe, this->shellIcons )
+        //   qDebug() << "  " << pe.name;
+        //
+   // }
+
 }
 
 /**
@@ -131,6 +184,11 @@ bool Entry::isDirectory() const {
  * @return
  */
 QPixmap Entry::pixmap( int scale ) const {
+    //if ( this->info().fileName().endsWith( ".exe" ) && !this->icon.isNull())
+    //    return this->icon;
+
+    if ( this->type() == Entry::Executable )
+        return this->iconPixmap();
+
     return pixmapCache.pixmap( this->iconName(), scale );
 }
-

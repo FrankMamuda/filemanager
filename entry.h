@@ -53,7 +53,8 @@ public:
         Home,
         Thumbnail,
         Trash,
-        Bookmark
+        Bookmark,
+        Executable
     };
     Q_ENUMS( EntryTypes )
 
@@ -69,6 +70,7 @@ public:
     QMimeType mimeType() const { return this->m_mimeType; }
     bool isDirectory() const;
     bool isCut() const { return this->m_cut; }
+    QPixmap iconPixmap() const { return this->m_pixmap; }
 
     // other functions
     QPixmap pixmap( int scale ) const;
@@ -80,9 +82,13 @@ public slots:
     void setType( const EntryTypes type ) { this->m_type = type; }
     void setIconName( const QString &iconName ) { this->m_iconName = iconName; }
     void setCut( bool cut = true ) { this->m_cut = cut; }
+    void setIconPixmap( const QPixmap &pixmap ) { this->m_pixmap = pixmap; }
 
     // other slots
     void reset();
+
+private slots:
+    //void extractIcon();
 
 private:
     ContainerModel *m_parent;
@@ -93,6 +99,7 @@ private:
     QString m_iconName;
     EntryTypes m_type;
     bool m_cut;
+    QPixmap m_pixmap;
 };
 
 Q_DECLARE_METATYPE( Entry::EntryTypes )

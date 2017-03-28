@@ -40,7 +40,6 @@ QPixmap PixmapCache::pixmap( const QString &name, int scale, bool thumbnail ) {
     // make unique pixmaps for different sizes
     cache = QString( "%1_%2" ).arg( name ).arg( scale );
 
-
     // search in hash table
     if ( !this->pixmapCache.contains( cache )) {
         // jpeg/png/etc. generate square thunbnails from the actual images
