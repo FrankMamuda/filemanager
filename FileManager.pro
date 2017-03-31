@@ -28,8 +28,10 @@ SOURCES += main.cpp\
     bookmarkmodel.cpp \
     notificationpanel.cpp \
     history.cpp \
-    extractor.cpp \
-    cache.cpp
+    cache.cpp \
+    indexer.cpp \
+    worker.cpp \
+    filestream.cpp
 
 HEADERS  += mainwindow.h \
     pixmapcache.h \
@@ -51,7 +53,10 @@ HEADERS  += mainwindow.h \
     notificationpanel.h \
     history.h \
     textlabel.h \
-    cache.h
+    cache.h \
+    indexer.h \
+    worker.h \
+    filestream.h
     common.h
 
 FORMS    += mainwindow.ui \

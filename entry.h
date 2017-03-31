@@ -87,9 +87,6 @@ public slots:
     // other slots
     void reset();
 
-private slots:
-    //void extractIcon();
-
 private:
     ContainerModel *m_parent;
 

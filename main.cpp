@@ -37,6 +37,8 @@ class Main m;
 // defines
 //
 //#define DARK_PALETTE
+struct Work;
+
 
 /**
  * @brief qMain
@@ -46,9 +48,20 @@ class Main m;
  */
 int main( int argc, char *argv[] ) {
     QApplication a( argc, argv );
+
+
+    // init cache
+    m.cache = new Cache( QDir::currentPath() + "/.cache" );
+
+
     MainWindow w;
     NotificationPanel *notify;
     QDir iconDir( QDir::currentPath() + "/icons" );
+
+    // register metatypes
+    qRegisterMetaType<Hash>( "Hash" );
+    qRegisterMetaType<DataEntry>( "DataEntry" );
+    qRegisterMetaType<Work>( "Work" );
 
     // set up icon theme
     QIcon::setThemeSearchPaths( QStringList( iconDir.absolutePath()));

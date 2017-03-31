@@ -16,44 +16,36 @@
  *
  */
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef INDEXER_H
+#define INDEXER_H
 
 //
 // includes
 //
-#include <QList>
-#include <QSettings>
+#include <QThread>
+#include <QMutex>
+#include <QDebug>
 #include "cache.h"
 
-//
-// classes
-//
-class MainWindow;
-class NotificationPanel;
-
 /**
- * @brief The Main class
+ * @brief The Indexer class
  */
-class Main {
-public:
-    // constructor destructor
-    Main();
-    ~Main();
+class Indexer : public QThread {
+    Q_OBJECT
 
-    // other members
-    MainWindow *gui() const { return this->m_gui; }
-    NotificationPanel *notifications() { return this->m_notifications; }
-    void setGui( MainWindow *gui ) { this->m_gui = gui; }
-    void setNotifications( NotificationPanel *notify ) { this->m_notifications = notify; }
-    QSettings *settings;
-    Cache *cache;
+public:
+    Indexer() {}
+
+public slots:
+    void addWork( const QString &fileName ) { this->workList << fileName; }
+
+signals:
+    void workDone( const QString &fileName, const Hash & );
 
 private:
-    MainWindow *m_gui;
-    NotificationPanel *m_notifications;
+    void run();
+    Hash work( const QString &fileName );
+    QStringList workList;
 };
 
-extern class Main m;
-
-#endif // MAIN_H
+#endif // INDEXER_H

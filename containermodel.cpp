@@ -42,6 +42,8 @@
 #include <commoncontrols.h>
 #include <shellapi.h>
 
+#include "cache.h"
+
 /**
  * @brief ContainerModel::ContainerModel
  * @param parent
@@ -49,28 +51,17 @@
  * @param iconSize
  */
 ContainerModel::ContainerModel( QAbstractItemView *view, ContainerModel::Modes mode, Containers container ) : m_parent( view ), m_mode( mode ), m_iconSize( Common::DefaultListIconSize ), m_selectionLocked( false ), m_container( container ) {
-    this->connect( &this->futureWatcher, SIGNAL( resultReadyAt( int )), this, SLOT( mimeTypeDetected( int )));
-    this->connect( this, SIGNAL( stop()), &this->futureWatcher, SLOT( cancel()));
-    this->connect( qApp, SIGNAL( aboutToQuit()), this, SLOT( quit()));
-
     // create rubber band
     if ( this->parent() != NULL )
         this->m_rubberBand = new QRubberBand( QRubberBand::Rectangle, this->parent()->viewport());
 
     // create selection model
     this->m_selectionModel = new QItemSelectionModel( this );
+
+    // TODO: disconnect
+    this->connect( m.cache, SIGNAL( finished( QString, DataEntry )), this, SLOT( mimeTypeDetected( QString, DataEntry )));
 }
 
-/**
- * @brief ContainerModel::quit
- */
-void ContainerModel::quit() {
-    this->disconnect( &this->futureWatcher, SIGNAL( resultReadyAt( int )));
-    this->future.cancel();
-    this->futureWatcher.cancel();
-    this->future.waitForFinished();
-    this->futureWatcher.waitForFinished();
-}
 
 /**
  * @brief ContainerModel::~ContainerModel
@@ -78,7 +69,6 @@ void ContainerModel::quit() {
 ContainerModel::~ContainerModel() {
     this->m_rubberBand->deleteLater();
     this->m_selectionModel->deleteLater();
-    qDeleteAll( this->workList );
 }
 
 /**
@@ -180,10 +170,6 @@ void ContainerModel::setIconSize( int iconSize ) {
         if ( entry->type() == Entry::Thumbnail || entry->type() == Entry::Executable )
             entry->setType( Entry::FileFolder );
     }
-
-    // recache images
-    qDebug() << "# ICON SIZE CHANGE";
-    this->determineMimeTypes();
 }
 
 /**
@@ -565,46 +551,53 @@ void ContainerModel::deselectCurrent() {
 /**
  * @brief ContainerModel::determineMimeTypes
  */
-void ContainerModel::determineMimeTypes() {
-    int y = 0;
-
-    emit this->stop();
-
-    this->future.cancel();
-    this->futureWatcher.cancel();
-    this->future.waitForFinished();
-    this->futureWatcher.waitForFinished();
-
-    foreach ( ASyncWorker *worker, this->workList ) {
-        if ( worker != NULL )
-            worker->deleteLater();
-    }
-    this->workList.clear();
-
+void ContainerModel::determineMimeTypes() {    
     if ( this->mode() != FileMode )
         return;
 
-    //qDeleteAll( this->workList );
     foreach ( Entry *entry, this->list ) {
         if ( entry->type() == Entry::FileFolder )
-            this->workList << new ASyncWorker( entry->info().absoluteFilePath(), y, this->iconSize());
-
-        y++;
+            m.cache->process( entry->info().absoluteFilePath());
     }
-
-    this->future = QtConcurrent::mapped( this->workList, determineMimeTypeAsync );
-    this->futureWatcher.setFuture( this->future );
 }
 
 /**
  * @brief ContainerModel::mimeTypeDetected
- * @param index
+ * @param fileName
+ * @param entry
  */
-void ContainerModel::mimeTypeDetected( int index ) {
+void ContainerModel::mimeTypeDetected( const QString &fileName, const DataEntry &data ) {
+    QMimeDatabase mdb;
+    int y, k;
+
+    if ( data.mimeType.isEmpty())
+        return;
+
+    // TODO: optimize (QMap or smth, filenames to indexes)
+    for ( y = 0; y < this->rowCount(); y++ ) {
+        for ( k = 0; k < this->columnCount(); k++ ) {
+            QModelIndex index;
+            Entry *entry;
+
+            index = this->index( y, k );
+            entry = this->indexToEntry( index );
+            if ( entry != NULL ) {
+                if ( !QString::compare( entry->info().absoluteFilePath(), fileName )) {
+                    qDebug() << "update" << fileName;
+                    entry->setIconPixmap( data.pixmapList.first());
+                    entry->setType( Entry::Thumbnail );
+                    entry->setMimeType( mdb.mimeTypeForName( data.mimeType ));
+                    this->parent()->update( index );
+                }
+            }
+        }
+    }
+#if 0
     Entry *entry;
     ASyncWorker *worker;
     int y;
     bool update = false;
+    QMimeDatabase mdb;
 
     if ( this->parent() == NULL )
         return;
@@ -612,22 +605,25 @@ void ContainerModel::mimeTypeDetected( int index ) {
     // update entry in view with corresponding icon or thumbnail
     worker = this->workList.at( index );
     entry = this->list.at( worker->index());
+
     if ( worker != NULL && entry != NULL ) {
+        if ( !worker->update())
+            return;
+
         if ( !QString::compare( worker->path(), entry->info().absoluteFilePath())) {
-            if ( worker->mimeType() != entry->mimeType()) {
-                entry->setMimeType( worker->mimeType());
+            DataEntry data;
+            QMimeType detectedMimeType;
+
+            detectedMimeType = mdb.mimeTypeForName( data.mimeType );
+            if ( detectedMimeType != entry->mimeType()) {
+                entry->setMimeType( detectedMimeType );
                 update = true;
             }
 
-            if ( worker->update()) {
-                if ( worker->pixmap().isNull()) {
-                    entry->setIconName( worker->iconName());
-                    entry->setType( Entry::Thumbnail );
-                } else {
-                    entry->setIconPixmap( worker->pixmap());
-                    entry->setType( Entry::Executable );
-                }
-
+            if ( data.pixmapList.count()) {
+                // for now, set single pixmap
+                entry->setIconPixmap( data.pixmapList.first());
+                entry->setType( Entry::Thumbnail );
                 update = true;
             }
 
@@ -637,86 +633,7 @@ void ContainerModel::mimeTypeDetected( int index ) {
             }
         }
     }
-}
-
-/**
- * @brief extractPixmap
- * @param path
- * @return
- */
-static QPixmap extractPixmap( const QString &path ) {
-    SHFILEINFO shellInfo;
-    QPixmap pixmap;
-
-    memset( &shellInfo, 0, sizeof( SHFILEINFO ));
-    if ( SUCCEEDED( SHGetFileInfo( reinterpret_cast<const wchar_t *>( PathUtils::toWindowsPath( path ).utf16()), 0, &shellInfo, sizeof( SHFILEINFO ), SHGFI_ICON | SHGFI_SYSICONINDEX | SHGFI_ICONLOCATION | SHGFI_USEFILEATTRIBUTES | SHGFI_LARGEICON ))) {
-        if ( shellInfo.hIcon ) {
-            if ( QSysInfo::windowsVersion() >= QSysInfo::WV_VISTA ) {
-                IImageList *imageList = NULL;
-
-                if ( SUCCEEDED( SHGetImageList( 0x2, { 0x46eb5926, 0x582e, 0x4017, { 0x9f, 0xdf, 0xe8, 0x99, 0x8d, 0xaa, 0x9, 0x50 }}, reinterpret_cast<void **>( &imageList )))) {
-                    HICON hIcon;
-
-                    if ( SUCCEEDED( imageList->GetIcon( shellInfo.iIcon, ILD_TRANSPARENT, &hIcon ))) {
-                        pixmap = QtWin::fromHICON(hIcon);
-                        DestroyIcon( hIcon );
-
-                        if ( !pixmap.isNull())
-                            return pixmap;
-                    }
-                }
-            }
-
-            pixmap = QtWin::fromHICON( shellInfo.hIcon );
-            DestroyIcon( shellInfo.hIcon );
-        }
-    }
-    return pixmap;
-}
-
-/**
- * @brief ContainerModel::determineMimeTypeAsync
- * @param worker
- * @return
- */
-ASyncWorker *ContainerModel::determineMimeTypeAsync( ASyncWorker *worker ) {
-    QMimeDatabase m;
-    QMimeType mimeType;
-    QPixmap pm;
-    QFileInfo info( worker->path());
-
-    // get mimetype from contents
-    if ( info.isSymLink())
-        mimeType = m.mimeTypeForFile( QFileInfo( info.symLinkTarget()), QMimeDatabase::MatchContent );
-    else
-        mimeType = m.mimeTypeForFile( QFileInfo( worker->path()), QMimeDatabase::MatchContent );
-
-    if ( mimeType.isValid())
-        worker->setMimeType( mimeType );
-    else
-        return worker;
-
-    // precache thumbnail
-    if ( worker->mimeType().iconName().startsWith( "image" )) {
-        pm = pixmapCache.pixmap( worker->path(), worker->iconSize(), true );
-        if ( pm.width() && pm.height()) {
-            worker->scheduleUpdate();
-            worker->setIconName( worker->path());
-        }
-    }
-
-    if ( !QString::compare( worker->mimeType().iconName(), "application-x-ms-dos-executable" )) {
-        qDebug() << "Extract" << worker->path();
-
-        // TODO: symlinks!!! (in entry path maybe?)
-        pm = extractPixmap( worker->path());
-        if ( pm.width() && pm.height()) {
-            worker->scheduleUpdate();
-            worker->setPixmap( pm );
-        }
-    }
-
-    return worker;
+#endif
 }
 
 /**

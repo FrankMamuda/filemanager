@@ -26,81 +26,111 @@
 #include <QPixmap>
 #include <QDir>
 #include <QHash>
+#include "filestream.h"
+
+//
+// classes
+//
+class Worker;
+class Indexer;
+struct Work;
 
 /**
  * @brief The CacheSystem namespace
  */
 namespace CacheSystem {
-    const unsigned int Version = 1;
-    const qint64 CacheBlockSize = 10485760;
+    static const quint8 Version = 2;
+    static const QString IndexFilename( "index.cache" );
+    static const QString DataFilename( "data.cache" );
 }
+
+/**
+ * @brief Hash
+ */
+typedef QPair<quint32, qint64> Hash;
+Q_DECLARE_METATYPE( Hash )
 
 /**
  * @brief The IndexEntry struct
  */
 struct IndexEntry {
+    IndexEntry( quint32 h = 0, qint64 s = 0, qint64 o = 0 ) : hash( h ), size( s ), offset( o ) {}
     quint32 hash;
     qint64 size;
-    quint8 index;
     qint64 offset;
 };
 
 // read/write operators
-inline static QDataStream &operator<<( QDataStream &out, const IndexEntry &e ) { out << e.hash << e.size << e.index << e.offset; return out; }
-inline static QDataStream &operator>>( QDataStream &in, IndexEntry &e ) { in >> e.hash >> e.size >> e.index >> e.offset; return in; }
+inline static QDataStream &operator<<( QDataStream &out, const IndexEntry &e ) { out << e.hash << e.size << e.offset; return out; }
+inline static QDataStream &operator>>( QDataStream &in, IndexEntry &e ) { in >> e.hash >> e.size >> e.offset; return in; }
 
 /**
  * @brief The DataEntry struct
  */
 struct DataEntry {
+    DataEntry( const QString &m = QString::null, QList<QPixmap> l = QList<QPixmap>()) : mimeType( m ), pixmapList( l ) {}
     QString mimeType;
     QList<QPixmap> pixmapList;
 };
+Q_DECLARE_METATYPE( DataEntry )
 
 // read/write operators
 inline static QDataStream &operator<<( QDataStream &out, const DataEntry &e ) { out << e.mimeType << e.pixmapList; return out; }
 inline static QDataStream &operator>>( QDataStream &in, DataEntry &e ) { in >> e.mimeType >> e.pixmapList; return in; }
 
 /**
+ * @brief The Work struct
+ */
+struct Work {
+    Work( const Hash &h = Hash(), const QString &f = QString::null, const DataEntry &d = DataEntry()) : hash( h ), fileName( f ), data( d ) {}
+    Hash hash;
+    QString fileName;
+    DataEntry data;
+};
+Q_DECLARE_METATYPE( Work )
+
+/**
  * @brief The Cache class
  */
 class Cache : public QObject {
     Q_OBJECT
-    Q_PROPERTY( QString path READ path WRITE setPath )
+    Q_PROPERTY( QString path READ path )
+    Q_PROPERTY( bool valid READ isValid )
 
 public:
     Cache( const QString &path );
-    ~Cache();
-    QString path() const { return this->m_path; }
-    int currentIndex() const { return this->m_currentIndex; }
+    ~Cache() { this->shutdown(); }
+    static quint32 checksum( const char *data, size_t len );
 
 public slots:
-    void setPath( const QString &path ) { this->m_path = path;}
-    bool write( quint32 hash, qint64 size, QString mimeType, QList<QPixmap>pixmapList );
-    bool writeChecksums();
-    bool isValid() const { return this->m_valid; }
-    bool contains( quint32 hash, qint64 size ) const;
-    IndexEntry indexAt( quint32 hash, qint64 size ) const;
-    DataEntry indexData( IndexEntry index ) const;
+    void process( const QString &fileName );
+
+signals:
+    void finished( const QString &fileName, const DataEntry &entry );
 
 private slots:
-    bool touch();
-    bool read();
-    bool readChecksums();
-    bool validateChecksums();
-    void setCurrentIndex();
-    QByteArray checksumForBlock( int blockId, bool &ok );
-    bool setChecksumForBlock( int blockId = 0 );
     void setValid( bool valid ) { this->m_valid = valid; }
-    void touchBlock( int blockId = 0 );
+    void shutdown();
+    void workDone( const Work &work );
+    void indexingDone( const QString &fileName, const Hash &hash );
 
 private:
+    QString path() const { return this->m_path; }
+    bool isValid() const { return this->m_valid; }
+    bool write( quint32 hash, qint64 size, QString mimeType, QList<QPixmap> pixmapList = QList<QPixmap>());
+    DataEntry cachedData( quint32 hash, qint64 size );
+    DataEntry cachedData( const Hash &hash ) { return this->cachedData( hash.first, hash.second ); }
+    bool contains( const Hash &hash ) const { return this->contains( hash.first, hash.second ); }
+    bool contains( quint32 hash, qint64 size ) const { return this->hash.contains( Hash( hash, size )); }
+    bool read();
+    FileStream index;
+    FileStream data;
     QString m_path;
-    int m_currentIndex;
-    QHash<QPair<quint32,qint64>, IndexEntry> indexHash;
-    QList<QByteArray> checksumList;
+    QHash<Hash, IndexEntry> hash;
     bool m_valid;
     QDir cacheDir;
+    Worker *worker;
+    Indexer *indexer;
 };
 
 #endif // CACHE_H

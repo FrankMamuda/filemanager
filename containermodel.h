@@ -34,6 +34,7 @@
 #include <QMimeType>
 #include <QItemSelectionModel>
 #include "common.h"
+#include "cache.h"
 
 //
 // classes
@@ -52,41 +53,6 @@ public:
     int textHeight;
 };
 Q_DECLARE_METATYPE( ContainerItem )
-
-/**
- * @brief The ASyncWorker class thread safe mime type detection implementation
- */
-class ASyncWorker : public QObject {
-    Q_OBJECT
-
-public:
-    ASyncWorker( const QString &path, int index, int iconSize )
-        : m_path( path ), m_index( index ), m_iconSize( iconSize ), m_update( false ) {}
-
-    QString path() const { return this->m_path; }
-    int index() const { return this->m_index; }
-    QMimeType mimeType() const { return this->m_mimeType; }
-    QString iconName() const { return this->m_iconName; }
-    int iconSize() const { return this->m_iconSize; }
-    bool update() const { return this->m_update; }
-    QPixmap pixmap() const { return this->m_pixmap; }
-
-    void setMimeType( const QMimeType &mimeType ) { QMutexLocker locker( &mutex ); this->m_mimeType = mimeType; }
-    void setIconName( const QString &iconName ) { QMutexLocker locker( &mutex ); this->m_iconName = iconName; }
-    void scheduleUpdate() { QMutexLocker locker( &mutex ); this->m_update = true; }
-    void setPath( const QString &path ) { this->m_path = path; }
-    void setPixmap( const QPixmap &pixmap ) { QMutexLocker locker( &mutex ); this->m_pixmap = pixmap; }
-
-private:
-    mutable QMutex mutex;
-    QString m_path;
-    int m_index;
-    QMimeType m_mimeType;
-    QString m_iconName;
-    int m_iconSize;
-    bool m_update;
-    QPixmap m_pixmap;
-};
 
 /**
  * @brief The ContainerModel class
@@ -168,10 +134,6 @@ public slots:
     void setIconSize( int iconSize = Common::DefaultListIconSize );
     void setMode( Modes mode = FileMode );
     void setVerticalOffset( int offset ) { this->m_verticalOffset = offset; }
-//    void setActiveContainer( Containers container );
-
-    // mime type detection related
-    void mimeTypeDetected( int index );
 
     // custom slots
     void buildList( const QString &path = QString::null );
@@ -188,9 +150,6 @@ public slots:
     void processMouseMove( QMouseEvent *e );
 
 private slots:
-    // mime type detection related
-    void determineMimeTypes();
-
     // other slots
     void displayProperties();
     void copy();
@@ -201,8 +160,9 @@ private slots:
     void rename();
     void selectCurrent();
     void deselectCurrent();
-    void quit();
     void restoreSelection();
+    void determineMimeTypes();
+    void mimeTypeDetected( const QString &fileName, const DataEntry &entry );
 
 private:
     QModelIndexList selection;
@@ -215,19 +175,13 @@ private:
     QPoint currentMousePos;
     QItemSelectionModel *m_selectionModel;
 
-    // mime type detection related
-    QList<ASyncWorker*> workList;
-    QList<ContainerItem>displayList;
-    static ASyncWorker *determineMimeTypeAsync( ASyncWorker *worker );
-    QFuture<ASyncWorker*> future;
-    QFutureWatcher<ASyncWorker*> futureWatcher;
-
     // properties
     Modes m_mode;
     int m_iconSize;
     int m_verticalOffset;
     bool m_selectionLocked;
     Containers m_container;
+    QList<ContainerItem>displayList;
 };
 
 Q_DECLARE_METATYPE( ContainerModel::Modes )

@@ -16,44 +16,38 @@
  *
  */
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef WORKER_H
+#define WORKER_H
 
 //
 // includes
 //
-#include <QList>
-#include <QSettings>
+#include <QThread>
+#include <QMutex>
+#include <QDebug>
+#include <QMimeType>
 #include "cache.h"
 
-//
-// classes
-//
-class MainWindow;
-class NotificationPanel;
-
 /**
- * @brief The Main class
+ * @brief The Worker class
  */
-class Main {
-public:
-    // constructor destructor
-    Main();
-    ~Main();
+class Worker : public QThread {
+    Q_OBJECT
 
-    // other members
-    MainWindow *gui() const { return this->m_gui; }
-    NotificationPanel *notifications() { return this->m_notifications; }
-    void setGui( MainWindow *gui ) { this->m_gui = gui; }
-    void setNotifications( NotificationPanel *notify ) { this->m_notifications = notify; }
-    QSettings *settings;
-    Cache *cache;
+public:
+
+public slots:
+    void addWork( const Work &work ) { this->workList << work; }
+
+signals:
+    void workDone( const Work & );
 
 private:
-    MainWindow *m_gui;
-    NotificationPanel *m_notifications;
+    void run();
+    DataEntry work( const QString &fileName );
+    QList<Work> workList;
+    static QPixmap generateThumbnail( const QString &path, int scale, bool &ok );
+    static QPixmap extractPixmap( const QString &path );
 };
 
-extern class Main m;
-
-#endif // MAIN_H
+#endif // WORKER_H
