@@ -37,15 +37,15 @@
       data.cache - thumbnail and mimetype cache data file
 
   CHANGELOG:
-    v2:
+    v3:
       implemented hash algorithm
       simplified blocked structure to a single data file
       optimized code
       introduced worker/indexer threads for hashing and mimetype detection
+      implemented in app
 
   TODOs:
-    further optimization of code
-    implement in app
+    further optimization of code (updates are SLOW)
     failsafe mode for corrupted/wrong version cache
 */
 
@@ -157,7 +157,7 @@ bool Cache::write( quint32 hash, qint64 size, QString mimeType, QList<QPixmap> p
 
     // check hash
     if ( hash == 0 || size == 0 || mimeType.length() == 0 ) {
-        qDebug() << this->tr( "Cache::write: zero length hash, size or mimeType" );
+       // qDebug() << this->tr( "Cache::write: zero length hash, size or mimeType" );
         return false;
     }
 
@@ -255,7 +255,25 @@ quint32 Cache::checksum( const char* data, size_t len ) {
  * @param fileName
  */
 void Cache::process( const QString &fileName ) {
+    if ( fileName.isEmpty() )
+        return;
+
     this->indexer->addWork( fileName );
+}
+
+/**
+ * @brief Cache::process
+ * @param fileList
+ */
+void Cache::process( const QStringList &fileList ) {
+    QStringList files;
+
+    foreach ( QString fileName, fileList ) {
+        if ( !fileName.isEmpty())
+            files << fileName;
+    }
+
+    this->indexer->addWork( files );
 }
 
 /**
@@ -277,6 +295,8 @@ void Cache::indexingDone( const QString &fileName, const Hash &hash ) {
  * @param fileName
  */
 void Cache::workDone( const Work &work ) {
+    //qDebug() << "finished" << work.fileName << work.hash << work.data.mimeType << work.data.pixmapList.count();
+
     // cache to disk
     this->write( work.hash.first, work.hash.second, work.data.mimeType, work.data.pixmapList );
 

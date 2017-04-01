@@ -96,9 +96,9 @@ void ContainerModel::reset( bool force ) {
         return;
 
     this->processEntries();
-    this->determineMimeTypes();
     this->beginResetModel();
     this->endResetModel();
+    this->determineMimeTypes();
     this->restoreSelection();
 }
 
@@ -109,6 +109,7 @@ void ContainerModel::softReset() {
     // do as little as possible
     this->beginResetModel();
     this->endResetModel();
+    this->determineMimeTypes();
     this->restoreSelection();
 }
 
@@ -555,9 +556,27 @@ void ContainerModel::determineMimeTypes() {
     if ( this->mode() != FileMode )
         return;
 
+
+    qDebug() << "mimetypes";
+
+    int y, k;
+    this->fileHash.clear();
+    for ( y = 0; y < this->rowCount(); y++ ) {
+        for ( k = 0; k < this->columnCount(); k++ ) {
+            QModelIndex index;
+            index = this->index( y, k );
+            Entry *entry;
+            entry = this->indexToEntry( index );
+
+            if ( entry != NULL )
+                this->fileHash.insert( entry->info().absoluteFilePath(), index );
+        }
+    }
+
     foreach ( Entry *entry, this->list ) {
-        if ( entry->type() == Entry::FileFolder )
+        if ( entry->type() == Entry::FileFolder && !entry->info().isDir()) {
             m.cache->process( entry->info().absoluteFilePath());
+        }
     }
 }
 
@@ -568,13 +587,31 @@ void ContainerModel::determineMimeTypes() {
  */
 void ContainerModel::mimeTypeDetected( const QString &fileName, const DataEntry &data ) {
     QMimeDatabase mdb;
-    int y, k;
+    int y;//, k;
 
     if ( data.mimeType.isEmpty())
         return;
 
     // TODO: optimize (QMap or smth, filenames to indexes)
-    for ( y = 0; y < this->rowCount(); y++ ) {
+    QList<QModelIndex> values = this->fileHash.values( fileName );
+    for ( y = 0; y < values.size(); y++ ) {
+        Entry *entry;
+
+        entry = this->indexToEntry( values.at( y ));
+        if ( entry != NULL ) {
+            if ( !QString::compare( entry->info().absoluteFilePath(), fileName )) {
+                if ( data.pixmapList.count()) {
+                    entry->setIconPixmap( data.pixmapList.first());
+                    entry->setType( Entry::Thumbnail );
+                }
+
+                entry->setMimeType( mdb.mimeTypeForName( data.mimeType ));
+                this->parent()->update( values.at( y ));
+            }
+        }
+    }
+
+    /*for ( y = 0; y < this->rowCount(); y++ ) {
         for ( k = 0; k < this->columnCount(); k++ ) {
             QModelIndex index;
             Entry *entry;
@@ -583,57 +620,17 @@ void ContainerModel::mimeTypeDetected( const QString &fileName, const DataEntry 
             entry = this->indexToEntry( index );
             if ( entry != NULL ) {
                 if ( !QString::compare( entry->info().absoluteFilePath(), fileName )) {
-                    qDebug() << "update" << fileName;
-                    entry->setIconPixmap( data.pixmapList.first());
-                    entry->setType( Entry::Thumbnail );
+                    if ( data.pixmapList.count()) {
+                        entry->setIconPixmap( data.pixmapList.first());
+                        entry->setType( Entry::Thumbnail );
+                    }
+
                     entry->setMimeType( mdb.mimeTypeForName( data.mimeType ));
                     this->parent()->update( index );
                 }
             }
         }
-    }
-#if 0
-    Entry *entry;
-    ASyncWorker *worker;
-    int y;
-    bool update = false;
-    QMimeDatabase mdb;
-
-    if ( this->parent() == NULL )
-        return;
-
-    // update entry in view with corresponding icon or thumbnail
-    worker = this->workList.at( index );
-    entry = this->list.at( worker->index());
-
-    if ( worker != NULL && entry != NULL ) {
-        if ( !worker->update())
-            return;
-
-        if ( !QString::compare( worker->path(), entry->info().absoluteFilePath())) {
-            DataEntry data;
-            QMimeType detectedMimeType;
-
-            detectedMimeType = mdb.mimeTypeForName( data.mimeType );
-            if ( detectedMimeType != entry->mimeType()) {
-                entry->setMimeType( detectedMimeType );
-                update = true;
-            }
-
-            if ( data.pixmapList.count()) {
-                // for now, set single pixmap
-                entry->setIconPixmap( data.pixmapList.first());
-                entry->setType( Entry::Thumbnail );
-                update = true;
-            }
-
-            if ( this->parent() != NULL && update ) {
-                for ( y = 0; y < this->columnCount(); y++ )
-                    this->parent()->update( this->index( worker->index(), y ));
-            }
-        }
-    }
-#endif
+    }*/
 }
 
 /**

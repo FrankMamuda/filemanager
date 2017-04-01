@@ -38,6 +38,7 @@ public:
 
 public slots:
     void addWork( const Work &work ) { this->workList << work; }
+    void addWork( QList<Work> list ) { this->workList << list; }
 
 signals:
     void workDone( const Work & );

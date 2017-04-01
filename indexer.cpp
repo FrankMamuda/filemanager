@@ -31,7 +31,7 @@ Hash Indexer::work( const QString &fileName ) {
     quint32 hash = 0;
     QFile file( fileName );
 
-    if ( file.size() <= 10485760 ) {
+    if ( /*file.isReadable() &*/ file.size() <= 10485760 ) {
         if ( file.open( QFile::ReadOnly )) {
             hash = Cache::checksum( file.readAll(), file.size());
             file.close();
@@ -52,6 +52,9 @@ void Indexer::run() {
             QString fileName;
             fileName = this->workList.takeLast();
             emit this->workDone( fileName, this->work( fileName ));
+        } else {
+            msleep( 1000 );
+         //   qDebug() << "indexer sleeping";
         }
     }
 }

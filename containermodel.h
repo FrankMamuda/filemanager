@@ -33,6 +33,7 @@
 #include <QFileInfo>
 #include <QMimeType>
 #include <QItemSelectionModel>
+#include <QMultiHash>
 #include "common.h"
 #include "cache.h"
 
@@ -182,6 +183,8 @@ private:
     bool m_selectionLocked;
     Containers m_container;
     QList<ContainerItem>displayList;
+
+    QMultiHash<QString, QModelIndex> fileHash;
 };
 
 Q_DECLARE_METATYPE( ContainerModel::Modes )

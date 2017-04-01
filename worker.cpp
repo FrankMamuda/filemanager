@@ -148,6 +148,9 @@ void Worker::run() {
             work = this->workList.takeLast();
             work.data = this->work( work.fileName );
             emit this->workDone( work );
+        } else {
+            msleep( 100 );
+          // qDebug() << "worker sleeping";
         }
     }
 }

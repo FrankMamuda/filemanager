@@ -104,6 +104,7 @@ public:
 
 public slots:
     void process( const QString &fileName );
+    void process( const QStringList &fileList );
 
 signals:
     void finished( const QString &fileName, const DataEntry &entry );

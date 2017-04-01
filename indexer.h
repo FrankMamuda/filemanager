@@ -38,6 +38,7 @@ public:
 
 public slots:
     void addWork( const QString &fileName ) { this->workList << fileName; }
+    void addWork( const QStringList &fileList ) { this->workList << fileList; }
 
 signals:
     void workDone( const QString &fileName, const Hash & );

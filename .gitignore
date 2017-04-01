@@ -3,3 +3,5 @@ icons/*
 *.cpp~
 *.h~
 *.autosave
+.cache/index.cache
+.cache/data.cache
