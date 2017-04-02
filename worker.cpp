@@ -27,6 +27,7 @@
 #include <shellapi.h>
 #include "worker.h"
 #include "cache.h"
+#include <Winuser.h>
 
 /**
  * @brief Worker::extractPixmap

@@ -27,6 +27,8 @@
 #include "pixmapcache.h"
 #include "notificationpanel.h"
 #include <QStyleFactory>
+#include <QThread>
+#include <QDebug>
 
 //
 // classes
@@ -55,8 +57,12 @@ int main( int argc, char *argv[] ) {
     qRegisterMetaType<Work>( "Work" );
 
     // init cache
+    qDebug() << QDir::currentPath();
+    QThread thread;
     m.cache = new Cache( QDir::currentPath() + "/.cache" );
-
+    m.cache->moveToThread( &thread );
+    thread.connect(qApp, SIGNAL(aboutToQuit()), SLOT(quit()));
+    thread.start();
 
     MainWindow w;
     NotificationPanel *notify;

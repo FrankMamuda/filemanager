@@ -273,6 +273,7 @@ void Cache::process( const QStringList &fileList ) {
             files << fileName;
     }
 
+    std::reverse( files.begin(), files.end());
     this->indexer->addWork( files );
 }
 

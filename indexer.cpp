@@ -53,7 +53,7 @@ void Indexer::run() {
             fileName = this->workList.takeLast();
             emit this->workDone( fileName, this->work( fileName ));
         } else {
-            msleep( 1000 );
+            msleep( 100 );
          //   qDebug() << "indexer sleeping";
         }
     }

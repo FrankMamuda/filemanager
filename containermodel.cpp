@@ -497,6 +497,8 @@ void ContainerModel::updateRubberBand() {
     if ( this->parent() == NULL )
         return;
 
+   // this->determineMimeTypes();
+
     if ( !this->rubberBand()->isHidden()) {
         origin = this->selectionOrigin;
         origin.setY( this->selectionOrigin.y() - this->verticalOffset());
@@ -557,7 +559,12 @@ void ContainerModel::determineMimeTypes() {
         return;
 
 
+    // TODO: must read files in batches?
     qDebug() << "mimetypes";
+
+    // use batched  QDirIterator? from a separate thread?
+    //
+    // abort pending thumbnailing on directory change?
 
     int y, k;
     this->fileHash.clear();
@@ -568,14 +575,18 @@ void ContainerModel::determineMimeTypes() {
             Entry *entry;
             entry = this->indexToEntry( index );
 
-            if ( entry != NULL )
+
+            // FIXME: is this even necesarry, bottleneck is opening dir and getting entrylist
+           // QRect rect = this->parent()->visualRect( index );
+            if ( entry != NULL /*&& this->parent()->viewport()->rect().intersects( rect )*/)
                 this->fileHash.insert( entry->info().absoluteFilePath(), index );
         }
     }
 
     foreach ( Entry *entry, this->list ) {
         if ( entry->type() == Entry::FileFolder && !entry->info().isDir()) {
-            m.cache->process( entry->info().absoluteFilePath());
+            if ( this->fileHash.contains( entry->info().absoluteFilePath()))
+                m.cache->process( entry->info().absoluteFilePath());
         }
     }
 }
