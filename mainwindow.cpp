@@ -130,7 +130,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
 
         infoList = QDir::drives();
         foreach ( QFileInfo driveInfo, infoList )
-            Bookmark::add( PathUtils::toUnixPath( driveInfo.absolutePath()), PathUtils::toUnixPath( driveInfo.absolutePath()), "drive-harddisk" );
+            Bookmark::add( PathUtils::toUnixPath( driveInfo.absolutePath()), PathUtils::toUnixPath( driveInfo.absolutePath()), Entry::getDriveIconName( driveInfo ));
 
         Bookmark::add( "Trash", "trash://", "user-trash" );
     }

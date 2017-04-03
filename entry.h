@@ -75,6 +75,7 @@ public:
     // other functions
     QPixmap pixmap( int scale ) const;
     ContainerModel *parent() const { return this->m_parent; }
+    static QString getDriveIconName( const QFileInfo &info );
 
 public slots:
     // properties

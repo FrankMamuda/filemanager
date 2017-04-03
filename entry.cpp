@@ -31,42 +31,6 @@
 #include <shellapi.h>
 
 /**
- * @brief Entry::extractIcon
- */
-/*
-void Entry::extractIcon() {
-    SHFILEINFO shellInfo;
-
-    memset( &shellInfo, 0, sizeof( SHFILEINFO ));
-    if ( SUCCEEDED( SHGetFileInfo( reinterpret_cast<const wchar_t *>( PathUtils::toWindowsPath( this->path()).utf16()), 0, &shellInfo, sizeof( SHFILEINFO ), SHGFI_ICON | SHGFI_SYSICONINDEX | SHGFI_ICONLOCATION | SHGFI_USEFILEATTRIBUTES | SHGFI_LARGEICON ))) {
-        if ( shellInfo.hIcon ) {
-            if ( QSysInfo::windowsVersion() >= QSysInfo::WV_VISTA ) {
-                IImageList *imageList = NULL;
-
-                if ( SUCCEEDED( SHGetImageList( 0x2, { 0x46eb5926, 0x582e, 0x4017, { 0x9f, 0xdf, 0xe8, 0x99, 0x8d, 0xaa, 0x9, 0x50 }}, reinterpret_cast<void **>( &imageList )))) {
-                    HICON hIcon;
-
-                    if ( SUCCEEDED( imageList->GetIcon( shellInfo.iIcon, ILD_TRANSPARENT, &hIcon ))) {
-                        QPixmap pixmap;
-                        pixmap = QtWin::fromHICON(hIcon);
-                        DestroyIcon( hIcon );
-
-                        if ( !pixmap.isNull()) {
-                            this->icon = pixmap;
-                            return;
-                        }
-                    }
-                }
-            }
-
-            this->icon = QtWin::fromHICON( shellInfo.hIcon );
-            DestroyIcon( shellInfo.hIcon );
-        }
-    }
-}
-*/
-
-/**
  * @brief Entry::Entry
  * @param type
  * @param parent
@@ -74,30 +38,50 @@ void Entry::extractIcon() {
  */
 Entry::Entry( EntryTypes type, const QFileInfo &fileInfo, ContainerModel *parent ) : m_parent( parent ), m_fileInfo( fileInfo ), m_type( type ), m_cut( false ) {
     this->reset();
+}
 
-    //if ( fileInfo.fileName().endsWith( ".exe" )) {
-    //    this->extractIcon();
+/**
+ * @brief Entry::getDriveIconName
+ * @param info
+ * @return
+ */
+QString Entry::getDriveIconName( const QFileInfo &info ) {
+    UINT type;
 
-        //this->shellIcons = extractlIcon( fileInfo.absoluteFilePath());
-        //qDebug() << "extracted" << this->shellIcons.count() << "shell icons";
+    type = GetDriveType(( wchar_t * )info.absoluteFilePath().utf16());
+    switch ( type ) {
+    case DRIVE_REMOVABLE:
+        return "drive-removable-media-usb";
+        break;
 
-        //foreach ( PixmapEntry pe, this->shellIcons )
-        //   qDebug() << "  " << pe.name;
-        //
-   // }
+    case DRIVE_REMOTE:
+        return "application-x-smb-server";
+        break;
 
+    case DRIVE_CDROM:
+        return "drive-optical";
+        break;
+
+    case DRIVE_RAMDISK:
+        return "media-flash";
+        break;
+
+    case DRIVE_FIXED:
+        return "drive-harddisk";
+        break;
+
+    case DRIVE_UNKNOWN:
+    case DRIVE_NO_ROOT_DIR:
+    default:
+        return "drive-removable-media";
+    }
 }
 
 /**
  * @brief reset
  */
 void Entry::reset() {
-    //QMimeDatabase m;
-
-    // first pass (by extension)
-    // TOO SLOW, we just cannot affort this
     this->m_mimeType = QMimeType();
-    //this->setMimeType( m.mimeTypeForFile( this->info(), QMimeDatabase::MatchExtension ));
 
     if ( this->isDirectory()) {
         switch ( this->type()) {
@@ -106,7 +90,7 @@ void Entry::reset() {
             break;
 
         case HardDisk:
-            this->setIconName( "drive-harddisk" );
+            this->setIconName( Entry::getDriveIconName( this->info()));
             break;
 
         case Root:

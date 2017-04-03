@@ -288,6 +288,7 @@ void Cache::indexingDone( const QString &fileName, const Hash &hash ) {
     }
 
     // done
+    // TODO: this could also be threaaded and async
     emit this->finished( fileName, this->cachedData( hash ));
 }
 
