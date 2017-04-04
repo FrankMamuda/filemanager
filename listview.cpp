@@ -49,7 +49,9 @@ ListView::ListView( QWidget* parent ) : QListView( parent ), m_model( new Contai
     this->setMouseTracking( true );
 
     // update selection rectangle on scroll bar changes
+    // TODO: disconnect
     this->connect( this->verticalScrollBar(), SIGNAL( valueChanged( int )), this, SLOT( updateRubberBand()));
+    this->connect( this->verticalScrollBar(), SIGNAL( valueChanged( int )), this->model(), SLOT( determineMimeTypes()));
 
     // NOTE: for some reason drops aren't accepted without the ugly drop indicator
     // while it is enabled, we do however abstain from painting it

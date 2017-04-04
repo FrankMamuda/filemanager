@@ -28,13 +28,14 @@
 #include "worker.h"
 #include "cache.h"
 #include <Winuser.h>
+#include <QRgb>
 
 /**
  * @brief Worker::extractPixmap
  * @param path
  * @return
  */
-QPixmap Worker::extractPixmap( const QString &path ) {
+QPixmap Worker::extractPixmap( const QString &path, bool jumbo = false ) {
     SHFILEINFO shellInfo;
     QPixmap pixmap;
 
@@ -43,13 +44,41 @@ QPixmap Worker::extractPixmap( const QString &path ) {
         if ( shellInfo.hIcon ) {
             if ( QSysInfo::windowsVersion() >= QSysInfo::WV_VISTA ) {
                 IImageList *imageList = NULL;
+                int index = 0x2;
 
-                if ( SUCCEEDED( SHGetImageList( 0x2, { 0x46eb5926, 0x582e, 0x4017, { 0x9f, 0xdf, 0xe8, 0x99, 0x8d, 0xaa, 0x9, 0x50 }}, reinterpret_cast<void **>( &imageList )))) {
+                if ( jumbo )
+                    index = 0x4;
+
+                if ( SUCCEEDED( SHGetImageList( index, { 0x46eb5926, 0x582e, 0x4017, { 0x9f, 0xdf, 0xe8, 0x99, 0x8d, 0xaa, 0x9, 0x50 }}, reinterpret_cast<void **>( &imageList )))) {
                     HICON hIcon;
 
                     if ( SUCCEEDED( imageList->GetIcon( shellInfo.iIcon, ILD_TRANSPARENT, &hIcon ))) {
-                        pixmap = QtWin::fromHICON(hIcon);
+                        pixmap = QtWin::fromHICON( hIcon );
                         DestroyIcon( hIcon );
+
+                        if ( jumbo ) {
+                            // NOTE: ugly hack
+                            //
+                            //        reasoning behind this is that jumbo icon returns
+                            //        256x256 icon even if the actual icon is 16x16
+                            //
+                            //        this essentially checks whether most 3/4 of the
+                            //        icon is blank
+                            //
+                            int y, k;
+                            bool bad = true;
+                            QImage image = pixmap.toImage();
+                            for ( y = 64; y < 256; y++ ) {
+                                for ( k = 64; k < 256; k++ ) {
+                                    if ( image.pixelColor( y, k ).alphaF() > 0.0f )
+                                        bad = false;
+                                }
+                            }
+
+                            if ( bad )
+                                return QPixmap();
+                        }
+
 
                         if ( !pixmap.isNull())
                             return pixmap;
@@ -102,13 +131,27 @@ QPixmap Worker::generateThumbnail( const QString &path, int scale, bool &ok ) {
 }
 
 /**
+ * @brief Worker::scalePixmap
+ * @param path
+ * @param scale
+ * @param ok
+ * @return
+ */
+QPixmap Worker::scalePixmap( const QPixmap &pixmap, float scale ) {
+    if ( pixmap.isNull() && !pixmap.width())
+        return pixmap;
+
+    return pixmap.scaled( pixmap.width() * scale, pixmap.height() * scale, Qt::IgnoreAspectRatio, Qt::SmoothTransformation );
+}
+
+/**
  * @brief Worker::work
  * @param fileName
  * @return
  */
 DataEntry Worker::work( const QString &fileName ) {
     DataEntry data;
-    QPixmap pixmap;
+    QPixmap pixmap, jumbo;
     QMimeDatabase db;
     QFileInfo info( fileName );
 
@@ -119,19 +162,35 @@ DataEntry Worker::work( const QString &fileName ) {
     if ( data.mimeType.startsWith( "image/" )) {
         bool ok;
         int pixmapSizes[4] = { 64, 48, 32, 16 };
-        int y;
+        //int y;
 
-        for ( y = 0; y < 4; y++ ) {
-            pixmap = Worker::generateThumbnail( info.absoluteFilePath(), pixmapSizes[y], ok );
-            if ( ok )
-                data.pixmapList << pixmap;
+        // TODO: regenerate from the largest, not the original image
+
+        //for ( y = 0; y < 4; y++ ) {
+        // FIXME: ugly code
+        QPixmap pixmap = Worker::generateThumbnail( info.absoluteFilePath(), pixmapSizes[0], ok );
+        if ( ok ) {
+            data.pixmapList << pixmap; // 64
+            data.pixmapList << Worker::scalePixmap( data.pixmapList.last(), 0.75f ); // 48
+            data.pixmapList << Worker::scalePixmap( data.pixmapList.last(), 0.75f ); // 32
+            data.pixmapList << Worker::scalePixmap( data.pixmapList.last(), 0.75f ); // 16
         }
+        //}
     }
 
+    // TODO: generate mipmap levels from jumbo icon
+    //
+    // ALL ICONS SHOULD ULTIMATELY HAVE 4 scaling levels 64 48 32 16
+    // FileInfo pane must extract full scale thumbnail on its own
+    //
     if ( !QString::compare( data.mimeType, "application/x-ms-dos-executable" ) && fileName.endsWith( ".exe", Qt::CaseInsensitive )) {
         pixmap = Worker::extractPixmap( info.absoluteFilePath());
         if ( !pixmap.isNull() && pixmap.width())
             data.pixmapList << pixmap;
+
+        jumbo = Worker::extractPixmap( info.absoluteFilePath(), true );
+        if ( !jumbo.isNull() && jumbo.width() > pixmap.width() && jumbo.height() > pixmap.height())
+            data.pixmapList << jumbo;
     }
 
     return data;
@@ -149,6 +208,9 @@ void Worker::run() {
             work = this->workList.takeLast();
             work.data = this->work( work.fileName );
             emit this->workDone( work );
+
+            // TODO: if this is the last one, emit finished and FLUSH TO DISK!!!
+
         } else {
             msleep( 100 );
           // qDebug() << "worker sleeping";

@@ -141,6 +141,7 @@ public slots:
     void setSelection( const QModelIndexList &selection );
     void processEntries();
     void updateRubberBand();
+    void determineMimeTypes();
 
     // conatiner event handlers
     void processDropEvent( const QModelIndex &index, const QPoint &pos );
@@ -162,7 +163,6 @@ private slots:
     void selectCurrent();
     void deselectCurrent();
     void restoreSelection();
-    void determineMimeTypes();
     void mimeTypeDetected( const QString &fileName, const DataEntry &entry );
 
 private:

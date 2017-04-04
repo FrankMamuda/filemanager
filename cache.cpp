@@ -43,10 +43,13 @@
       optimized code
       introduced worker/indexer threads for hashing and mimetype detection
       implemented in app
+    v4:
+      more optimizations (loading, caching)
 
   TODOs:
     further optimization of code (updates are SLOW)
     failsafe mode for corrupted/wrong version cache
+    store jumbo icons in separate file (no need to regeneate duplicates)
 */
 
 /**
@@ -170,6 +173,9 @@ bool Cache::write( quint32 hash, qint64 size, QString mimeType, QList<QPixmap> p
     this->index.seek( FileStream::End );
     this->index << indexEntry;
 
+    // add new enty to list
+    this->hash[Hash( indexEntry.hash, indexEntry.size )] = indexEntry;
+
     // create new data entry
     DataEntry dataEntry( mimeType, pixmapList );
     this->data.seek( FileStream::End );
@@ -278,17 +284,31 @@ void Cache::process( const QStringList &fileList ) {
 }
 
 /**
+ * @brief Cache::stop
+ */
+void Cache::stop() {
+    this->indexer->clear();
+    this->worker->clear();
+}
+
+/**
  * @brief Cache::indexingDone
  * @param fileName
  */
 void Cache::indexingDone( const QString &fileName, const Hash &hash ) {
     if ( !this->contains( hash )) {
         this->worker->addWork( Work( hash, fileName ));
+
+        if ( QFileInfo( fileName ).size() <= 10485760 )
+            qDebug() << "Cache::indexingDone: uncached" << fileName;
+
         return;
     }
 
     // done
-    // TODO: this could also be threaaded and async
+    // NOTE: this could also be threaded and async
+    //       no, not really. this is read froma single
+    //       file
     emit this->finished( fileName, this->cachedData( hash ));
 }
 
@@ -298,6 +318,12 @@ void Cache::indexingDone( const QString &fileName, const Hash &hash ) {
  */
 void Cache::workDone( const Work &work ) {
     //qDebug() << "finished" << work.fileName << work.hash << work.data.mimeType << work.data.pixmapList.count();
+
+    // TODO: add new indexes here!
+    /*IndexEntry indexEntry( work.);
+    indexEntry.;
+        this->hash[Hash( indexEntry.hash, indexEntry.size )] = indexEntry;
+    }*/
 
     // cache to disk
     this->write( work.hash.first, work.hash.second, work.data.mimeType, work.data.pixmapList );

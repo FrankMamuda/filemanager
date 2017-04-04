@@ -34,15 +34,8 @@
 #include "pathutils.h"
 #include "bookmark.h"
 #include "notificationpanel.h"
-#include <QInputDialog>
-
-#include <QtWin>
-#include <QSysInfo>
-#include <commctrl.h>
-#include <commoncontrols.h>
-#include <shellapi.h>
-
 #include "cache.h"
+#include <QInputDialog>
 
 /**
  * @brief ContainerModel::ContainerModel
@@ -171,6 +164,8 @@ void ContainerModel::setIconSize( int iconSize ) {
         if ( entry->type() == Entry::Thumbnail || entry->type() == Entry::Executable )
             entry->setType( Entry::FileFolder );
     }
+
+    this->determineMimeTypes();
 }
 
 /**
@@ -497,7 +492,9 @@ void ContainerModel::updateRubberBand() {
     if ( this->parent() == NULL )
         return;
 
-   // this->determineMimeTypes();
+    // FIXME: too frequent updates?
+    // updates on mouse move, must only update on scroll
+    //this->determineMimeTypes();
 
     if ( !this->rubberBand()->isHidden()) {
         origin = this->selectionOrigin;
@@ -560,11 +557,16 @@ void ContainerModel::determineMimeTypes() {
 
 
     // TODO: must read files in batches?
-    qDebug() << "mimetypes";
-
     // use batched  QDirIterator? from a separate thread?
     //
     // abort pending thumbnailing on directory change?
+
+    // TODO: detect >10mb files as match by extension
+
+    // stop indexing/generating thumbnails
+    m.cache->stop();
+
+    int z = 0;
 
     int y, k;
     this->fileHash.clear();
@@ -575,20 +577,23 @@ void ContainerModel::determineMimeTypes() {
             Entry *entry;
             entry = this->indexToEntry( index );
 
+            if ( entry->isUpdated() || entry->info().isDir() || entry->type() != Entry::FileFolder || entry->info().size() > 10485760 || entry->info().fileName().endsWith( ".cache" ))
+                continue;
 
-            // FIXME: is this even necesarry, bottleneck is opening dir and getting entrylist
-           // QRect rect = this->parent()->visualRect( index );
-            if ( entry != NULL /*&& this->parent()->viewport()->rect().intersects( rect )*/)
+            //if ( entry->)
+
+            // FIXME: is this even necessary, bottleneck is opening dir and getting entrylist
+            QRect rect = this->parent()->visualRect( index );
+            if ( entry != NULL && this->parent()->viewport()->rect().intersects( rect )) {
                 this->fileHash.insert( entry->info().absoluteFilePath(), index );
+                m.cache->process( entry->info().absoluteFilePath());
+                z++;
+            }
         }
     }
 
-    foreach ( Entry *entry, this->list ) {
-        if ( entry->type() == Entry::FileFolder && !entry->info().isDir()) {
-            if ( this->fileHash.contains( entry->info().absoluteFilePath()))
-                m.cache->process( entry->info().absoluteFilePath());
-        }
-    }
+    if ( z > 0 )
+        qDebug() << "detecting" << z << "mimetypes";
 }
 
 /**
@@ -611,12 +616,37 @@ void ContainerModel::mimeTypeDetected( const QString &fileName, const DataEntry 
         entry = this->indexToEntry( values.at( y ));
         if ( entry != NULL ) {
             if ( !QString::compare( entry->info().absoluteFilePath(), fileName )) {
-                if ( data.pixmapList.count()) {
-                    entry->setIconPixmap( data.pixmapList.first());
+                int index = this->iconSize() / 16;
+
+                if ( data.pixmapList.count()) {                    
+                    // FIXME: ugly code
+                    switch ( data.pixmapList.count()) {
+                    case 4:
+                        index = 4 - index;
+
+                        if ( index < 0 )
+                            index = 0;
+                        else if ( index > 3 )
+                            index = 3;
+
+                        entry->setIconPixmap( data.pixmapList.at( index ));
+                        break;
+
+                        // xlicon+jumbo
+                    case 2:
+                        entry->setIconPixmap( data.pixmapList.at( 1 ));
+                        break;
+
+                    default:
+                    case 1:
+                        entry->setIconPixmap( data.pixmapList.first());
+                        break;
+                    }
                     entry->setType( Entry::Thumbnail );
                 }
 
                 entry->setMimeType( mdb.mimeTypeForName( data.mimeType ));
+                entry->setUpdated( true );
                 this->parent()->update( values.at( y ));
             }
         }

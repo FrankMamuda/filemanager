@@ -26,9 +26,6 @@
 #include "pixmapcache.h"
 #include "containermodel.h"
 #include "pathutils.h"
-#include <commctrl.h>
-#include <commoncontrols.h>
-#include <shellapi.h>
 
 /**
  * @brief Entry::Entry
@@ -36,7 +33,7 @@
  * @param parent
  * @param fileInfo
  */
-Entry::Entry( EntryTypes type, const QFileInfo &fileInfo, ContainerModel *parent ) : m_parent( parent ), m_fileInfo( fileInfo ), m_type( type ), m_cut( false ) {
+Entry::Entry( EntryTypes type, const QFileInfo &fileInfo, ContainerModel *parent ) : m_parent( parent ), m_fileInfo( fileInfo ), m_type( type ), m_cut( false ), m_updated( false ) {
     this->reset();
 }
 
@@ -176,3 +173,7 @@ QPixmap Entry::pixmap( int scale ) const {
 
     return pixmapCache.pixmap( this->iconName(), scale );
 }
+
+
+
+

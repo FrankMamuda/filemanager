@@ -39,6 +39,7 @@ public:
 public slots:
     void addWork( const Work &work ) { this->workList << work; }
     void addWork( QList<Work> list ) { this->workList << list; }
+    void clear() { this->workList.clear(); }
 
 signals:
     void workDone( const Work & );
@@ -48,7 +49,8 @@ private:
     DataEntry work( const QString &fileName );
     QList<Work> workList;
     static QPixmap generateThumbnail( const QString &path, int scale, bool &ok );
-    static QPixmap extractPixmap( const QString &path );
+    static QPixmap extractPixmap( const QString &path , bool jumbo );
+    static QPixmap scalePixmap( const QPixmap &pixmap, float scale );
 };
 
 #endif // WORKER_H

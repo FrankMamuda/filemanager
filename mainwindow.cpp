@@ -54,7 +54,7 @@ GOALS:
     tabbled and multiview
     notifications on copy/link/delete etc. (for now use system?)
       custom copy/move dialogs (as notifications)
-    +/- thumbnail cache and cleanup
+    + thumbnail cache and cleanup
       (cache preview size limit)
       (cache preview store by md5 hash?)
     text previews just read the first few bytes
@@ -67,11 +67,11 @@ GOALS:
         with mime type database and create a list of default programs
     implement QFileSystemWatcher for file updates
     tooltips
-    +/- fix mimetype deletection performance regression
+    + fix mimetype deletection performance regression
     + fix crash on app exit while detecting mimetypes
     - notifications in categories - warning, error, info in status bar - not implementing this
-    extract windows icon from executables
-    cache to disk (crc32?):
+    + extract windows icon from executables
+    + cache to disk (crc32?):
         mimetype
         thumbnail (+extracted icon)
         (introduce a reasonable file size limit)
@@ -237,6 +237,9 @@ void MainWindow::updateInfoPanel() {
                     pixmap = QPixmap( entry->info().symLinkTarget());
                 else
                     pixmap = QPixmap( entry->info().absoluteFilePath());
+
+                if ( pixmap.isNull() || !pixmap.width())
+                    pixmap = entry->iconPixmap();
             } else
                 pixmap = pixmapCache.pixmap( entry->iconName(), 64 );
 

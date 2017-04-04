@@ -44,6 +44,8 @@ class Entry : public QObject {
     Q_PROPERTY( QString path READ path )
     Q_PROPERTY( bool directory READ isDirectory )
     Q_PROPERTY( bool cut WRITE setCut READ isCut )
+    Q_PROPERTY( bool updated READ isUpdated WRITE setUpdated )
+
 
 public:
     enum EntryTypes {
@@ -71,6 +73,7 @@ public:
     bool isDirectory() const;
     bool isCut() const { return this->m_cut; }
     QPixmap iconPixmap() const { return this->m_pixmap; }
+    bool isUpdated() const{ return m_updated;}
 
     // other functions
     QPixmap pixmap( int scale ) const;
@@ -84,6 +87,7 @@ public slots:
     void setIconName( const QString &iconName ) { this->m_iconName = iconName; }
     void setCut( bool cut = true ) { this->m_cut = cut; }
     void setIconPixmap( const QPixmap &pixmap ) { this->m_pixmap = pixmap; }
+    void setUpdated( bool updated ) { this->m_updated = updated; }
 
     // other slots
     void reset();
@@ -98,6 +102,7 @@ private:
     EntryTypes m_type;
     bool m_cut;
     QPixmap m_pixmap;
+    bool m_updated;
 };
 
 Q_DECLARE_METATYPE( Entry::EntryTypes )
