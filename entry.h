@@ -46,7 +46,6 @@ class Entry : public QObject {
     Q_PROPERTY( bool cut WRITE setCut READ isCut )
     Q_PROPERTY( bool updated READ isUpdated WRITE setUpdated )
 
-
 public:
     enum EntryTypes {
         FileFolder = 0,

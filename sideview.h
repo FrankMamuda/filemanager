@@ -31,6 +31,7 @@
 //
 // classes
 //
+class ListViewDelegate;
 class BookmarkModel;
 class ContainerStyle;
 
@@ -44,6 +45,7 @@ public:
     SideView( QWidget * );
     ~SideView();
     BookmarkModel *model() const { return this->m_model; }
+    ListViewDelegate *delegate() const { return this->m_delegate; }
 
 public slots:
     void setModel( BookmarkModel * );
@@ -65,6 +67,7 @@ private:
     BookmarkModel *m_model;
     QModelIndex index;
     ContainerStyle *m_style;
+    ListViewDelegate *m_delegate;
 };
 
 #endif // STORAGEVIEW_H

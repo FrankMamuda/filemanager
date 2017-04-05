@@ -43,8 +43,8 @@ SideView::SideView( QWidget* parent ) : QListView( parent ), m_model( new Bookma
     this->connect( this, SIGNAL( clicked( QModelIndex )), this, SLOT( processItemOpen( QModelIndex )));
 
     // set view delegate
-    // TODO: delete me
-    this->setItemDelegate( new ListViewDelegate( this ));
+    this->m_delegate = new ListViewDelegate( this );
+    this->setItemDelegate( this->delegate());
 
     // NOTE: for some reason drops aren't accepted without the ugly drop indicator
     // while it is enabled, we do however abstain from painting it
@@ -56,6 +56,8 @@ SideView::SideView( QWidget* parent ) : QListView( parent ), m_model( new Bookma
  * @brief SideView::~SideView
  */
 SideView::~SideView() {
+    this->disconnect( this, SIGNAL( clicked( QModelIndex )));
+    this->m_delegate->deleteLater();
     this->m_model->deleteLater();
     this->m_style->deleteLater();
 }

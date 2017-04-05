@@ -34,8 +34,6 @@
 class Worker : public QThread {
     Q_OBJECT
 
-public:
-
 public slots:
     void addWork( const Work &work ) { this->workList << work; }
     void addWork( QList<Work> list ) { this->workList << list; }

@@ -42,6 +42,7 @@ namespace CacheSystem {
     static const quint8 Version = 2;
     static const QString IndexFilename( "index.cache" );
     static const QString DataFilename( "data.cache" );
+    static const qint64 MaxFileSize = 10485760;
 }
 
 /**

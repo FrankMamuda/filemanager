@@ -298,17 +298,11 @@ void Cache::stop() {
 void Cache::indexingDone( const QString &fileName, const Hash &hash ) {
     if ( !this->contains( hash )) {
         this->worker->addWork( Work( hash, fileName ));
-
-        if ( QFileInfo( fileName ).size() <= 10485760 )
-            qDebug() << "Cache::indexingDone: uncached" << fileName;
-
+        qDebug() << "Cache::indexingDone: uncached" << fileName;
         return;
     }
 
     // done
-    // NOTE: this could also be threaded and async
-    //       no, not really. this is read froma single
-    //       file
     emit this->finished( fileName, this->cachedData( hash ));
 }
 
@@ -317,14 +311,6 @@ void Cache::indexingDone( const QString &fileName, const Hash &hash ) {
  * @param fileName
  */
 void Cache::workDone( const Work &work ) {
-    //qDebug() << "finished" << work.fileName << work.hash << work.data.mimeType << work.data.pixmapList.count();
-
-    // TODO: add new indexes here!
-    /*IndexEntry indexEntry( work.);
-    indexEntry.;
-        this->hash[Hash( indexEntry.hash, indexEntry.size )] = indexEntry;
-    }*/
-
     // cache to disk
     this->write( work.hash.first, work.hash.second, work.data.mimeType, work.data.pixmapList );
 

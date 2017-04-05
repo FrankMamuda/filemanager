@@ -177,7 +177,6 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->on_actionInfo_toggled( Variable::isEnabled( "mainWindow/infoPanelVisible" ));
 
     // FIXME/TODO: not universal
-    // TODO: disconnect
     this->connect( this->ui->listView->selectionModel(), SIGNAL( selectionChanged( QItemSelection, QItemSelection )), this, SLOT( updateInfoPanel()));
     this->connect( this->ui->tableView->selectionModel(), SIGNAL( selectionChanged( QItemSelection, QItemSelection )), this, SLOT( updateInfoPanel()));
 
@@ -185,6 +184,30 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->updateInfoPanel();
 
     this->ui->valueType->setAlignment( Qt::AlignCenter );
+}
+
+/**
+ * @brief MainWindow::~MainWindow
+ */
+MainWindow::~MainWindow() {
+    // get rid of ui
+    delete ui;
+
+    // sever connections
+    this->disconnect( this->historyManager(), SIGNAL( changed()));
+    this->disconnect( this->ui->listView->selectionModel(), SIGNAL( selectionChanged( QItemSelection, QItemSelection )));
+    this->disconnect( this->ui->tableView->selectionModel(), SIGNAL( selectionChanged( QItemSelection, QItemSelection )));
+    this->disconnect( this->actionViewGrid, SIGNAL( triggered( bool )));
+    this->disconnect( this->actionViewList, SIGNAL( triggered( bool )));
+    this->disconnect( this->actionViewDetails, SIGNAL( triggered( bool )));
+
+    // delete objects
+    this->m_historyManager->deleteLater();
+    this->viewModeMenu->deleteLater();
+    this->menuStyle->deleteLater();
+    this->actionViewGrid->deleteLater();
+    this->actionViewList->deleteLater();
+    this->actionViewDetails->deleteLater();
 }
 
 /**
@@ -231,12 +254,8 @@ void MainWindow::updateInfoPanel() {
         if ( model->selectionList.count() == 1 || ( model->container() == ContainerModel::TableContainer && model->selectionList.count() == 4 )) {
             entry = model->selectionList.first();
 
-            // TODO/FIXME: auto resolve symlinks by pointing absoluteFilePath to target?
             if ( entry->type() == Entry::Thumbnail ) {
-                if ( entry->info().isSymLink())
-                    pixmap = QPixmap( entry->info().symLinkTarget());
-                else
-                    pixmap = QPixmap( entry->info().absoluteFilePath());
+                pixmap = QPixmap( entry->path());
 
                 if ( pixmap.isNull() || !pixmap.width())
                     pixmap = entry->iconPixmap();
@@ -248,7 +267,6 @@ void MainWindow::updateInfoPanel() {
             sizeString = TextUtils::sizeToText( entry->info().size());
         } else {
             pixmap = pixmapCache.pixmap( "document-multiple", 64 );
-
             // TODO: use COLUMN COUNT as global constant
             if ( model->container() == ContainerModel::ListContainer )
                 fileName = this->tr( "%1 files" ).arg( model->selectionList.count());
@@ -310,7 +328,6 @@ void MainWindow::setCurrentPath( const QString &path, bool saveToHistory ) {
     } else {
         this->ui->actionUp->setEnabled( true );
 
-
         windowsPath = PathUtils::toWindowsPath( path );
 
         // handle symlinks
@@ -339,26 +356,6 @@ void MainWindow::setCurrentPath( const QString &path, bool saveToHistory ) {
 
     if ( saveToHistory )
         this->historyManager()->addItem( this->m_currentPath );
-}
-
-/**
- * @brief MainWindow::~MainWindow
- */
-MainWindow::~MainWindow() {
-    // get rid of ui
-    delete ui;
-
-    this->disconnect( this->historyManager(), SIGNAL( changed()));
-    this->m_historyManager->deleteLater();
-
-    this->viewModeMenu->deleteLater();
-    this->menuStyle->deleteLater();
-    this->actionViewGrid->deleteLater();
-    this->actionViewList->deleteLater();
-    this->actionViewDetails->deleteLater();
-    this->disconnect( this->actionViewGrid, SIGNAL( triggered( bool )));
-    this->disconnect( this->actionViewList, SIGNAL( triggered( bool )));
-    this->disconnect( this->actionViewDetails, SIGNAL( triggered( bool )));
 }
 
 /**

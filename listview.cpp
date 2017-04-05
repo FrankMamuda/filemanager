@@ -27,10 +27,6 @@
 #include <QScrollBar>
 #include "listviewdelegate.h"
 #include "containerstyle.h"
-//#include "main.h"
-//#include "mainwindow.h"
-
-// TODO: keep selection on update
 
 /**
  * @brief ListView::ListView
@@ -42,14 +38,14 @@ ListView::ListView( QWidget* parent ) : QListView( parent ), m_model( new Contai
     this->connect( this, SIGNAL( clicked( QModelIndex )), this->model(), SLOT( processItemOpen( QModelIndex )));
 
     // set view delegate
-    // TODO: delete me
-    this->setItemDelegate( new ListViewDelegate( this ));
+    this->m_delegate = new ListViewDelegate( this );
+    this->setItemDelegate( this->delegate());
 
     // enable mouse tracking
     this->setMouseTracking( true );
 
     // update selection rectangle on scroll bar changes
-    // TODO: disconnect
+    // also update icons in view
     this->connect( this->verticalScrollBar(), SIGNAL( valueChanged( int )), this, SLOT( updateRubberBand()));
     this->connect( this->verticalScrollBar(), SIGNAL( valueChanged( int )), this->model(), SLOT( determineMimeTypes()));
 
@@ -63,6 +59,9 @@ ListView::ListView( QWidget* parent ) : QListView( parent ), m_model( new Contai
  * @brief ListView::~ListView
  */
 ListView::~ListView() {
+    this->disconnect( this, SIGNAL( clicked( QModelIndex )));
+    this->disconnect( this->verticalScrollBar(), SIGNAL( valueChanged( int )));
+    this->disconnect( this->verticalScrollBar(), SIGNAL( valueChanged( int )));
     this->m_model->deleteLater();
     this->m_style->deleteLater();
 }

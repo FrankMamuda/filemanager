@@ -51,7 +51,7 @@ ContainerModel::ContainerModel( QAbstractItemView *view, ContainerModel::Modes m
     // create selection model
     this->m_selectionModel = new QItemSelectionModel( this );
 
-    // TODO: disconnect
+    // listen to cache updates
     this->connect( m.cache, SIGNAL( finished( QString, DataEntry )), this, SLOT( mimeTypeDetected( QString, DataEntry )));
 }
 
@@ -60,6 +60,7 @@ ContainerModel::ContainerModel( QAbstractItemView *view, ContainerModel::Modes m
  * @brief ContainerModel::~ContainerModel
  */
 ContainerModel::~ContainerModel() {
+    this->disconnect( m.cache, SIGNAL( finished( QString, DataEntry )));
     this->m_rubberBand->deleteLater();
     this->m_selectionModel->deleteLater();
 }
@@ -151,11 +152,6 @@ Entry *ContainerModel::indexToEntry( const QModelIndex &index ) const {
  * @param iconSize
  */
 void ContainerModel::setIconSize( int iconSize ) {
-    /*
-    FIXME
-    *if ( this->m_iconSize == iconSize )
-        return;*/
-
     this->m_iconSize = iconSize;
 
     foreach ( Entry *entry, this->list ) {
@@ -492,10 +488,6 @@ void ContainerModel::updateRubberBand() {
     if ( this->parent() == NULL )
         return;
 
-    // FIXME: too frequent updates?
-    // updates on mouse move, must only update on scroll
-    //this->determineMimeTypes();
-
     if ( !this->rubberBand()->isHidden()) {
         origin = this->selectionOrigin;
         origin.setY( this->selectionOrigin.y() - this->verticalOffset());
@@ -551,49 +543,43 @@ void ContainerModel::deselectCurrent() {
 /**
  * @brief ContainerModel::determineMimeTypes
  */
-void ContainerModel::determineMimeTypes() {    
+void ContainerModel::determineMimeTypes() {
+    QModelIndex index;
+    QRect rect;
+    Entry *entry;
+    int y, k, z = 0;
+
     if ( this->mode() != FileMode )
         return;
 
-
-    // TODO: must read files in batches?
-    // use batched  QDirIterator? from a separate thread?
-    //
-    // abort pending thumbnailing on directory change?
-
+    // TODO: must read files in batches via QDirIterator from a separate thread?
     // TODO: detect >10mb files as match by extension
 
-    // stop indexing/generating thumbnails
+    // clean up
     m.cache->stop();
-
-    int z = 0;
-
-    int y, k;
     this->fileHash.clear();
+
+    // build file hash
     for ( y = 0; y < this->rowCount(); y++ ) {
         for ( k = 0; k < this->columnCount(); k++ ) {
-            QModelIndex index;
             index = this->index( y, k );
-            Entry *entry;
             entry = this->indexToEntry( index );
 
-            if ( entry->isUpdated() || entry->info().isDir() || entry->type() != Entry::FileFolder || entry->info().size() > 10485760 || entry->info().fileName().endsWith( ".cache" ))
+            if ( entry->isUpdated() || entry->info().isDir() || entry->type() != Entry::FileFolder || entry->info().fileName().endsWith( ".cache" ))
                 continue;
 
-            //if ( entry->)
-
-            // FIXME: is this even necessary, bottleneck is opening dir and getting entrylist
-            QRect rect = this->parent()->visualRect( index );
+            rect = this->parent()->visualRect( index );
             if ( entry != NULL && this->parent()->viewport()->rect().intersects( rect )) {
-                this->fileHash.insert( entry->info().absoluteFilePath(), index );
-                m.cache->process( entry->info().absoluteFilePath());
+                this->fileHash.insert( entry->path(), index );
+                m.cache->process( entry->path());
                 z++;
             }
         }
     }
 
+    // report
     if ( z > 0 )
-        qDebug() << "detecting" << z << "mimetypes";
+        qDebug() << "about to detect mimetypes of" << z << "files";
 }
 
 /**
@@ -603,20 +589,23 @@ void ContainerModel::determineMimeTypes() {
  */
 void ContainerModel::mimeTypeDetected( const QString &fileName, const DataEntry &data ) {
     QMimeDatabase mdb;
-    int y;//, k;
+    int y, index;
 
     if ( data.mimeType.isEmpty())
         return;
 
-    // TODO: optimize (QMap or smth, filenames to indexes)
     QList<QModelIndex> values = this->fileHash.values( fileName );
+
+    if ( values.size() > 1 )
+        qDebug() << "multihash";
+
     for ( y = 0; y < values.size(); y++ ) {
         Entry *entry;
 
         entry = this->indexToEntry( values.at( y ));
         if ( entry != NULL ) {
-            if ( !QString::compare( entry->info().absoluteFilePath(), fileName )) {
-                int index = this->iconSize() / 16;
+            if ( !QString::compare( entry->path(), fileName )) {
+                index = this->iconSize() / 16;
 
                 if ( data.pixmapList.count()) {                    
                     // FIXME: ugly code
@@ -651,27 +640,6 @@ void ContainerModel::mimeTypeDetected( const QString &fileName, const DataEntry 
             }
         }
     }
-
-    /*for ( y = 0; y < this->rowCount(); y++ ) {
-        for ( k = 0; k < this->columnCount(); k++ ) {
-            QModelIndex index;
-            Entry *entry;
-
-            index = this->index( y, k );
-            entry = this->indexToEntry( index );
-            if ( entry != NULL ) {
-                if ( !QString::compare( entry->info().absoluteFilePath(), fileName )) {
-                    if ( data.pixmapList.count()) {
-                        entry->setIconPixmap( data.pixmapList.first());
-                        entry->setType( Entry::Thumbnail );
-                    }
-
-                    entry->setMimeType( mdb.mimeTypeForName( data.mimeType ));
-                    this->parent()->update( index );
-                }
-            }
-        }
-    }*/
 }
 
 /**

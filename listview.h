@@ -31,6 +31,7 @@
 //
 // classes
 //
+class ListViewDelegate;
 class ContainerModel;
 class ContainerStyle;
 
@@ -44,6 +45,7 @@ public:
     ListView( QWidget * );
     ~ListView();
     ContainerModel *model() const { return this->m_model; }
+    ListViewDelegate *delegate() const { return this->m_delegate; }
 
 public slots:
     // overrides
@@ -67,6 +69,7 @@ private slots:
 private:
     ContainerModel *m_model;
     ContainerStyle *m_style;
+    ListViewDelegate *m_delegate;
 };
 
 #endif // LISTVIEW_H

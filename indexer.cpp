@@ -31,11 +31,15 @@ Hash Indexer::work( const QString &fileName ) {
     quint32 hash = 0;
     QFile file( fileName );
 
-    if ( /*file.isReadable() &*/ file.size() <= 10485760 ) {
-        if ( file.open( QFile::ReadOnly )) {
-            hash = Cache::checksum( file.readAll(), file.size());
-            file.close();
-        }
+    if ( file.open( QFile::ReadOnly )) {
+
+        // read the first 10MB and assume files are identical
+        if ( file.size() >= CacheSystem::MaxFileSize )
+            hash = Cache::checksum( file.read( CacheSystem::MaxFileSize ).constData(), CacheSystem::MaxFileSize );
+        else
+            hash = Cache::checksum( file.readAll().constData(), file.size());
+
+        file.close();
     }
 
     return Hash( hash, file.size());
@@ -54,7 +58,7 @@ void Indexer::run() {
             emit this->workDone( fileName, this->work( fileName ));
         } else {
             msleep( 100 );
-         //   qDebug() << "indexer sleeping";
+            //   qDebug() << "indexer sleeping";
         }
     }
 }

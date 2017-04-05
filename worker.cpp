@@ -155,27 +155,32 @@ DataEntry Worker::work( const QString &fileName ) {
     QMimeDatabase db;
     QFileInfo info( fileName );
 
-    if ( info.size() > 10485760 )
-        return data;
+    // files larger than the current 10MB get handled differently:
+    //   - no thumbnail caching;
+    //   - checksum is generated for the first 10MB
+    //   - icon is extracted anyway
+    if ( info.size() > CacheSystem::MaxFileSize ) {
+        data.mimeType = db.mimeTypeForFile( info, QMimeDatabase::MatchExtension ).name();
+    } else {
+        data.mimeType = db.mimeTypeForFile( info, QMimeDatabase::MatchContent ).name();
+        if ( data.mimeType.startsWith( "image/" )) {
+            bool ok;
+            int pixmapSizes[4] = { 64, 48, 32, 16 };
+            //int y;
 
-    data.mimeType = db.mimeTypeForFile( info, QMimeDatabase::MatchContent ).name();
-    if ( data.mimeType.startsWith( "image/" )) {
-        bool ok;
-        int pixmapSizes[4] = { 64, 48, 32, 16 };
-        //int y;
+            // TODO: regenerate from the largest, not the original image
 
-        // TODO: regenerate from the largest, not the original image
-
-        //for ( y = 0; y < 4; y++ ) {
-        // FIXME: ugly code
-        QPixmap pixmap = Worker::generateThumbnail( info.absoluteFilePath(), pixmapSizes[0], ok );
-        if ( ok ) {
-            data.pixmapList << pixmap; // 64
-            data.pixmapList << Worker::scalePixmap( data.pixmapList.last(), 0.75f ); // 48
-            data.pixmapList << Worker::scalePixmap( data.pixmapList.last(), 0.75f ); // 32
-            data.pixmapList << Worker::scalePixmap( data.pixmapList.last(), 0.75f ); // 16
+            //for ( y = 0; y < 4; y++ ) {
+            // FIXME: ugly code
+            QPixmap pixmap = Worker::generateThumbnail( info.absoluteFilePath(), pixmapSizes[0], ok );
+            if ( ok ) {
+                data.pixmapList << pixmap; // 64
+                data.pixmapList << Worker::scalePixmap( data.pixmapList.last(), 0.75f ); // 48
+                data.pixmapList << Worker::scalePixmap( data.pixmapList.last(), 0.75f ); // 32
+                data.pixmapList << Worker::scalePixmap( data.pixmapList.last(), 0.75f ); // 16
+            }
+            //}
         }
-        //}
     }
 
     // TODO: generate mipmap levels from jumbo icon
