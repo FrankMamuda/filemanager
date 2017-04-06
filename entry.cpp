@@ -168,7 +168,7 @@ QPixmap Entry::pixmap( int scale ) const {
     //if ( this->info().fileName().endsWith( ".exe" ) && !this->icon.isNull())
     //    return this->icon;
 
-    if ( this->type() == Entry::Thumbnail )
+    if ( this->type() == Thumbnail || this->type() == Executable )
         return this->iconPixmap();
 
     return pixmapCache.pixmap( this->iconName(), scale );

@@ -34,6 +34,12 @@
 class Worker : public QThread {
     Q_OBJECT
 
+public:
+    static QPixmap generateThumbnail( const QString &path, int scale, bool &ok );
+    static QPixmap extractPixmap( const QString &path, bool &ok, bool jumbo = false );
+    static QPixmap scalePixmap( const QPixmap &pixmap, int scale );
+    static QList<QPixmap> generatePixmapLevels( const QPixmap &pixmap );
+
 public slots:
     void addWork( const Work &work ) { this->workList << work; }
     void addWork( QList<Work> list ) { this->workList << list; }
@@ -46,9 +52,6 @@ private:
     void run();
     DataEntry work( const QString &fileName );
     QList<Work> workList;
-    static QPixmap generateThumbnail( const QString &path, int scale, bool &ok );
-    static QPixmap extractPixmap( const QString &path , bool jumbo );
-    static QPixmap scalePixmap( const QPixmap &pixmap, float scale );
 };
 
 #endif // WORKER_H

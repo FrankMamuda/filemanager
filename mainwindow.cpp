@@ -34,6 +34,7 @@
 #include <QMimeDatabase>
 #include "textutils.h"
 #include "pixmapcache.h"
+#include "worker.h"
 
 /*
 GOALS:
@@ -170,20 +171,18 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     Variable::add( "mainWindow/bookmarkPanelVisible", true );
     Variable::add( "mainWindow/infoPanelVisible", true );
 
-    // TODO: fix - a little messy
+    // FIXME: a little messy
     this->ui->actionBookmarks->setChecked( Variable::isEnabled( "mainWindow/bookmarkPanelVisible" ));
     this->ui->actionInfo->setChecked( Variable::isEnabled( "mainWindow/infoPanelVisible" ));
     this->on_actionBookmarks_toggled( Variable::isEnabled( "mainWindow/bookmarkPanelVisible" ));
     this->on_actionInfo_toggled( Variable::isEnabled( "mainWindow/infoPanelVisible" ));
 
-    // FIXME/TODO: not universal
+    // connect info panel for updates
     this->connect( this->ui->listView->selectionModel(), SIGNAL( selectionChanged( QItemSelection, QItemSelection )), this, SLOT( updateInfoPanel()));
     this->connect( this->ui->tableView->selectionModel(), SIGNAL( selectionChanged( QItemSelection, QItemSelection )), this, SLOT( updateInfoPanel()));
 
     // update info panel
     this->updateInfoPanel();
-
-    this->ui->valueType->setAlignment( Qt::AlignCenter );
 }
 
 /**
@@ -254,8 +253,16 @@ void MainWindow::updateInfoPanel() {
         if ( model->selectionList.count() == 1 || ( model->container() == ContainerModel::TableContainer && model->selectionList.count() == 4 )) {
             entry = model->selectionList.first();
 
-            if ( entry->type() == Entry::Thumbnail ) {
-                pixmap = QPixmap( entry->path());
+            if ( entry->type() == Entry::Thumbnail || entry->type() == Entry::Executable ) {
+                // get jumbo icon
+                if ( entry->type() == Entry::Executable ) {
+                    bool ok;
+                    pixmap = Worker::extractPixmap( entry->path(), ok, true );
+
+                    if ( !ok )
+                        pixmap = QPixmap();
+                } else
+                    pixmap = QPixmap( entry->path());
 
                 if ( pixmap.isNull() || !pixmap.width())
                     pixmap = entry->iconPixmap();
@@ -353,6 +360,8 @@ void MainWindow::setCurrentPath( const QString &path, bool saveToHistory ) {
     }
 
     this->ui->statusBar->setText( this->tr( "%1 items" ).arg( this->ui->listView->model()->numItems()));
+
+    this->updateInfoPanel();
 
     if ( saveToHistory )
         this->historyManager()->addItem( this->m_currentPath );

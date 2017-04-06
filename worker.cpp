@@ -35,16 +35,21 @@
  * @param path
  * @return
  */
-QPixmap Worker::extractPixmap( const QString &path, bool jumbo = false ) {
+QPixmap Worker::extractPixmap( const QString &path, bool &ok, bool jumbo ) {
     SHFILEINFO shellInfo;
     QPixmap pixmap;
+    QImage image;
+    int index;
+    int y, k;
+
+    ok = false;
 
     memset( &shellInfo, 0, sizeof( SHFILEINFO ));
     if ( SUCCEEDED( SHGetFileInfo( reinterpret_cast<const wchar_t *>( QDir::toNativeSeparators( path ).utf16()), 0, &shellInfo, sizeof( SHFILEINFO ), SHGFI_ICON | SHGFI_SYSICONINDEX | SHGFI_ICONLOCATION | SHGFI_USEFILEATTRIBUTES | SHGFI_LARGEICON ))) {
         if ( shellInfo.hIcon ) {
             if ( QSysInfo::windowsVersion() >= QSysInfo::WV_VISTA ) {
                 IImageList *imageList = NULL;
-                int index = 0x2;
+                index = 0x2;
 
                 if ( jumbo )
                     index = 0x4;
@@ -56,6 +61,9 @@ QPixmap Worker::extractPixmap( const QString &path, bool jumbo = false ) {
                         pixmap = QtWin::fromHICON( hIcon );
                         DestroyIcon( hIcon );
 
+                        if ( pixmap.isNull())
+                            return QPixmap();
+
                         if ( jumbo ) {
                             // NOTE: ugly hack
                             //
@@ -65,32 +73,30 @@ QPixmap Worker::extractPixmap( const QString &path, bool jumbo = false ) {
                             //        this essentially checks whether most 3/4 of the
                             //        icon is blank
                             //
-                            int y, k;
-                            bool bad = true;
-                            QImage image = pixmap.toImage();
+                            image = pixmap.toImage();
                             for ( y = 64; y < 256; y++ ) {
                                 for ( k = 64; k < 256; k++ ) {
                                     if ( image.pixelColor( y, k ).alphaF() > 0.0f )
-                                        bad = false;
+                                        ok = true;
                                 }
                             }
-
-                            if ( bad )
-                                return QPixmap();
                         }
 
-
-                        if ( !pixmap.isNull())
+                        if ( !pixmap.isNull() && pixmap.width())
                             return pixmap;
                     }
                 }
             }
-
             pixmap = QtWin::fromHICON( shellInfo.hIcon );
             DestroyIcon( shellInfo.hIcon );
+
+            if ( !pixmap.isNull() && pixmap.width()) {
+                ok = true;
+                return pixmap;
+            }
         }
     }
-    return pixmap;
+    return QPixmap();
 }
 
 /**
@@ -137,11 +143,26 @@ QPixmap Worker::generateThumbnail( const QString &path, int scale, bool &ok ) {
  * @param ok
  * @return
  */
-QPixmap Worker::scalePixmap( const QPixmap &pixmap, float scale ) {
+QPixmap Worker::scalePixmap( const QPixmap &pixmap, int scale ) {
     if ( pixmap.isNull() && !pixmap.width())
         return pixmap;
 
-    return pixmap.scaled( pixmap.width() * scale, pixmap.height() * scale, Qt::IgnoreAspectRatio, Qt::SmoothTransformation );
+    return pixmap.scaled( scale, scale, Qt::IgnoreAspectRatio, Qt::SmoothTransformation );
+}
+
+/**
+ * @brief Worker::generatePixmapLevels
+ * @param pixmap
+ * @return
+ */
+QList<QPixmap> Worker::generatePixmapLevels( const QPixmap &pixmap ) {
+    int numPixmapLevels = 4, pixmapLevels[numPixmapLevels] = { 64, 48, 32, 16 }, y;
+    QList<QPixmap> list;
+
+    for ( y = 0; y < numPixmapLevels; y++ )
+        list << Worker::scalePixmap( pixmap, pixmapLevels[y] );
+
+    return list;
 }
 
 /**
@@ -165,37 +186,27 @@ DataEntry Worker::work( const QString &fileName ) {
         data.mimeType = db.mimeTypeForFile( info, QMimeDatabase::MatchContent ).name();
         if ( data.mimeType.startsWith( "image/" )) {
             bool ok;
-            int pixmapSizes[4] = { 64, 48, 32, 16 };
-            //int y;
-
-            // TODO: regenerate from the largest, not the original image
-
-            //for ( y = 0; y < 4; y++ ) {
-            // FIXME: ugly code
-            QPixmap pixmap = Worker::generateThumbnail( info.absoluteFilePath(), pixmapSizes[0], ok );
-            if ( ok ) {
-                data.pixmapList << pixmap; // 64
-                data.pixmapList << Worker::scalePixmap( data.pixmapList.last(), 0.75f ); // 48
-                data.pixmapList << Worker::scalePixmap( data.pixmapList.last(), 0.75f ); // 32
-                data.pixmapList << Worker::scalePixmap( data.pixmapList.last(), 0.75f ); // 16
-            }
-            //}
+            pixmap = Worker::generateThumbnail( info.absoluteFilePath(), 64, ok );
+            if ( ok )
+                data.pixmapList = Worker::generatePixmapLevels( pixmap );
         }
     }
 
-    // TODO: generate mipmap levels from jumbo icon
-    //
-    // ALL ICONS SHOULD ULTIMATELY HAVE 4 scaling levels 64 48 32 16
-    // FileInfo pane must extract full scale thumbnail on its own
-    //
+    // extract icon
     if ( !QString::compare( data.mimeType, "application/x-ms-dos-executable" ) && fileName.endsWith( ".exe", Qt::CaseInsensitive )) {
-        pixmap = Worker::extractPixmap( info.absoluteFilePath());
-        if ( !pixmap.isNull() && pixmap.width())
-            data.pixmapList << pixmap;
+        bool ok;
 
-        jumbo = Worker::extractPixmap( info.absoluteFilePath(), true );
-        if ( !jumbo.isNull() && jumbo.width() > pixmap.width() && jumbo.height() > pixmap.height())
-            data.pixmapList << jumbo;
+        // extract jumbo first
+        pixmap = Worker::extractPixmap( info.absoluteFilePath(), ok, true );
+        if ( ok )
+            data.pixmapList = Worker::generatePixmapLevels( pixmap );
+        else {
+            // then extra large icon
+            pixmap = Worker::extractPixmap( info.absoluteFilePath(), ok );
+
+            if ( ok )
+                data.pixmapList = Worker::generatePixmapLevels( pixmap );
+        }
     }
 
     return data;

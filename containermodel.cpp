@@ -48,9 +48,6 @@ ContainerModel::ContainerModel( QAbstractItemView *view, ContainerModel::Modes m
     if ( this->parent() != NULL )
         this->m_rubberBand = new QRubberBand( QRubberBand::Rectangle, this->parent()->viewport());
 
-    // create selection model
-    this->m_selectionModel = new QItemSelectionModel( this );
-
     // listen to cache updates
     this->connect( m.cache, SIGNAL( finished( QString, DataEntry )), this, SLOT( mimeTypeDetected( QString, DataEntry )));
 }
@@ -62,7 +59,6 @@ ContainerModel::ContainerModel( QAbstractItemView *view, ContainerModel::Modes m
 ContainerModel::~ContainerModel() {
     this->disconnect( m.cache, SIGNAL( finished( QString, DataEntry )));
     this->m_rubberBand->deleteLater();
-    this->m_selectionModel->deleteLater();
 }
 
 /**
@@ -521,6 +517,7 @@ void ContainerModel::selectCurrent() {
     if ( !( QApplication::keyboardModifiers() & Qt::ControlModifier ))
         this->selectionModel()->clearSelection();
 
+    this->parent()->setCurrentIndex( this->currentIndex );
     this->selectionModel()->select( this->currentIndex, QItemSelectionModel::Select | QItemSelectionModel::Rows );
 }
 
@@ -553,7 +550,6 @@ void ContainerModel::determineMimeTypes() {
         return;
 
     // TODO: must read files in batches via QDirIterator from a separate thread?
-    // TODO: detect >10mb files as match by extension
 
     // clean up
     m.cache->stop();
@@ -605,33 +601,21 @@ void ContainerModel::mimeTypeDetected( const QString &fileName, const DataEntry 
         entry = this->indexToEntry( values.at( y ));
         if ( entry != NULL ) {
             if ( !QString::compare( entry->path(), fileName )) {
-                index = this->iconSize() / 16;
+                if ( data.pixmapList.count() == 4 ) {
+                    index = this->iconSize() / 16;
+                    index = 4 - index;
 
-                if ( data.pixmapList.count()) {                    
-                    // FIXME: ugly code
-                    switch ( data.pixmapList.count()) {
-                    case 4:
-                        index = 4 - index;
+                    if ( index < 0 )
+                        index = 0;
+                    else if ( index > 3 )
+                        index = 3;
 
-                        if ( index < 0 )
-                            index = 0;
-                        else if ( index > 3 )
-                            index = 3;
+                    entry->setIconPixmap( data.pixmapList.at( index ));
 
-                        entry->setIconPixmap( data.pixmapList.at( index ));
-                        break;
-
-                        // xlicon+jumbo
-                    case 2:
-                        entry->setIconPixmap( data.pixmapList.at( 1 ));
-                        break;
-
-                    default:
-                    case 1:
-                        entry->setIconPixmap( data.pixmapList.first());
-                        break;
-                    }
-                    entry->setType( Entry::Thumbnail );
+                    if ( entry->info().fileName().endsWith( ".exe" ))
+                        entry->setType( Entry::Executable );
+                    else
+                        entry->setType( Entry::Thumbnail );
                 }
 
                 entry->setMimeType( mdb.mimeTypeForName( data.mimeType ));

@@ -122,7 +122,7 @@ public:
     int numItems() const { return this->list.count(); }
     QAbstractItemView *parent() const { return this->m_parent; }
     QRubberBand *rubberBand() const { return this->m_rubberBand; }
-    QItemSelectionModel *selectionModel() { return this->m_selectionModel; }
+    QItemSelectionModel *selectionModel() { return this->parent()->selectionModel(); }
 
     // TODO: make private?
     QList<Entry*> selectionList;
@@ -174,7 +174,6 @@ private:
     QRubberBand *m_rubberBand;
     QPoint selectionOrigin;
     QPoint currentMousePos;
-    QItemSelectionModel *m_selectionModel;
 
     // properties
     Modes m_mode;
