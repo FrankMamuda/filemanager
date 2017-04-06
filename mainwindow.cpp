@@ -123,19 +123,6 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->ui->actionUp->setIcon( QIcon::fromTheme( "go-up" ));
     this->ui->actionForward->setIcon( QIcon::fromTheme( "go-next" ));
 
-    // get bookmarks
-    if ( !Bookmark::count() ) {
-        QFileInfoList infoList;
-        Bookmark::add( "Root", "/", "folder-red" );
-        Bookmark::add( "Home", "/home", "user-home" );
-
-        infoList = QDir::drives();
-        foreach ( QFileInfo driveInfo, infoList )
-            Bookmark::add( PathUtils::toUnixPath( driveInfo.absolutePath()), PathUtils::toUnixPath( driveInfo.absolutePath()), Entry::getDriveIconName( driveInfo ));
-
-        Bookmark::add( "Trash", "trash://", "user-trash" );
-    }
-
     // setup view mode list
     this->viewModeMenu = new QMenu();
     this->menuStyle = new MenuStyle;
@@ -266,6 +253,12 @@ void MainWindow::updateInfoPanel() {
 
                 if ( pixmap.isNull() || !pixmap.width())
                     pixmap = entry->iconPixmap();
+
+                // fast resize twice the size of info panel
+                if ( pixmap.width() > this->ui->dockInfo->width() * 2 ) {
+                    qDebug() << "fast rescale";
+                    pixmap = pixmap.scaledToWidth( this->ui->dockInfo->width() * 2, Qt::FastTransformation );
+                }
             } else
                 pixmap = pixmapCache.pixmap( entry->iconName(), 64 );
 

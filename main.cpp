@@ -51,27 +51,28 @@ struct Work;
 int main( int argc, char *argv[] ) {
     QApplication a( argc, argv );
 
+    // report thread
+    qDebug() << "Strating app on thread" << QThread::currentThreadId();
+
     // register metatypes
     qRegisterMetaType<Hash>( "Hash" );
     qRegisterMetaType<DataEntry>( "DataEntry" );
     qRegisterMetaType<Work>( "Work" );
 
-    // init cache
-    qDebug() << QDir::currentPath();
+    // init cache, run it from a separate thread
     QThread thread;
     m.cache = new Cache( QDir::currentPath() + "/.cache" );
     m.cache->moveToThread( &thread );
-    thread.connect(qApp, SIGNAL(aboutToQuit()), SLOT(quit()));
+    thread.connect( qApp, SIGNAL( aboutToQuit()), SLOT(quit()));
     thread.start();
 
-    MainWindow w;
-    NotificationPanel *notify;
-    QDir iconDir( QDir::currentPath() + "/icons" );
-
-
     // set up icon theme
+    QDir iconDir( QDir::currentPath() + "/icons" );
     QIcon::setThemeSearchPaths( QStringList( iconDir.absolutePath()));
     QIcon::setThemeName( "oxygen" );
+
+    // create main window
+    MainWindow w;
 
     // style app
     QApplication::setStyle( QStyleFactory::create("Fusion"));
@@ -101,6 +102,7 @@ int main( int argc, char *argv[] ) {
     w.show();
 
     // create notification widget
+    NotificationPanel *notify;
     notify = new NotificationPanel( &w );
     notify->hide();
     m.setNotifications( notify );
@@ -111,7 +113,7 @@ int main( int argc, char *argv[] ) {
 
     // default icon
     if ( pixmapCache.pixmap( "application-x-zerosize", 48 ).width() == 0 )
-        QMessageBox::warning( &w, "Warning", "Invalid icon theme", QMessageBox::Ok );
+        QMessageBox::warning( &w, QObject::tr( "Warning" ), QObject::tr( "Invalid icon theme" ), QMessageBox::Ok );
 
     // return success
     return a.exec();

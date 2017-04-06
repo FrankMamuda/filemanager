@@ -63,6 +63,7 @@ public:
 class MainWindow : public QMainWindow {
     Q_OBJECT
     Q_PROPERTY( QString currentPath READ currentPath WRITE setCurrentPath )
+    friend class SideView;
 
 public:
     // constructor/destructor

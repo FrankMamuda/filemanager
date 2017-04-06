@@ -37,9 +37,9 @@ public:
     Indexer() {}
 
 public slots:
-    void addWork( const QString &fileName ) { this->workList << fileName; }
-    void addWork( const QStringList &fileList ) { this->workList << fileList; }
-    void clear() { this->workList.clear(); }
+    void addWork( const QString &fileName ) { QMutexLocker( &this->m_mutex ); this->workList << fileName; }
+    void addWork( const QStringList &fileList ) { QMutexLocker( &this->m_mutex ); this->workList << fileList; }
+    void clear() { QMutexLocker( &this->m_mutex ); this->workList.clear(); }
 
 signals:
     void workDone( const QString &fileName, const Hash & );
@@ -48,6 +48,7 @@ private:
     void run();
     Hash work( const QString &fileName );
     QStringList workList;
+    mutable QMutex m_mutex;
 };
 
 #endif // INDEXER_H

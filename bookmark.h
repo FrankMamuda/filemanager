@@ -22,27 +22,79 @@
 //
 // includes
 //
-#include "variable.h"
-#include <QStringList>
+#include "filestream.h"
+#include <QDir>
+#include <QPixmap>
+
+//
+// classes
+//
+class SideView;
 
 /**
- * @brief The BookMark class
+ * @brief The BookMarkSystem namespace
  */
-class Bookmark {
+namespace BookMarkSystem {
+    static const quint8 Version = 1;
+    static const QString DataFilename( "bookmarks" );
+}
+
+/**
+ * @brief The BookmarkEntry struct
+ */
+struct BookmarkEntry {
+    BookmarkEntry( const QString &a = QString::null, const QString &p = QString::null, const QPixmap &pm = QPixmap()) : alias( a ), path( p ), pixmap( pm ) {}
+    QString alias;
+    QString path;
+    QPixmap pixmap;
+};
+Q_DECLARE_METATYPE( BookmarkEntry )
+
+// read/write operators
+inline static QDataStream &operator<<( QDataStream &out, const BookmarkEntry &e ) { out << e.alias << e.path << e.pixmap; return out; }
+inline static QDataStream &operator>>( QDataStream &in, BookmarkEntry &e ) { in >> e.alias >> e.path >> e.pixmap; return in; }
+
+/**
+ * @brief The Bookmark class
+ */
+class Bookmark : public QObject {
+    Q_OBJECT
+    Q_PROPERTY( QString path READ path )
+    Q_PROPERTY( bool valid READ isValid )
+    friend class BookmarkModel;
+
 public:
     enum BookmarkData {
         Alias = 0,
         Path,
-        IconName
+        Pixmap
     };
     Q_ENUMS( BookmarkData )
 
-    static int count();
-    static void add( const QString &alias = QString::null, const QString &path = QString::null, const QString &iconName = QString::null, int insert = -1 );
-    static void setValue( int index, Bookmark::BookmarkData field, const QString &value );
-    static QString value( int index, Bookmark::BookmarkData field );
-};
+    Bookmark( const QString &path );
+    ~Bookmark() {}
+    int count() { return this->list.count(); }
+    void add( const QString &alias, const QString &path, const QPixmap &pixmap = QPixmap(), bool writeOut = true ) { this->add( BookmarkEntry( alias, path, pixmap ), writeOut ); }
+    void add( const BookmarkEntry &entry, bool writeOut = true );
+    void remove( int pos );
+    QString path() const { return this->m_path; }
+    bool isValid() const { return this->m_valid; }
+    void shutdown() { this->setValid( false ); this->data.close(); }
+    static QPixmap iconNameToPixmap( const QString &iconName );
+    QVariant value( int index, BookmarkData field );
+    void setValue( int index, BookmarkData field, const QVariant &value );
 
-Q_DECLARE_METATYPE( Bookmark::BookmarkData )
+private slots:
+    void write();
+    void read();
+    void setValid( bool valid ) { this->m_valid = valid; }
+
+private:
+    QList<BookmarkEntry> list;
+    QString m_path;
+    bool m_valid;
+    QDir bookmarkDir;
+    FileStream data;
+};
 
 #endif // BOOKMARK_H

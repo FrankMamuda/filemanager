@@ -46,6 +46,9 @@ public:
     bool toEnd() { return this->seek( End ); }
     bool setPos( qint64 position ) { return this->seek( Set, position ); }
     qint64 size() const { return this->m_file.size(); }
+    void resize( qint64 size ) { this->m_file.resize( size ); }
+    void clear() { this->resize( 0 ); }
+    void sync() { this->m_file.flush(); }
 
 private:
     QFile m_file;

@@ -41,9 +41,9 @@ public:
     static QList<QPixmap> generatePixmapLevels( const QPixmap &pixmap );
 
 public slots:
-    void addWork( const Work &work ) { this->workList << work; }
-    void addWork( QList<Work> list ) { this->workList << list; }
-    void clear() { this->workList.clear(); }
+    void addWork( const Work &work ) { QMutexLocker( &this->m_mutex ); this->workList << work; }
+    void addWork( QList<Work> list ) { QMutexLocker( &this->m_mutex ); this->workList << list; }
+    void clear() { QMutexLocker( &this->m_mutex ); this->workList.clear(); }
 
 signals:
     void workDone( const Work & );
@@ -52,6 +52,7 @@ private:
     void run();
     DataEntry work( const QString &fileName );
     QList<Work> workList;
+    mutable QMutex m_mutex;
 };
 
 #endif // WORKER_H

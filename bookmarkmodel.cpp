@@ -21,13 +21,30 @@
 //
 #include "bookmarkmodel.h"
 #include "bookmark.h"
+#include "sideview.h"
+
+/**
+ * @brief BookmarkModel::BookmarkModel
+ * @param parent
+ */
+BookmarkModel::BookmarkModel( QAbstractItemView *parent ) : m_parent( parent ) {
+    this->m_bookmarks = new Bookmark( QDir::currentPath() + "/.config" );
+}
+
+/**
+ * @brief BookmarkModel::~BookmarkModel
+ */
+BookmarkModel::~BookmarkModel() {
+    this->m_bookmarks->shutdown();
+    this->m_bookmarks->deleteLater();
+}
 
 /**
  * @brief BookmarkModel::rowCount
  * @return
  */
 int BookmarkModel::rowCount( const QModelIndex & ) const {
-    return Bookmark::count();
+    return this->bookmarks()->count();
 }
 
 /**
@@ -39,10 +56,10 @@ int BookmarkModel::rowCount( const QModelIndex & ) const {
 QVariant BookmarkModel::data( const QModelIndex &modelIndex, int role ) const {
     switch ( role )  {
     case Qt::DecorationRole:
-        return QIcon::fromTheme( Bookmark::value( modelIndex.row(), Bookmark::IconName )).pixmap( 32, 32 );
+        return this->bookmarks()->list.at( modelIndex.row()).pixmap;
 
     case Qt::DisplayRole:
-        return Bookmark::value( modelIndex.row(), Bookmark::Alias );
+        return this->bookmarks()->list.at( modelIndex.row()).alias;
     }
 
     return QVariant();

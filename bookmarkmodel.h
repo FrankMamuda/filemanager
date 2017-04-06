@@ -25,6 +25,11 @@
 #include <QAbstractListModel>
 #include <QAbstractItemView>
 
+//
+// classes
+//
+class Bookmark;
+
 /**
  * @brief The BookmarkModel class
  */
@@ -32,7 +37,8 @@ class BookmarkModel : public QAbstractListModel {
     Q_OBJECT
 
 public:
-    explicit BookmarkModel( QAbstractItemView *parent ) : m_listParent( parent ) {}
+    explicit BookmarkModel( QAbstractItemView *parent );
+    ~BookmarkModel();
 
     // overrides
     int rowCount( const QModelIndex & = QModelIndex()) const;
@@ -43,10 +49,14 @@ public:
     Qt::DropActions supportedDragActions() const { return Qt::CopyAction | Qt::MoveAction; }
 
     // parent widget
-    QAbstractItemView *listParent() const { return this->m_listParent; }
+    QAbstractItemView *parent() const { return this->m_parent; }
+
+    // bookmarks
+    Bookmark *bookmarks() const { return this->m_bookmarks; }
 
 private:
-    QAbstractItemView *m_listParent;
+    QAbstractItemView *m_parent;
+    Bookmark *m_bookmarks;
 };
 
 #endif // BOOKMARKMODEL_H

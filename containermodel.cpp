@@ -587,6 +587,12 @@ void ContainerModel::mimeTypeDetected( const QString &fileName, const DataEntry 
     QMimeDatabase mdb;
     int y, index;
 
+
+
+    // FIXME: this could be called from another thread
+    //        while the list is empty? could this be a potential crash
+    //        reason?
+
     if ( data.mimeType.isEmpty())
         return;
 

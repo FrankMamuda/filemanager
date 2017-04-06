@@ -218,6 +218,8 @@ DataEntry Worker::work( const QString &fileName ) {
 void Worker::run() {
     // enter event loop
     while ( !this->isInterruptionRequested()) {
+        QMutexLocker( &this->m_mutex );
+
         // LIFO - prioritizing most recent entries
         if ( !this->workList.isEmpty()) {
             Work work;
@@ -226,10 +228,8 @@ void Worker::run() {
             emit this->workDone( work );
 
             // TODO: if this is the last one, emit finished and FLUSH TO DISK!!!
-
         } else {
             msleep( 100 );
-          // qDebug() << "worker sleeping";
         }
     }
 }

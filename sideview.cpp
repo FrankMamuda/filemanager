@@ -55,7 +55,7 @@ SideView::SideView( QWidget* parent ) : QListView( parent ), m_model( new Bookma
 /**
  * @brief SideView::~SideView
  */
-SideView::~SideView() {
+SideView::~SideView() {    
     this->disconnect( this, SIGNAL( clicked( QModelIndex )));
     this->m_delegate->deleteLater();
     this->m_model->deleteLater();
@@ -108,7 +108,7 @@ void SideView::dropEvent( QDropEvent *e ) {
         return;
     }
 
-    Bookmark::add( info.fileName(), info.absoluteFilePath(), "inode-directory" );
+    this->model()->bookmarks()->add( info.fileName(), info.absoluteFilePath(), Bookmark::iconNameToPixmap( "inode-directory" ));
     this->model()->reset();
     e->accept();
 }
@@ -121,7 +121,7 @@ void SideView::processItemOpen( const QModelIndex &index ) {
     if ( QApplication::keyboardModifiers() & Qt::ControlModifier )
         return;
 
-    m.gui()->setCurrentPath( Bookmark::value( index.row(), Bookmark::Path ));
+    m.gui()->setCurrentPath( this->model()->bookmarks()->value( index.row(), Bookmark::Path ).toString());
 }
 
 /**
@@ -149,9 +149,9 @@ void SideView::renameBookmark() {
     bool ok;
     QString alias;
 
-    alias = QInputDialog::getText( m.gui(), this->tr( "Rename bookmark" ), this->tr( "New alias:" ), QLineEdit::Normal, Bookmark::value( this->currentIndex().row(), Bookmark::Alias ), &ok );
+    alias = QInputDialog::getText( m.gui(), this->tr( "Rename bookmark" ), this->tr( "New alias:" ), QLineEdit::Normal, this->model()->bookmarks()->value( this->currentIndex().row(), Bookmark::Alias ).toString(), &ok );
     if ( ok && !alias.isEmpty()) {
-        Bookmark::setValue( this->currentIndex().row(), Bookmark::Alias, alias );
+        this->model()->bookmarks()->setValue( this->currentIndex().row(), Bookmark::Alias, alias );
         this->model()->reset();
         //this->update( this->currentIndex());
     }
@@ -165,9 +165,9 @@ void SideView::changeBookmarkTarget() {
     bool ok;
     QString target;
 
-    target = QInputDialog::getText( m.gui(), this->tr( "Change bookmark target" ), this->tr( "New path:" ), QLineEdit::Normal, Bookmark::value( this->currentIndex().row(), Bookmark::Path ), &ok );
+    target = QInputDialog::getText( m.gui(), this->tr( "Change bookmark target" ), this->tr( "New path:" ), QLineEdit::Normal, this->model()->bookmarks()->value( this->currentIndex().row(), Bookmark::Path ).toString(), &ok );
     if ( ok && !target.isEmpty()) {
-        Bookmark::setValue( this->currentIndex().row(), Bookmark::Path, target );
+        this->model()->bookmarks()->setValue( this->currentIndex().row(), Bookmark::Path, target );
         this->model()->reset();
     }
 }
@@ -176,7 +176,8 @@ void SideView::changeBookmarkTarget() {
  * @brief SideView::removeBookmark
  */
 void SideView::removeBookmark() {
-    m.notifications()->push( NotificationPanel::Warning, "Bookmarks", "Bookmark removal not supported yet" );
+    this->model()->bookmarks()->remove( this->currentIndex().row());
+    this->model()->reset();
 }
 
 /**

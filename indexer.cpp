@@ -32,7 +32,6 @@ Hash Indexer::work( const QString &fileName ) {
     QFile file( fileName );
 
     if ( file.open( QFile::ReadOnly )) {
-
         // read the first 10MB and assume files are identical
         if ( file.size() >= CacheSystem::MaxFileSize )
             hash = Cache::checksum( file.read( CacheSystem::MaxFileSize ).constData(), CacheSystem::MaxFileSize );
@@ -51,6 +50,8 @@ Hash Indexer::work( const QString &fileName ) {
 void Indexer::run() {
     // enter event loop
     while ( !this->isInterruptionRequested()) {
+        QMutexLocker( &this->m_mutex );
+
         // LIFO - prioritizing most recent entries
         if ( !this->workList.isEmpty()) {
             QString fileName;
@@ -58,7 +59,6 @@ void Indexer::run() {
             emit this->workDone( fileName, this->work( fileName ));
         } else {
             msleep( 100 );
-            //   qDebug() << "indexer sleeping";
         }
     }
 }
