@@ -47,7 +47,6 @@
       more optimizations (loading, caching)
 
   TODOs:
-    further optimization of code (updates are SLOW)
     failsafe mode for corrupted/wrong version cache
     store jumbo icons in separate file (no need to regeneate duplicates)
 */

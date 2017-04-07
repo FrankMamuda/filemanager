@@ -39,6 +39,7 @@ class Main m;
 // defines
 //
 //#define DARK_PALETTE
+#define THREADED_CACHE
 struct Work;
 
 
@@ -60,11 +61,13 @@ int main( int argc, char *argv[] ) {
     qRegisterMetaType<Work>( "Work" );
 
     // init cache, run it from a separate thread
-    QThread thread;
     m.cache = new Cache( QDir::currentPath() + "/.cache" );
+#ifdef THREADED_CACHE
+    QThread thread;
     m.cache->moveToThread( &thread );
-    thread.connect( qApp, SIGNAL( aboutToQuit()), SLOT(quit()));
+    thread.connect( qApp, SIGNAL( aboutToQuit()), SLOT( quit()));
     thread.start();
+#endif
 
     // set up icon theme
     QDir iconDir( QDir::currentPath() + "/icons" );

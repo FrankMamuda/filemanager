@@ -544,7 +544,7 @@ void ContainerModel::determineMimeTypes() {
     QModelIndex index;
     QRect rect;
     Entry *entry;
-    int y, k, z = 0;
+    int y, k;//, z = 0;
 
     if ( this->mode() != FileMode )
         return;
@@ -568,14 +568,14 @@ void ContainerModel::determineMimeTypes() {
             if ( entry != NULL && this->parent()->viewport()->rect().intersects( rect )) {
                 this->fileHash.insert( entry->path(), index );
                 m.cache->process( entry->path());
-                z++;
+                //z++;
             }
         }
     }
 
     // report
-    if ( z > 0 )
-        qDebug() << "about to detect mimetypes of" << z << "files";
+    //if ( z > 0 )
+    //    qDebug() << "about to detect mimetypes of" << z << "files";
 }
 
 /**
@@ -587,20 +587,15 @@ void ContainerModel::mimeTypeDetected( const QString &fileName, const DataEntry 
     QMimeDatabase mdb;
     int y, index;
 
-
-
     // FIXME: this could be called from another thread
     //        while the list is empty? could this be a potential crash
     //        reason?
 
-    if ( data.mimeType.isEmpty())
+    // no updates for invalid mimetypes and non-active widgets
+    if ( data.mimeType.isEmpty() || !this->parent()->isVisible())
         return;
 
     QList<QModelIndex> values = this->fileHash.values( fileName );
-
-    if ( values.size() > 1 )
-        qDebug() << "multihash";
-
     for ( y = 0; y < values.size(); y++ ) {
         Entry *entry;
 

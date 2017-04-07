@@ -240,6 +240,9 @@ void MainWindow::updateInfoPanel() {
         if ( model->selectionList.count() == 1 || ( model->container() == ContainerModel::TableContainer && model->selectionList.count() == 4 )) {
             entry = model->selectionList.first();
 
+            if ( entry == NULL )
+                return;
+
             if ( entry->type() == Entry::Thumbnail || entry->type() == Entry::Executable ) {
                 // get jumbo icon
                 if ( entry->type() == Entry::Executable ) {
@@ -300,15 +303,19 @@ void MainWindow::closeEvent( QCloseEvent *e ) {
     QMainWindow::closeEvent( e );
 }
 
+// TODO: make static
 /**
  * @brief MainWindow::setCurrentPath
  * @param path
- * @param changeDir
+ * @param saveToHistory
  */
-// TODO: make static
 void MainWindow::setCurrentPath( const QString &path, bool saveToHistory ) {
     QDir directory;
     QString windowsPath, unixPath;
+
+    this->ui->tableView->model()->selectionList.clear();
+    this->ui->listView->model()->selectionList.clear();
+
 
     // build special file list for root
     if ( !QString::compare( path, "/" )) {
