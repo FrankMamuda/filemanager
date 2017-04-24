@@ -258,10 +258,8 @@ void MainWindow::updateInfoPanel() {
                     pixmap = entry->iconPixmap();
 
                 // fast resize twice the size of info panel
-                if ( pixmap.width() > this->ui->dockInfo->width() * 2 ) {
-                    qDebug() << "fast rescale";
+                if ( pixmap.width() > this->ui->dockInfo->width() * 2 )
                     pixmap = pixmap.scaledToWidth( this->ui->dockInfo->width() * 2, Qt::FastTransformation );
-                }
             } else
                 pixmap = pixmapCache.pixmap( entry->iconName(), 64 );
 

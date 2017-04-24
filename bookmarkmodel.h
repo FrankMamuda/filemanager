@@ -47,6 +47,7 @@ public:
     Qt::ItemFlags flags( const QModelIndex &index ) const;
     Qt::DropActions supportedDropActions() const { return Qt::CopyAction | Qt::MoveAction; }
     Qt::DropActions supportedDragActions() const { return Qt::CopyAction | Qt::MoveAction; }
+    QMimeData *mimeData( const QModelIndexList &indexes ) const;
 
     // parent widget
     QAbstractItemView *parent() const { return this->m_parent; }

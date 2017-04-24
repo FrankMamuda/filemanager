@@ -16,46 +16,35 @@
  *
  */
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef ICONFETCHER_H
+#define ICONFETCHER_H
 
 //
 // includes
 //
-#include <QList>
-#include <QSettings>
-
-//
-// classes
-//
-class MainWindow;
-class NotificationPanel;
-class Cache;
-class IconCache;
+#include <QThread>
+#include <QMutex>
+#include <QDebug>
+#include <QPixmap>
+#include "iconcache.h"
 
 /**
- * @brief The Main class
+ * @brief The IconFetcher class
  */
-class Main {
-public:
-    // constructor destructor
-    Main();
-    ~Main();
+class IconFetcher : public QThread {
+    Q_OBJECT
 
-    // other members
-    MainWindow *gui() const { return this->m_gui; }
-    NotificationPanel *notifications() { return this->m_notifications; }
-    void setGui( MainWindow *gui ) { this->m_gui = gui; }
-    void setNotifications( NotificationPanel *notify ) { this->m_notifications = notify; }
-    QSettings *settings;
-    Cache *cache;
-    IconCache *iconCache;
+public slots:
+    void clear() { QMutexLocker( &this->m_mutex ); this->workList.clear(); }
+    void addWork( const QString &iconName, quint8 iconScale );
+
+signals:
+    void workDone( const QString &, quint8, const QPixmap & );
 
 private:
-    MainWindow *m_gui;
-    NotificationPanel *m_notifications;
+    void run();
+    QList<IconIndex> workList;
+    mutable QMutex m_mutex;
 };
 
-extern class Main m;
-
-#endif // MAIN_H
+#endif // ICONFETCHER_H

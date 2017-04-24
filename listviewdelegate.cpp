@@ -74,15 +74,6 @@ void ListViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &opt
     viewMode = qobject_cast<QListView*>( this->parent())->viewMode();
     bookMarkView = qobject_cast<SideView*>( this->parent()) != NULL;
 
-
-    // the in-between line
-#if 0
-    if ( bookMarkView ) {
-        int lineY = qobject_cast<SideView*>( this->parent())->mapFromGlobal( QCursor::pos()).y();
-        painter->drawLine( 0, lineY, option.widget->width(), lineY );
-    }
-#endif
-
     //
     // STAGE 0: display hilight
     //
@@ -187,4 +178,12 @@ void ListViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &opt
         // paint it exactly the same as before, yet ignoring selections
         QStyledItemDelegate::paint( painter, optionNoSelection, index );
     }
+
+    // the in-between line
+#if 0
+    if ( bookMarkView ) {
+        int lineY = qobject_cast<SideView*>( this->parent())->mapFromGlobal( QCursor::pos()).y();
+        painter->drawLine( 0, lineY, option.widget->width(), lineY );
+    }
+#endif
 }

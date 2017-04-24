@@ -16,46 +16,51 @@
  *
  */
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef ICONBROWSER_H
+#define ICONBROWSER_H
 
 //
 // includes
 //
-#include <QList>
-#include <QSettings>
+#include <QDialog>
+#include <QResizeEvent>
+#include <QModelIndex>
 
 //
 // classes
 //
-class MainWindow;
-class NotificationPanel;
-class Cache;
-class IconCache;
+class IconModel;
 
 /**
- * @brief The Main class
+ * The Ui namespace
  */
-class Main {
-public:
-    // constructor destructor
-    Main();
-    ~Main();
+namespace Ui {
+class IconBrowser;
+}
 
-    // other members
-    MainWindow *gui() const { return this->m_gui; }
-    NotificationPanel *notifications() { return this->m_notifications; }
-    void setGui( MainWindow *gui ) { this->m_gui = gui; }
-    void setNotifications( NotificationPanel *notify ) { this->m_notifications = notify; }
-    QSettings *settings;
-    Cache *cache;
-    IconCache *iconCache;
+/**
+ * @brief The IconBrowser class
+ */
+class IconBrowser : public QDialog {
+    Q_OBJECT
+
+public:
+    explicit IconBrowser( QWidget *parent = 0 );
+    ~IconBrowser();
+    QPixmap selectedPixmap() const;
+
+private slots:
+    void on_iconView_clicked( const QModelIndex &index );
+
+    void on_pushButton_clicked();
+
+protected:
+    void resizeEvent( QResizeEvent *e );
 
 private:
-    MainWindow *m_gui;
-    NotificationPanel *m_notifications;
+    Ui::IconBrowser *ui;
+    IconModel *iconModel;
+    QModelIndex currentIndex;
 };
 
-extern class Main m;
-
-#endif // MAIN_H
+#endif // ICONBROWSER_H

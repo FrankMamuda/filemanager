@@ -55,21 +55,26 @@ bool FileStream::seek( FileStream::Origin origin, qint64 position ) {
         return false;
 
     // reset just in case
-    this->device()->reset();
+    //this->device()->reset();
+
+    if ( this->m_file.pos() < position ) {
+        if ( this->skipRawData( position - this->m_file.pos()) != -1 )
+            return true;
+        else
+            return false;
+    }
 
     switch ( origin ) {
     case Start:
-        this->m_file.seek( 0 );
-        break;
+        return this->device()->seek( 0 );
 
     case End:
-        this->m_file.seek( this->m_file.size());
-        break;
+        return this->device()->seek( this->m_file.size());
 
     case Set:
     default:
-        this->m_file.seek( position );
+        return this->device()->seek( position );
     }
 
-    return true;
+    return false;
 }

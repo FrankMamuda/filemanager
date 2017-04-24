@@ -32,6 +32,7 @@
 #include <QMimeData>
 #include "containerstyle.h"
 #include "notificationpanel.h"
+#include "iconbrowser.h"
 
 /**
  * @brief SideView::SideView
@@ -50,6 +51,13 @@ SideView::SideView( QWidget* parent ) : QListView( parent ), m_model( new Bookma
     // while it is enabled, we do however abstain from painting it
     this->m_style = new ContainerStyle( this->style());
     this->setStyle( this->m_style );
+
+    // TODO: set in UI
+    this->setDragEnabled( true );
+    this->setDropIndicatorShown( true );
+    this->setAcceptDrops( true );
+    this->setSelectionMode( QAbstractItemView::SingleSelection );
+    this->setDragDropMode( QAbstractItemView::InternalMove );
 }
 
 /**
@@ -92,7 +100,12 @@ void SideView::dropEvent( QDropEvent *e ) {
     QString path;
     QFileInfo info;
 
-    // TODO: get icon from mimetype? or .dekstop entry?
+    // detect bookmark drop
+    // handle differently since this is internal move
+    if ( e->mimeData()->text().startsWith( "bookmark" )) {
+        qDebug() << "drop bookmark";
+        return;
+    }
 
     if ( urls.count() > 1 ) {
         m.notifications()->push( NotificationPanel::Error, "Bookmarks", "Can add only one bookmark at a time" );
@@ -102,6 +115,7 @@ void SideView::dropEvent( QDropEvent *e ) {
     }
 
     path = urls.first().toLocalFile();
+
     info.setFile( path );
     if ( !info.isDir()) {
         m.notifications()->push( NotificationPanel::Error, "Bookmarks", "Cannot add files as bookmarks" );
@@ -153,7 +167,6 @@ void SideView::renameBookmark() {
     if ( ok && !alias.isEmpty()) {
         this->model()->bookmarks()->setValue( this->currentIndex().row(), Bookmark::Alias, alias );
         this->model()->reset();
-        //this->update( this->currentIndex());
     }
 }
 
@@ -184,5 +197,15 @@ void SideView::removeBookmark() {
  * @brief SideView::changeBookmarkIcon
  */
 void SideView::changeBookmarkIcon() {
-    m.notifications()->push( NotificationPanel::Warning, "Bookmarks", "Icon change not supported yet" );
+    IconBrowser ibDialog;
+
+    if ( ibDialog.exec() == QDialog::Accepted ) {
+        QPixmap pixmap;
+
+        pixmap = ibDialog.selectedPixmap();
+        if ( pixmap.isNull())
+            return;
+
+        this->model()->bookmarks()->setValue( this->currentIndex().row(), Bookmark::Pixmap, pixmap.scaledToHeight( 32, Qt::SmoothTransformation ));
+    }
 }

@@ -22,6 +22,7 @@
 #include "bookmarkmodel.h"
 #include "bookmark.h"
 #include "sideview.h"
+#include <QMimeData>
 
 /**
  * @brief BookmarkModel::BookmarkModel
@@ -77,4 +78,17 @@ Qt::ItemFlags BookmarkModel::flags( const QModelIndex &index ) const {
     // allow invalid indexes to put bookmarks "in-between"
     // TODO: currently not supported
     return Qt::ItemIsDropEnabled;
+}
+
+/**
+ * @brief BookmarkModel::mimeData
+ * @param indexes
+ * @return
+ */
+QMimeData *BookmarkModel::mimeData( const QModelIndexList &indexes ) const {
+    QMimeData *mimeData;
+    mimeData = QAbstractItemModel::mimeData( indexes );
+    mimeData->setText( "bookmark" );
+    mimeData->setObjectName( "bookmark" );
+    return mimeData;
 }

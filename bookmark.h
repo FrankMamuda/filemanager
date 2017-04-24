@@ -77,8 +77,6 @@ public:
     void add( const QString &alias, const QString &path, const QPixmap &pixmap = QPixmap(), bool writeOut = true ) { this->add( BookmarkEntry( alias, path, pixmap ), writeOut ); }
     void add( const BookmarkEntry &entry, bool writeOut = true );
     void remove( int pos );
-    QString path() const { return this->m_path; }
-    bool isValid() const { return this->m_valid; }
     void shutdown() { this->setValid( false ); this->data.close(); }
     static QPixmap iconNameToPixmap( const QString &iconName );
     QVariant value( int index, BookmarkData field );
@@ -90,6 +88,11 @@ private slots:
     void setValid( bool valid ) { this->m_valid = valid; }
 
 private:
+    Q_DISABLE_COPY( Bookmark )
+
+    bool isValid() const { return this->m_valid; }
+    QString path() const { return this->m_path; }
+
     QList<BookmarkEntry> list;
     QString m_path;
     bool m_valid;

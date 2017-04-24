@@ -165,15 +165,15 @@ bool Entry::isDirectory() const {
  * @return
  */
 QPixmap Entry::pixmap( int scale ) const {
-    //if ( this->info().fileName().endsWith( ".exe" ) && !this->icon.isNull())
-    //    return this->icon;
+    QPixmap pixmap;
 
     if ( this->type() == Thumbnail || this->type() == Executable )
-        return this->iconPixmap();
+        pixmap = this->iconPixmap();
+    else
+        pixmap = pixmapCache.pixmap( this->iconName(), scale );
 
-    return pixmapCache.pixmap( this->iconName(), scale );
+    if ( pixmap.isNull() || !pixmap.width())
+        return pixmapCache.pixmap( this->info().absoluteFilePath(), scale );
+
+    return pixmap;
 }
-
-
-
-

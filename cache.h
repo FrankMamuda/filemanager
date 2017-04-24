@@ -40,8 +40,8 @@ struct Work;
  */
 namespace CacheSystem {
     static const quint8 Version = 2;
-    static const QString IndexFilename( "index.cache" );
-    static const QString DataFilename( "data.cache" );
+    static const QString IndexFilename( "files.index" );
+    static const QString DataFilename( "files.data" );
     static const qint64 MaxFileSize = 10485760;
 }
 
@@ -118,9 +118,10 @@ private slots:
     void indexingDone( const QString &fileName, const Hash &hash );
 
 private:
+    Q_DISABLE_COPY( Cache )
     QString path() const { return this->m_path; }
     bool isValid() const { return this->m_valid; }
-    bool write( quint32 hash, qint64 size, QString mimeType, QList<QPixmap> pixmapList = QList<QPixmap>());
+    bool write( quint32 hash, qint64 size, const QString &mimeType, QList<QPixmap> pixmapList = QList<QPixmap>());
     DataEntry cachedData( quint32 hash, qint64 size );
     DataEntry cachedData( const Hash &hash ) { return this->cachedData( hash.first, hash.second ); }
     bool contains( const Hash &hash ) const { return this->contains( hash.first, hash.second ); }

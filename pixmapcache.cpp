@@ -22,6 +22,8 @@
 #include "pixmapcache.h"
 #include <QIcon>
 #include <QFileInfo>
+#include <QFileIconProvider>
+#include <QDebug>
 
 //
 // class: PixmapCache
@@ -56,13 +58,20 @@ QPixmap PixmapCache::pixmap( const QString &name, int scale, bool thumbnail ) {
         }
 
         // handle missing icons
-        if ( pixmap.width() == 0 ) {
+        if ( pixmap.isNull() || !pixmap.width()) {
             pixmap = QIcon::fromTheme( "application-x-zerosize" ).pixmap( scale, scale );
 
             // failsafe, in case something doesn't work as intended
             // NOTE: for some reason some icons fail to load
-            if ( pixmap.width() == 0 )
-                return QPixmap();
+            if ( pixmap.width() == 0 ) {
+                // try one more time with QFileIconProvider
+                QFileIconProvider p;
+                if ( pixmap.isNull() || !pixmap.width())
+                    pixmap = p.icon( QFileInfo( name )).pixmap( scale, scale );
+
+                if ( pixmap.isNull() || !pixmap.width())
+                    return QPixmap();
+            }
         }
 
         // generate thumbnail if necessary

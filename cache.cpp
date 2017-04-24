@@ -152,7 +152,7 @@ bool Cache::read() {
  * @param pixmapList
  * @return
  */
-bool Cache::write( quint32 hash, qint64 size, QString mimeType, QList<QPixmap> pixmapList ) {
+bool Cache::write( quint32 hash, qint64 size, const QString &mimeType, QList<QPixmap> pixmapList ) {
     // failsafe
     if ( !this->isValid())
         return false;
@@ -202,7 +202,7 @@ DataEntry Cache::cachedData( quint32 hash, qint64 size ) {
 }
 
 /**
- * @brief Cache::fail
+ * @brief Cache::shutdown
  */
 void Cache::shutdown() {
     this->setValid( false );

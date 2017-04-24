@@ -250,16 +250,10 @@
      <item>
       <widget class="SideView" name="sideView">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>96</width>
-         <height>16777215</height>
-        </size>
        </property>
        <property name="acceptDrops">
         <bool>true</bool>
@@ -273,14 +267,11 @@
        <property name="horizontalScrollBarPolicy">
         <enum>Qt::ScrollBarAlwaysOff</enum>
        </property>
+       <property name="sizeAdjustPolicy">
+        <enum>QAbstractScrollArea::AdjustToContents</enum>
+       </property>
        <property name="editTriggers">
         <set>QAbstractItemView::NoEditTriggers</set>
-       </property>
-       <property name="showDropIndicator" stdset="0">
-        <bool>true</bool>
-       </property>
-       <property name="dragEnabled">
-        <bool>true</bool>
        </property>
        <property name="dragDropMode">
         <enum>QAbstractItemView::DragDrop</enum>
@@ -288,17 +279,14 @@
        <property name="defaultDropAction">
         <enum>Qt::MoveAction</enum>
        </property>
-       <property name="selectionMode">
-        <enum>QAbstractItemView::SingleSelection</enum>
-       </property>
        <property name="iconSize">
         <size>
          <width>32</width>
          <height>32</height>
         </size>
        </property>
-       <property name="textElideMode">
-        <enum>Qt::ElideLeft</enum>
+       <property name="resizeMode">
+        <enum>QListView::Adjust</enum>
        </property>
        <property name="gridSize">
         <size>

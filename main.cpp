@@ -29,6 +29,8 @@
 #include <QStyleFactory>
 #include <QThread>
 #include <QDebug>
+#include "cache.h"
+#include "iconcache.h"
 
 //
 // classes
@@ -59,14 +61,24 @@ int main( int argc, char *argv[] ) {
     qRegisterMetaType<Hash>( "Hash" );
     qRegisterMetaType<DataEntry>( "DataEntry" );
     qRegisterMetaType<Work>( "Work" );
+    qRegisterMetaType<IconEntry>( "IconEntry" );
+    qRegisterMetaType<IconIndex>( "IconIndex" );
 
     // init cache, run it from a separate thread
     m.cache = new Cache( QDir::currentPath() + "/.cache" );
+    m.iconCache = new IconCache( QDir::currentPath() + "/.cache" );
 #ifdef THREADED_CACHE
-    QThread thread;
+    QThread thread, iconThread;
+
     m.cache->moveToThread( &thread );
     thread.connect( qApp, SIGNAL( aboutToQuit()), SLOT( quit()));
     thread.start();
+
+    //..m.iconCache->moveToThread( &iconThread );
+    //iconThread.connect( qApp, SIGNAL( aboutToQuit()), SLOT( quit()));
+    //iconThread.start();
+    m.iconCache->connect( qApp, SIGNAL( aboutToQuit()), SLOT( quit()));
+    m.iconCache->start();
 #endif
 
     // set up icon theme
@@ -134,4 +146,6 @@ Main::Main() {
  */
 Main::~Main() {
     delete this->settings;
+    this->cache->deleteLater();
+    this->iconCache->deleteLater();
 }

@@ -31,7 +31,11 @@ SOURCES += main.cpp\
     cache.cpp \
     indexer.cpp \
     worker.cpp \
-    filestream.cpp
+    filestream.cpp \
+    iconbrowser.cpp \
+    iconmodel.cpp \
+    iconcache.cpp \
+    iconfetcher.cpp
 
 HEADERS  += mainwindow.h \
     pixmapcache.h \
@@ -56,12 +60,17 @@ HEADERS  += mainwindow.h \
     cache.h \
     indexer.h \
     worker.h \
-    filestream.h
+    filestream.h \
+    iconbrowser.h \
+    iconmodel.h \
+    iconcache.h \
+    iconfetcher.h
     common.h
 
 FORMS    += mainwindow.ui \
     properties.ui \
-    notificationpanel.ui
+    notificationpanel.ui \
+    iconbrowser.ui
 
 RESOURCES += \
     resources.qrc
