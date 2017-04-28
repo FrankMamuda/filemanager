@@ -77,7 +77,8 @@ void IconBrowser::resizeEvent( QResizeEvent *e ) {
 void IconBrowser::on_pushButton_clicked() {
     QPixmap pixmap;
 
-    pixmap.load( QFileDialog::getOpenFileName( this, this->tr( "Open Image" ), QDir::currentPath(), this->tr( "Image Files (*.png *.jpg *.bmp)" )));
+    // TODO: in future, must use custom file dialog - we are a filemanager, aren't we?
+    pixmap.load( QFileDialog::getOpenFileName( this, this->tr( "Open Image" ), QDir::currentPath(), this->tr( "Image Files (*.png *.jpg *.bmp *.svg)" )));
     if ( !pixmap.isNull()) {
         this->iconModel->clear();
         this->iconModel->addIcon( "scaled to height", pixmap.scaledToHeight( 32, Qt::SmoothTransformation ));

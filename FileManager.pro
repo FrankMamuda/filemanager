@@ -35,7 +35,8 @@ SOURCES += main.cpp\
     iconbrowser.cpp \
     iconmodel.cpp \
     iconcache.cpp \
-    iconfetcher.cpp
+    iconfetcher.cpp \
+    fileutils.cpp
 
 HEADERS  += mainwindow.h \
     pixmapcache.h \
@@ -64,7 +65,8 @@ HEADERS  += mainwindow.h \
     iconbrowser.h \
     iconmodel.h \
     iconcache.h \
-    iconfetcher.h
+    iconfetcher.h \
+    fileutils.h
     common.h
 
 FORMS    += mainwindow.ui \
@@ -76,4 +78,4 @@ RESOURCES += \
     resources.qrc
 
 win32:RC_FILE = icon.rc
-
+win32:LIBS += -luser32

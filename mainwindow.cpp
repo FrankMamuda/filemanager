@@ -72,7 +72,7 @@ GOALS:
     + fix crash on app exit while detecting mimetypes
     - notifications in categories - warning, error, info in status bar - not implementing this
     + extract windows icon from executables
-    + cache to disk (crc32?):
+    + cache to disk:
         mimetype
         thumbnail (+extracted icon)
         (introduce a reasonable file size limit)

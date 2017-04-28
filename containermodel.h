@@ -160,6 +160,7 @@ private slots:
     void cut();
     void open();
     void rename();
+    void recycle();
     void selectCurrent();
     void deselectCurrent();
     void restoreSelection();

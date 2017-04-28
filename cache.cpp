@@ -297,7 +297,7 @@ void Cache::stop() {
 void Cache::indexingDone( const QString &fileName, const Hash &hash ) {
     if ( !this->contains( hash )) {
         this->worker->addWork( Work( hash, fileName ));
-        qDebug() << "Cache::indexingDone: uncached" << fileName;
+        //qDebug() << "Cache::indexingDone: uncached" << fileName;
         return;
     }
 

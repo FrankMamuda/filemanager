@@ -107,6 +107,7 @@ void IconModel::addIcon( const QString &iconName, const QPixmap &pixmap ) {
  * @param pixmap
  */
 void IconModel::iconFetched( const QString &iconName, quint8, const QPixmap &pixmap ) {
+    // TODO: must ignore when stopped
     this->addIcon( iconName, pixmap );
 }
 

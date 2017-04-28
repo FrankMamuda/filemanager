@@ -31,6 +31,7 @@
 #include <QDebug>
 #include "cache.h"
 #include "iconcache.h"
+#include "fileutils.h"
 
 //
 // classes
@@ -129,6 +130,9 @@ int main( int argc, char *argv[] ) {
     // default icon
     if ( pixmapCache.pixmap( "application-x-zerosize", 48 ).width() == 0 )
         QMessageBox::warning( &w, QObject::tr( "Warning" ), QObject::tr( "Invalid icon theme" ), QMessageBox::Ok );
+
+    // test
+    //FileUtils::copy2( "/c/Private/zzz.xcf", "/c/Private/Downloads" );
 
     // return success
     return a.exec();

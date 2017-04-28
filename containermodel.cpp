@@ -692,6 +692,8 @@ void ContainerModel::processContextMenu( const QModelIndex &index, const QPoint 
     menu.addAction( "Copy", this, SLOT( copy()));
     menu.addAction( "Paste", this, SLOT( paste()));
     menu.addSeparator();
+    menu.addAction( "Recycle", this, SLOT( recycle()));
+    menu.addSeparator();
     menu.addAction( "Rename", this, SLOT( rename()));
     menu.addSeparator();
     menu.addAction( "Properties", this, SLOT( displayProperties()));
@@ -798,6 +800,13 @@ void ContainerModel::rename() {
     if ( ok && !fileName.isEmpty() && QString::compare( current, fileName )) {
         qDebug() << "rename simulation from" << current << "to" << fileName;
     }
+}
+
+/**
+ * @brief ContainerModel::recycle
+ */
+void ContainerModel::recycle() {
+
 }
 
 /**

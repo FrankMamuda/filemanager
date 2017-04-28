@@ -82,8 +82,12 @@ QPixmap Worker::extractPixmap( const QString &path, bool &ok, bool jumbo ) {
                             }
                         }
 
-                        if ( !pixmap.isNull() && pixmap.width())
+                        if ( !pixmap.isNull() && pixmap.width()) {
+                            if ( !jumbo )
+                                ok = true;
+
                             return pixmap;
+                        }
                     }
                 }
             }
@@ -156,7 +160,8 @@ QPixmap Worker::scalePixmap( const QPixmap &pixmap, int scale ) {
  * @return
  */
 QList<QPixmap> Worker::generatePixmapLevels( const QPixmap &pixmap ) {
-    int numPixmapLevels = 4, pixmapLevels[numPixmapLevels] = { 64, 48, 32, 16 }, y;
+    const int numPixmapLevels = 4;
+    int pixmapLevels[numPixmapLevels] = { 64, 48, 32, 16 }, y;
     QList<QPixmap> list;
 
     for ( y = 0; y < numPixmapLevels; y++ )
@@ -172,7 +177,7 @@ QList<QPixmap> Worker::generatePixmapLevels( const QPixmap &pixmap ) {
  */
 DataEntry Worker::work( const QString &fileName ) {
     DataEntry data;
-    QPixmap pixmap, jumbo;
+    QPixmap pixmap;
     QMimeDatabase db;
     QFileInfo info( fileName );
 
