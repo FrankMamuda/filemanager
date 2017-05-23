@@ -29,12 +29,13 @@
 #include "main.h"
 #include "bookmark.h"
 #include "notificationpanel.h"
-#include <QStatusBar>
 #include "history.h"
 #include <QMimeDatabase>
 #include "textutils.h"
 #include "pixmapcache.h"
 #include "worker.h"
+#include <windows.h>
+#include <dwmapi.h>
 
 /*
 GOALS:
@@ -83,7 +84,7 @@ GOALS:
  * @brief MainWindow::MainWindow
  * @param parent
  */
-MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::MainWindow ), m_currentPath( QDir::currentPath()) {
+MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::MainWindow ), m_currentPath( QDir::currentPath()), gesture( NoGesture ), currentGrabArea( NoArea ) {
     ViewModes viewMode;
     QSize size;
 
@@ -96,7 +97,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
 
     // style docks
     this->setStyleSheet( "QDockWidget::title { background-color: transparent; text-align: center; }" );
-    this->ui->dockPath->setTitleBarWidget( new QWidget());
+    //this->ui->dockPath->setTitleBarWidget( new QWidget());
     this->ui->dockStatus->setTitleBarWidget( new QWidget());
 
     // make history!
@@ -168,8 +169,228 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->connect( this->ui->listView->selectionModel(), SIGNAL( selectionChanged( QItemSelection, QItemSelection )), this, SLOT( updateInfoPanel()));
     this->connect( this->ui->tableView->selectionModel(), SIGNAL( selectionChanged( QItemSelection, QItemSelection )), this, SLOT( updateInfoPanel()));
 
+
+
+    // ==================================================
+    // NOTE: lots of UI hacks for desired view
+    // FIXME: delete!
+    QMainWindow *window = new QMainWindow();
+    window->addToolBar( this->ui->mainToolBar );
+    window->addToolBarBreak();
+    window->addToolBar( this->ui->navigationToolbar );
+    window->setContentsMargins( 0, 0, 0, 0 );
+    this->ui->navigationToolbar->addWidget( this->ui->pathEdit );
+    this->ui->mainToolBar->setStyleSheet( "QToolBar { background: transparent; border: none; }" );
+    this->ui->navigationToolbar->setStyleSheet( "QToolBar { background: transparent; border: none; }" );
+    this->ui->dockPath->setTitleBarWidget( window );
+    this->ui->dockPath->setMinimumHeight( 64 );
+
+    // make sidebar dark
+    this->ui->dockBookmarks->setStyleSheet( "QDockWidget { background: #353535; }" );
+    this->ui->dockBookmarksContents->setStyleSheet( "QWidget { background: #353535; }" );
+    this->ui->sideView->setStyleSheet( "QListView { background: #353535; color: #8c8c8c; } QListWidget::item { color: #8c8c8c; }" );
+
+    this->ui->dockBookmarks->setTitleBarWidget( new QWidget());
+    //this->ui->sideView->setStyleSheet( "QListView { color: #8c8c8c; background: transparent; } " );
+    //this->ui->sideView->setAutoFillBackground( false );
+    this->connect( this->ui->actionClose, SIGNAL( triggered( bool )), qApp, SLOT( quit()));
+
+    // ==================================================
+
+
+
+    // remove frame
+    this->removeFrame();
+
     // update info panel
     this->updateInfoPanel();
+}
+
+/**
+ * @brief MainWindow::eventFilter
+ * @param object
+ * @param event
+ * @return
+ */
+bool MainWindow::eventFilter( QObject *object, QEvent *event ) {
+    QMouseEvent *mouseEvent;
+    int y;
+
+    // filter mouse events
+    if ( event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease ||
+         event->type() == QEvent::MouseMove || event->type() == QEvent::HoverMove ||
+         event->type() == QEvent::Leave ) {
+
+        // get mouse event
+        mouseEvent = static_cast<QMouseEvent*>( event );
+
+        // test mouse origin if needed
+        if ( this->gesture == NoGesture ) {
+            this->currentGrabArea = NoArea;
+            for ( y = 0; y < Ui::MouseGrabAreas; y++ ) {
+                if ( this->grabAreas[y].contains( mouseEvent->pos())) {
+                    this->currentGrabArea = static_cast<Areas>( y );
+                    break;
+                }
+            }
+        }
+
+        // change cursor shape if needed
+        if ( this->gesture == NoGesture ) {
+           Qt::CursorShape shape;
+
+           if ( this->currentGrabArea == Top || this->currentGrabArea == Bottom )
+               shape = Qt::SizeVerCursor;
+           else if ( this->currentGrabArea == Left || this->currentGrabArea == Right )
+               shape = Qt::SizeHorCursor;
+           else if ( this->currentGrabArea == TopLeft || this->currentGrabArea == BottomRight )
+               shape = Qt::SizeFDiagCursor;
+           else if ( this->currentGrabArea == TopRight || this->currentGrabArea == BottomLeft )
+               shape = Qt::SizeBDiagCursor;
+           else if ( this->currentGrabArea == NoArea )
+               shape = Qt::ArrowCursor;
+
+           if ( this->cursor().shape() != shape )
+               this->setCursor( QCursor( shape ));
+        }
+
+        // handle events
+        switch ( event->type()) {
+        case QEvent::MouseButtonPress:
+            if ( mouseEvent->button() == Qt::LeftButton ) {
+                // store mouse position
+                this->mousePos = mouseEvent->pos();
+
+                // determine gesture
+                if ( this->currentGrabArea == NoArea )
+                    this->gesture = Drag;
+                else
+                    this->gesture = Resize;
+
+                return true;
+            }
+            break;
+
+        case QEvent::MouseButtonRelease:
+            if ( mouseEvent->button() == Qt::LeftButton ) {
+                this->gesture = NoGesture;
+                return true;
+            }
+            break;
+
+        case QEvent::MouseMove:
+            if ( this->gesture == Drag ) {
+                this->move( mouseEvent->globalPos().x() - this->mousePos.x(), mouseEvent->globalPos().y() - this->mousePos.y());
+                return true;
+            } else if ( this->gesture == Resize ) {
+                QRect updatedGeometry;
+
+                updatedGeometry = this->geometry();
+
+                switch ( this->currentGrabArea ) {
+                case TopLeft:
+                    updatedGeometry.setTopLeft( mouseEvent->globalPos());
+                    break;
+
+                case Top:
+                    updatedGeometry.setTop( mouseEvent->globalPos().y());
+                    break;
+
+                case TopRight:
+                    updatedGeometry.setTopRight( mouseEvent->globalPos());
+                    break;
+
+                case Right:
+                    updatedGeometry.setRight( mouseEvent->globalPos().x());
+                    break;
+
+                case BottomRight:
+                    updatedGeometry.setBottomRight( mouseEvent->globalPos());
+                    break;
+
+                case Bottom:
+                    updatedGeometry.setBottom( mouseEvent->globalPos().y());
+                    break;
+
+                case BottomLeft:
+                    updatedGeometry.setBottomLeft( mouseEvent->globalPos());
+                    break;
+
+                case Left:
+                    updatedGeometry.setLeft( mouseEvent->globalPos().x());
+                    break;
+
+                default:
+                    break;
+                }
+
+                // respect minimum width
+                if ( updatedGeometry.width() < this->minimumWidth())
+                    updatedGeometry.setLeft( this->geometry().x());
+
+                // respect minimum height
+                if ( updatedGeometry.height() < this->minimumHeight())
+                    updatedGeometry.setTop( this->geometry().y());
+
+                // set the new geometry
+                this->setGeometry( updatedGeometry );
+
+                // rebuild areas
+                this->makeGrabAreas();
+
+                // return success
+                return true;
+            }
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    // other events are handles normally
+    return QMainWindow::eventFilter( object, event );
+}
+
+/**
+ * @brief MainWindow::removeFrame
+ */
+void MainWindow::removeFrame() {
+    MARGINS margins = { -1, -1, -1, -1 };
+    int flag = DWMNCRP_ENABLED;
+    HWND hwnd;
+
+    // remove frame, detect leave event
+    this->setWindowFlags( Qt::FramelessWindowHint );
+    this->setAttribute( Qt::WA_Hover );
+
+    // enable shadow
+    hwnd = reinterpret_cast<HWND>( this->winId());
+    DwmSetWindowAttribute( hwnd, 2, &flag, 4 );
+    DwmExtendFrameIntoClientArea( hwnd, &margins );
+
+    // enable mouse tracking
+    this->setMouseTracking( true );
+
+    // filter events
+    this->installEventFilter( this );
+
+    // make mouse grab areas
+    this->makeGrabAreas();
+}
+
+/**
+ * @brief MainWindow::makeAreas
+ */
+void MainWindow::makeGrabAreas() {
+    this->grabAreas[TopLeft] = QRect( 0, 0, Ui::BorderWidth, Ui::BorderWidth );
+    this->grabAreas[Top] = QRect( Ui::BorderWidth, 0, this->width() - Ui::BorderWidth * 2, Ui::BorderWidth );
+    this->grabAreas[TopRight] = QRect( this->width() - Ui::BorderWidth, 0, Ui::BorderWidth, Ui::BorderWidth );
+    this->grabAreas[Right] = QRect( this->width() - Ui::BorderWidth, Ui::BorderWidth, Ui::BorderWidth, this->height() - Ui::BorderWidth * 2 );
+    this->grabAreas[BottomRight] = QRect( this->width() - Ui::BorderWidth, this->height() - Ui::BorderWidth, Ui::BorderWidth, Ui::BorderWidth );
+    this->grabAreas[Bottom] = QRect( Ui::BorderWidth, this->height() - Ui::BorderWidth, this->width() - Ui::BorderWidth * 2, Ui::BorderWidth );
+    this->grabAreas[BottomLeft] = QRect( 0, this->height() - Ui::BorderWidth, Ui::BorderWidth, Ui::BorderWidth );
+    this->grabAreas[Left] = QRect( 0, Ui::BorderWidth, Ui::BorderWidth, this->height() - Ui::BorderWidth * 2 );
 }
 
 /**

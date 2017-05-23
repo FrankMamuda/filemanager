@@ -32,6 +32,7 @@
 #include "cache.h"
 #include "iconcache.h"
 #include "fileutils.h"
+#include <QHBoxLayout>
 
 //
 // classes
@@ -69,7 +70,7 @@ int main( int argc, char *argv[] ) {
     m.cache = new Cache( QDir::currentPath() + "/.cache" );
     m.iconCache = new IconCache( QDir::currentPath() + "/.cache" );
 #ifdef THREADED_CACHE
-    QThread thread, iconThread;
+    QThread thread;
 
     m.cache->moveToThread( &thread );
     thread.connect( qApp, SIGNAL( aboutToQuit()), SLOT( quit()));
@@ -87,29 +88,29 @@ int main( int argc, char *argv[] ) {
     QIcon::setThemeSearchPaths( QStringList( iconDir.absolutePath()));
     QIcon::setThemeName( "oxygen" );
 
+    // style app
+    QApplication::setStyle( QStyleFactory::create( "Fusion" ));
+
+    // create dark pallette
+    m.darkPalette.setColor( QPalette::Window, QColor( 53,53,53 ));
+    m.darkPalette.setColor( QPalette::WindowText, Qt::white );
+    m.darkPalette.setColor( QPalette::Base, QColor( 25,25,25 ));
+    m.darkPalette.setColor( QPalette::AlternateBase, QColor( 53,53,53 ));
+    m.darkPalette.setColor( QPalette::ToolTipBase, Qt::white );
+    m.darkPalette.setColor( QPalette::ToolTipText, Qt::white );
+    m.darkPalette.setColor( QPalette::Text, Qt::white );
+    m.darkPalette.setColor( QPalette::Button, QColor( 53,53,53 ));
+    m.darkPalette.setColor( QPalette::ButtonText, Qt::white );
+    m.darkPalette.setColor( QPalette::BrightText, Qt::red );
+    m.darkPalette.setColor( QPalette::Link, QColor( 42, 130, 218 ));
+    m.darkPalette.setColor( QPalette::Highlight, QColor( 42, 130, 218 ));
+    m.darkPalette.setColor( QPalette::HighlightedText, Qt::black );
+
     // create main window
     MainWindow w;
 
-    // style app
-    QApplication::setStyle( QStyleFactory::create("Fusion"));
 #ifdef DARK_PALETTE
-    QPalette darkPalette;
-    darkPalette.setColor( QPalette::Window, QColor( 53,53,53 ));
-    darkPalette.setColor( QPalette::WindowText, Qt::white );
-    darkPalette.setColor( QPalette::Base, QColor( 25,25,25 ));
-    darkPalette.setColor( QPalette::AlternateBase, QColor( 53,53,53 ));
-    darkPalette.setColor( QPalette::ToolTipBase, Qt::white );
-    darkPalette.setColor( QPalette::ToolTipText, Qt::white );
-    darkPalette.setColor( QPalette::Text, Qt::white );
-    darkPalette.setColor( QPalette::Button, QColor( 53,53,53 ));
-    darkPalette.setColor( QPalette::ButtonText, Qt::white );
-    darkPalette.setColor( QPalette::BrightText, Qt::red );
-    darkPalette.setColor( QPalette::Link, QColor( 42, 130, 218 ));
-
-    darkPalette.setColor( QPalette::Highlight, QColor( 42, 130, 218 ));
-    darkPalette.setColor( QPalette::HighlightedText, Qt::black );
-
-    qApp->setPalette( darkPalette );
+    qApp->setPalette( m.darkPalette );
     qApp->setStyleSheet( "QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }" );
 #endif
 

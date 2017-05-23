@@ -28,6 +28,7 @@
 #include <QComboBox>
 #include <QProxyStyle>
 #include "ui_mainwindow.h"
+#include <QPaintEvent>
 
 //
 // classes
@@ -42,6 +43,8 @@ class History;
 //
 namespace Ui {
 class MainWindow;
+static const int BorderWidth = 8;
+static const int MouseGrabAreas = 8;
 }
 
 /**
@@ -92,9 +95,32 @@ public:
     };
     Q_ENUMS( ViewModes )
 
+    // grab areas for frameless resizing
+    enum Areas {
+        NoArea = -1,
+        TopLeft,
+        Top,
+        TopRight,
+        Right,
+        BottomRight,
+        Bottom,
+        BottomLeft,
+        Left
+    };
+    Q_ENUMS( Areas )
+
+    // frameless gestures
+    enum Gestures {
+        NoGesture = -1,
+        Drag,
+        Resize
+    };
+    Q_ENUMS( Gestures )
+
 protected:
     void resizeEvent( QResizeEvent * );
     void closeEvent( QCloseEvent * );
+    bool eventFilter( QObject *object, QEvent *event );
 
 public slots:
     void setCurrentPath( const QString &path = QDir::currentPath(), bool saveToHistory = true );
@@ -117,6 +143,8 @@ private slots:
     void setDetailView();
     void checkHistoryPosition();
     void updateInfoPanel();
+    void removeFrame();
+    void makeGrabAreas();
 
 private:
     Ui::MainWindow *ui;
@@ -131,6 +159,12 @@ private:
     QAction *actionViewList;
     QAction *actionViewDetails;
     QMenu *viewModeMenu;
+
+    // variables for frameless resizing
+    QPoint mousePos;
+    Gestures gesture;
+    Areas currentGrabArea;
+    QRect grabAreas[Ui::MouseGrabAreas];
 };
 
 Q_DECLARE_METATYPE( MainWindow::IconScale )

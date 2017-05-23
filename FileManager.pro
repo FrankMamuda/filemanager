@@ -78,4 +78,4 @@ RESOURCES += \
     resources.qrc
 
 win32:RC_FILE = icon.rc
-win32:LIBS += -luser32
+win32:LIBS += -lgdi32 -ldwmapi
