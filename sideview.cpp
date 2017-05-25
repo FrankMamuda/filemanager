@@ -58,6 +58,9 @@ SideView::SideView( QWidget* parent ) : QListView( parent ), m_model( new Bookma
     this->setAcceptDrops( true );
     this->setSelectionMode( QAbstractItemView::SingleSelection );
     this->setDragDropMode( QAbstractItemView::InternalMove );
+
+    // filter events for dragging
+    this->setMouseTracking( true );
 }
 
 /**

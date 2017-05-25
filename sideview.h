@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef STORAGEVIEW_H
-#define STORAGEVIEW_H
+#pragma once
 
 //
 // includes
@@ -69,6 +68,4 @@ private:
     ContainerStyle *m_style;
     ListViewDelegate *m_delegate;
 };
-
-#endif // STORAGEVIEW_H
 

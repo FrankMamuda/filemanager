@@ -4,10 +4,10 @@
 #
 #-------------------------------------------------
 
-QT       += core gui concurrent
+QT       += core gui concurrent xml winextras
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-QT += winextras
+
 TARGET = FileManager
 TEMPLATE = app
 
@@ -78,4 +78,4 @@ RESOURCES += \
     resources.qrc
 
 win32:RC_FILE = icon.rc
-win32:LIBS += -lgdi32 -ldwmapi
+win32:LIBS += -lgdi32 -ldwmapi -luser32

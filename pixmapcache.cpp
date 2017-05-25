@@ -24,6 +24,9 @@
 #include <QFileInfo>
 #include <QFileIconProvider>
 #include <QDebug>
+#include <QtGui/QIconEngine>
+#include <QDir>
+#include <QDomDocument>
 
 //
 // class: PixmapCache
@@ -47,7 +50,7 @@ QPixmap PixmapCache::pixmap( const QString &name, int scale, bool thumbnail ) {
         // jpeg/png/etc. generate square thunbnails from the actual images
         // other file use icons based on the mime-type
         if ( !thumbnail )
-            pixmap = QIcon::fromTheme( name ).pixmap( scale, scale );
+            pixmap = this->findPixmap( name, scale );// QIcon::fromTheme( name ).pixmap( scale, scale );
         else {
             QFileInfo info( name );
 
@@ -59,7 +62,7 @@ QPixmap PixmapCache::pixmap( const QString &name, int scale, bool thumbnail ) {
 
         // handle missing icons
         if ( pixmap.isNull() || !pixmap.width()) {
-            pixmap = QIcon::fromTheme( "application-x-zerosize" ).pixmap( scale, scale );
+            pixmap = this->findPixmap( "application-x-zerosize", scale ); //QIcon::fromTheme( "application-x-zerosize" ).pixmap( scale, scale );
 
             // failsafe, in case something doesn't work as intended
             // NOTE: for some reason some icons fail to load
@@ -102,4 +105,294 @@ QPixmap PixmapCache::pixmap( const QString &name, int scale, bool thumbnail ) {
     // retrieve and return the pixmap
     pixmap = this->pixmapCache[cache];
     return pixmap;
+}
+
+/**
+ * @brief PixmapCache::buildIndex
+ */
+void PixmapCache::buildIndex() {
+    QString iconPath, buffer;
+    QFile index;
+    QRegExp rx;
+    QStringList dirList;
+    int pos;
+
+    // currently get the first theme search path
+    iconPath = QIcon::themeSearchPaths().first() + "/" + QIcon::themeName();
+
+    // open theme index file
+    index.setFileName( iconPath + "/" + "index.theme" );
+    if ( !index.open( QFile::ReadOnly ))
+        return;
+
+    // read index file
+    buffer = QString( index.readAll().constData());
+
+    // set pattern to extract icon directories
+   // rx.setPattern( "Directories=((?:[A-z]+\\/[A-z0-9]+,?)+)" );
+    rx.setPattern( "Directories=(.+)\\s" );
+
+    // extract icon directories
+    pos = 0;
+    while (( pos = rx.indexIn( buffer, pos )) != -1 ) {
+        dirList << rx.cap( 1 );
+        pos += rx.matchedLength();
+    }
+
+    // abort on no directorues
+    if ( !dirList.count())
+        return;
+
+    // append directories to index
+    dirList = dirList.first().split( "," );
+    foreach ( QString dir, dirList )
+        this->index << iconPath + "/" + dir;
+
+    // close index file
+    index.close();
+}
+
+/**
+ * @brief PixmapCache::parseSVG
+ * @param buffer
+ * @return
+ */
+int PixmapCache::parseSVG( const QString &buffer ) {
+    QDomDocument doc;
+    QDomNodeList svgNodes;
+    int width = 0, height = 0, scale = 0;
+
+    // parse svg as an XML document
+    doc.setContent( buffer );
+
+    // get root node
+    svgNodes = doc.elementsByTagName( "svg" );
+    if ( svgNodes.size()) {
+        QDomElement element;
+
+        // convert node to element
+        element = svgNodes.at( 0 ).toElement();
+
+        // get width directly
+        if ( element.hasAttribute( "width" ))
+            width = element.attribute( "width" ).toInt();
+
+        // get height directly
+        if ( element.hasAttribute( "height" ))
+            height = element.attribute( "height" ).toInt();
+
+         // extract width and height from viewBox (override)
+        if ( element.hasAttribute( "viewBox" )) {
+            QStringList parms;
+
+            parms = element.attribute( "viewBox" ).split( " " );
+            if ( parms.count() == 4 ) {
+                width = parms.at( 2 ).toInt();
+                height = parms.at( 3 ).toInt();
+            }
+        }
+    }
+
+    // done parsing
+    doc.clear();
+
+    // store size
+    if ( width && height )
+        scale = width;
+
+    return scale;
+}
+
+/**
+ * @brief PixmapCache::readIconFile
+ * @param fileName
+ * @return
+ */
+IconMatch PixmapCache::readIconFile( const QString &fileName, bool &ok, int recursionLevel ) {
+    QString buffer;
+    bool binary = false;
+    QFile file( fileName );
+    QByteArray data;
+    IconMatch iconMatch( fileName );
+
+    // bad icon by default
+    ok = false;
+
+    // attempt to read icon file
+    if ( !file.open( QFile::ReadOnly ))
+        return iconMatch;
+
+    // read whole file
+    data = file.readAll();
+
+    // avoid recursions
+    recursionLevel--;
+    if ( recursionLevel < 0 )
+        return iconMatch;
+
+    // convert to text in case it is an svg or a symbolic link
+    buffer = QString( data.constData());
+
+    // test if file is binary
+    // TODO: optimize this, no need to read the whole file, first 100 bytes should be enough
+    for ( QString::ConstIterator y = buffer.constBegin(), end = buffer.constEnd(); y != end; y++ ) {
+        if ( y->unicode() > 127 )  {
+            binary = true;
+            break;
+        }
+    }
+
+    if ( !binary ) {
+        // test if svg
+        if ( buffer.startsWith( "<svg" ) || buffer.startsWith( "<?xml" )) {
+            iconMatch.scale = this->parseSVG( buffer );
+        } else {
+            QFileInfo info( file );
+            QDir dir;
+            QString link;
+            int pos = 0, numCdUps = 0;
+
+            // construct filename from symlink
+            dir.setPath( info.absolutePath());
+            link = buffer;
+            while (( pos = buffer.indexOf( "../", pos )) != -1 ) {
+                link = buffer.mid( pos + 3, buffer.length() - pos - 3 );
+                dir.cdUp();
+                pos++;
+                numCdUps++;
+            }
+            link = dir.absolutePath() + "/" + link;
+
+            // recursively read symlink target
+            iconMatch.fileName = link;
+            return this->readIconFile( link, ok, recursionLevel );
+        }
+    } else {
+        QPixmap pixmap;
+
+        // get size directly from pixmap
+        if ( pixmap.load( fileName ))
+            iconMatch.scale = pixmap.width();
+    }
+
+    // clean up
+    data.clear();
+    buffer.clear();
+    file.close();
+
+    // check scale
+    if ( iconMatch.scale > 0 )
+        ok = true;
+
+    // return icon match
+    return iconMatch;
+}
+
+/**
+ * @brief PixmapCache::findIcon
+ * @param name
+ * @return
+ */
+// FIXME: precache icons???
+QPixmap PixmapCache::findPixmap( const QString &name, int scale ) {
+    int y = 0, bestIndex = 0, bestScale = 0;
+    IconMatchList matchList;
+
+    // get icon match list
+    matchList = this->getIconMatchList( name );
+
+    // don't bother if no matches
+    if ( matchList.isEmpty())
+        return QPixmap();
+
+    // go through all matches
+    foreach ( IconMatch iconMatch, matchList ) {
+        if ( iconMatch.scale == scale ) {
+            bestIndex = y;
+            bestScale = iconMatch.scale;
+            break;
+        } else if ( iconMatch.scale > bestScale ) {
+            bestScale = iconMatch.scale;
+            bestIndex = y;
+        }
+
+        y++;
+    }
+
+    return QPixmap( matchList.at( bestIndex ).fileName ).scaled( scale, scale, Qt::IgnoreAspectRatio, Qt::SmoothTransformation );
+}
+
+/**
+ * @brief PixmapCache::fromTheme some icon themes from have folders full of symlinks to avoid duplicate icons
+ * unfortunately QIcon does not handle these symlinks (plain text files). Moreover, since we cannot reliably
+ * get a filename from QIcon::fromTheme, we must manually find the best matching icon here while resolving all
+ * symlinks
+ * @param name
+ * @return
+ */
+
+// TODO: early quit if matching size found?
+QIcon PixmapCache::fromTheme( const QString &name ) {
+    int y = 0, bestIndex = 0, bestScale = 0;
+    IconMatchList matchList;
+
+    // get icon match list
+    matchList = this->getIconMatchList( name );
+
+    // don't bother if no matches
+    if ( matchList.isEmpty())
+        return QIcon();
+
+    // go through all matches
+    foreach ( IconMatch iconMatch, matchList ) {
+        if ( iconMatch.scale > bestScale ) {
+            bestScale = iconMatch.scale;
+            bestIndex = y;
+        }
+
+        y++;
+    }
+
+    return QIcon( matchList.at( bestIndex ).fileName );
+}
+
+/**
+ * @brief PixmapCache::getIconMatchList
+ * @param name
+ * @return
+ */
+IconMatchList PixmapCache::getIconMatchList( const QString &name ) {
+    QDir dir;
+    QStringList iconPathList;
+    IconMatchList matchList;
+    int recursionLevel = 2;
+
+    // set directory filter to find png and svg icons only
+    dir.setNameFilters( QStringList() << ( name + ".png" ) << ( name + ".svg" ));
+
+    // go through all directories
+    foreach ( QString path, this->index ) {
+        dir.setPath( path );
+
+        // append all matched paths
+        foreach ( QString match, dir.entryList())
+            iconPathList << ( dir.absolutePath() + "/" + match );
+    }
+
+    // don't bother if no matches
+    if ( iconPathList.isEmpty())
+        return matchList;
+
+    // go through all filenames
+    foreach ( QString iconPath, iconPathList ) {
+        bool ok;
+        IconMatch iconMatch;
+
+        // TODO: set real filename!!!
+        iconMatch = this->readIconFile( iconPath, ok, recursionLevel );
+        if ( ok )
+            matchList << iconMatch;
+    }
+
+    return matchList;
 }

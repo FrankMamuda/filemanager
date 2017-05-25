@@ -24,6 +24,7 @@
 #include <QDebug>
 #include "pathutils.h"
 #include "entry.h"
+#include "pixmapcache.h"
 
 /**
  * @brief Bookmark::Bookmark
@@ -115,7 +116,7 @@ void Bookmark::remove( int pos ) {
  * @param iconName
  */
 QPixmap Bookmark::iconNameToPixmap( const QString &iconName ) {
-    return QIcon::fromTheme( iconName ).pixmap( 32, 32 );
+    return pixmapCache.findPixmap( iconName, 32 );// QIcon::fromTheme( iconName ).pixmap( 32, 32 );
 }
 
 /**

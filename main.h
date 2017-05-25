@@ -51,7 +51,6 @@ public:
     QSettings *settings;
     Cache *cache;
     IconCache *iconCache;
-    QPalette darkPalette;
 
 private:
     MainWindow *m_gui;

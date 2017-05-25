@@ -26,15 +26,33 @@
 #include <QHash>
 
 /**
+ * @brief The IconMatch struct
+ */
+struct IconMatch {
+    IconMatch( const QString &f = QString::null, int s = 0 ) : fileName( f ), scale( s ) {}
+    QString fileName;
+    int scale;
+};
+
+typedef QList<IconMatch> IconMatchList;
+
+/**
  * @brief The PixmapCache class
  */
 class PixmapCache {
 public:
     PixmapCache() {}
     QPixmap pixmap( const QString &name, int scale, bool thumbnail = false );
+    QIcon fromTheme( const QString &name );
+    void buildIndex();
+    int parseSVG( const QString &buffer );
+    IconMatch readIconFile( const QString &buffer, bool &ok, int recursionLevel = 2 );
+    QPixmap findPixmap( const QString &name, int scale );
+    IconMatchList getIconMatchList( const QString &name );
 
 private:
     QHash<QString, QPixmap> pixmapCache;
+    QStringList index;
 };
 
 extern class PixmapCache pixmapCache;

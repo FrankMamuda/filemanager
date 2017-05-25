@@ -120,22 +120,22 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
         this->resize( size );
 
     // set icons here (some bug resets icons, when defined in form)
-    this->ui->actionBack->setIcon( QIcon::fromTheme( "go-previous" ));
-    this->ui->actionUp->setIcon( QIcon::fromTheme( "go-up" ));
-    this->ui->actionForward->setIcon( QIcon::fromTheme( "go-next" ));
+    this->ui->actionBack->setIcon( pixmapCache.fromTheme( /*QIcon::fromTheme(*/ "go-previous" ));
+    this->ui->actionUp->setIcon( pixmapCache.fromTheme( /*QIcon::fromTheme(*/ "go-up" ));
+    this->ui->actionForward->setIcon( pixmapCache.fromTheme( /*QIcon::fromTheme(*/ "go-next" ));
 
     // setup view mode list
     this->viewModeMenu = new QMenu();
     this->menuStyle = new MenuStyle;
     this->viewModeMenu->setStyle( this->menuStyle );
-    this->actionViewGrid = new QAction( QIcon::fromTheme( "preferences-desktop-icons" ), this->tr( "Grid view" ));
-    this->actionViewList = new QAction( QIcon::fromTheme( "view-media-playlist" ), this->tr( "List view" ));
-    this->actionViewDetails = new QAction( QIcon::fromTheme( "x-office-spreadsheet" ), this->tr( "Detail view" ));
+    this->actionViewGrid = new QAction( pixmapCache.fromTheme( /*QIcon::fromTheme(*/ "preferences-desktop-icons" ), this->tr( "Grid view" ));
+    this->actionViewList = new QAction( pixmapCache.fromTheme( /*QIcon::fromTheme(*/ "view-media-playlist" ), this->tr( "List view" ));
+    this->actionViewDetails = new QAction( pixmapCache.fromTheme( /*QIcon::fromTheme(*/ "x-office-spreadsheet" ), this->tr( "Detail view" ));
     this->viewModeMenu->addAction( this->actionViewGrid );
     this->viewModeMenu->addAction( this->actionViewList );
     this->viewModeMenu->addAction( this->actionViewDetails );
     this->ui->actionViewMode->setMenu( this->viewModeMenu );
-    this->ui->actionViewMode->setIcon( QIcon::fromTheme( "preferences-system-windows-actions" ));
+    this->ui->actionViewMode->setIcon( pixmapCache.fromTheme( /*QIcon::fromTheme(*/ "preferences-system-windows-actions" ));
     this->connect( this->actionViewGrid, SIGNAL( triggered( bool )), this, SLOT( setGridView()));
     this->connect( this->actionViewList, SIGNAL( triggered( bool )), this, SLOT( setListView()));
     this->connect( this->actionViewDetails, SIGNAL( triggered( bool )), this, SLOT( setDetailView()));
@@ -151,11 +151,11 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
         this->setDetailView();
 
     // notification icons
-    this->ui->notificationInfo->setIcon( QIcon::fromTheme( "dialog-information" ));
+    this->ui->notificationInfo->setIcon( pixmapCache.fromTheme( /*QIcon::fromTheme(*/ "dialog-information" ));
 
     // handle actions
-    this->ui->actionBookmarks->setIcon( QIcon::fromTheme( "folder-bookmark" ));
-    this->ui->actionInfo->setIcon( QIcon::fromTheme( "dialog-information" ));
+    this->ui->actionBookmarks->setIcon( pixmapCache.fromTheme( /*QIcon::fromTheme(*/ "folder-bookmark" ));
+    this->ui->actionInfo->setIcon( pixmapCache.fromTheme( /*QIcon::fromTheme(*/ "dialog-information" ));
     Variable::add( "mainWindow/bookmarkPanelVisible", true );
     Variable::add( "mainWindow/infoPanelVisible", true );
 
@@ -179,6 +179,8 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     window->addToolBarBreak();
     window->addToolBar( this->ui->navigationToolbar );
     window->setContentsMargins( 0, 0, 0, 0 );
+    //  window->addDockWidget( Qt::RightDockWidgetArea, this->ui->dockInfo, Qt::Vertical );
+
     this->ui->navigationToolbar->addWidget( this->ui->pathEdit );
     this->ui->mainToolBar->setStyleSheet( "QToolBar { background: transparent; border: none; }" );
     this->ui->navigationToolbar->setStyleSheet( "QToolBar { background: transparent; border: none; }" );
@@ -191,13 +193,20 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->ui->sideView->setStyleSheet( "QListView { background: #353535; color: #8c8c8c; } QListWidget::item { color: #8c8c8c; }" );
 
     this->ui->dockBookmarks->setTitleBarWidget( new QWidget());
+    this->ui->dockInfo->setTitleBarWidget( new QWidget());
+
+
     //this->ui->sideView->setStyleSheet( "QListView { color: #8c8c8c; background: transparent; } " );
     //this->ui->sideView->setAutoFillBackground( false );
     this->connect( this->ui->actionClose, SIGNAL( triggered( bool )), qApp, SLOT( quit()));
 
+    this->ui->dockBookmarks->installEventFilter( this );
+    this->ui->dockBookmarksContents->installEventFilter( this );
+    this->ui->sideView->installEventFilter( this );
+
+    this->setWindowIcon( pixmapCache.fromTheme( "document-open-folder" ));
+
     // ==================================================
-
-
 
     // remove frame
     this->removeFrame();
@@ -217,9 +226,11 @@ bool MainWindow::eventFilter( QObject *object, QEvent *event ) {
     int y;
 
     // filter mouse events
-    if ( event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease ||
-         event->type() == QEvent::MouseMove || event->type() == QEvent::HoverMove ||
-         event->type() == QEvent::Leave ) {
+    if (( event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease ||
+          event->type() == QEvent::MouseMove || event->type() == QEvent::HoverMove ||
+          event->type() == QEvent::Leave )
+           && this->cursor().shape() != Qt::SplitHCursor // HACK: allow resizing of dock widgets
+            ) {
 
         // get mouse event
         mouseEvent = static_cast<QMouseEvent*>( event );
@@ -237,21 +248,21 @@ bool MainWindow::eventFilter( QObject *object, QEvent *event ) {
 
         // change cursor shape if needed
         if ( this->gesture == NoGesture ) {
-           Qt::CursorShape shape;
+            Qt::CursorShape shape;
 
-           if ( this->currentGrabArea == Top || this->currentGrabArea == Bottom )
-               shape = Qt::SizeVerCursor;
-           else if ( this->currentGrabArea == Left || this->currentGrabArea == Right )
-               shape = Qt::SizeHorCursor;
-           else if ( this->currentGrabArea == TopLeft || this->currentGrabArea == BottomRight )
-               shape = Qt::SizeFDiagCursor;
-           else if ( this->currentGrabArea == TopRight || this->currentGrabArea == BottomLeft )
-               shape = Qt::SizeBDiagCursor;
-           else if ( this->currentGrabArea == NoArea )
-               shape = Qt::ArrowCursor;
+            if ( this->currentGrabArea == Top || this->currentGrabArea == Bottom )
+                shape = Qt::SizeVerCursor;
+            else if ( this->currentGrabArea == Left || this->currentGrabArea == Right )
+                shape = Qt::SizeHorCursor;
+            else if ( this->currentGrabArea == TopLeft || this->currentGrabArea == BottomRight )
+                shape = Qt::SizeFDiagCursor;
+            else if ( this->currentGrabArea == TopRight || this->currentGrabArea == BottomLeft )
+                shape = Qt::SizeBDiagCursor;
+            else if ( this->currentGrabArea == NoArea )
+                shape = Qt::ArrowCursor;
 
-           if ( this->cursor().shape() != shape )
-               this->setCursor( QCursor( shape ));
+            if ( this->cursor().shape() != shape )
+                this->setCursor( QCursor( shape ));
         }
 
         // handle events
@@ -348,7 +359,7 @@ bool MainWindow::eventFilter( QObject *object, QEvent *event ) {
         }
     }
 
-    // other events are handles normally
+    // other events are handled normally
     return QMainWindow::eventFilter( object, event );
 }
 

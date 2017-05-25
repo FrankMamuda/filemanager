@@ -48,15 +48,15 @@ QString Entry::getDriveIconName( const QFileInfo &info ) {
     type = GetDriveType(( wchar_t * )info.absoluteFilePath().utf16());
     switch ( type ) {
     case DRIVE_REMOVABLE:
-        return "drive-removable-media-usb";
+        return "drive-removable-media";
         break;
 
     case DRIVE_REMOTE:
-        return "application-x-smb-server";
+        return "network-workgroup";
         break;
 
     case DRIVE_CDROM:
-        return "drive-optical";
+        return "media-optical";
         break;
 
     case DRIVE_RAMDISK:
@@ -83,7 +83,7 @@ void Entry::reset() {
     if ( this->isDirectory()) {
         switch ( this->type()) {
         case FileFolder:
-            this->setIconName( "inode-directory" );
+            this->setIconName( "folder" );
             break;
 
         case HardDisk:

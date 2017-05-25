@@ -13,10 +13,6 @@
   <property name="windowTitle">
    <string>File Manager</string>
   </property>
-  <property name="windowIcon">
-   <iconset theme="document-open-folder">
-    <normaloff>.</normaloff>.</iconset>
-  </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout_2">
     <property name="leftMargin">
@@ -93,7 +89,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget">
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="Main">
           <attribute name="title">
@@ -598,7 +594,7 @@
      <item>
       <widget class="SideView" name="sideView">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>

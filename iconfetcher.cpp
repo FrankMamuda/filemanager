@@ -21,6 +21,7 @@
 //
 #include <QIcon>
 #include "iconfetcher.h"
+#include "pixmapcache.h"
 
 /**
  * @brief IconFetcher::addWork
@@ -50,7 +51,7 @@ void IconFetcher::run() {
             QPixmap pixmap;
 
             index = this->workList.takeLast();
-            pixmap = QIcon::fromTheme( index.first ).pixmap( index.second, index.second );
+            pixmap = pixmapCache.findPixmap( index.first, index.second );//QIcon::fromTheme( index.first ).pixmap( index.second, index.second );
 
             if ( !pixmap.isNull() && pixmap.width())
                 emit this->workDone( index.first, index.second, pixmap );

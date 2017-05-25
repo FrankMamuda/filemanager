@@ -24,6 +24,7 @@
 #include <QIcon>
 #include "iconcache.h"
 #include "iconfetcher.h"
+#include "pixmapcache.h"
 
 /**
  * @brief IconCache::IconCache
@@ -199,10 +200,11 @@ void IconCache::run() {
                 continue;
             }
 
-            if ( QIcon::hasThemeIcon( iconName ))
+            /*if ( QIcon::hasThemeIcon( iconName ))
                 pixmap = QIcon::fromTheme( iconName ).pixmap( iconScale, iconScale );
             else
-                continue;
+                continue;*/
+            pixmap = pixmapCache.findPixmap( iconName, iconScale );
 
             if ( !pixmap.isNull() && pixmap.width()) {
                 // cache to disk
