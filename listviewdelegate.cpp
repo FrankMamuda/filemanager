@@ -104,37 +104,40 @@ void ListViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &opt
     //
     // STAGE 1: display pixmap
     //
-    QRect pixmapRect;
-    QPixmap pixmap;
     int width, height, offset;
     bool isCut;
 
-    // get pixmap and its dimensions
-    pixmap = qvariant_cast<QPixmap>( index.model()->data( index, Qt::DecorationRole ));
-    isCut = index.model()->data( index, Qt::UserRole + 1 ).toBool();
-    pixmapRect = option.rect;
-    width = option.decorationSize.width();
-    height = option.decorationSize.height();
+    if ( viewMode == QListView::IconMode ) {
+        QRect pixmapRect;
+        QPixmap pixmap;
 
-    // properly position pixmap
-    if ( width < pixmapRect.width()) {
-        if ( viewMode == QListView::IconMode ) {
-            offset = pixmapRect.width() - width;
-            pixmapRect.setX( pixmapRect.x() + offset / 2 );
+        // get pixmap and its dimensions
+        pixmap = qvariant_cast<QPixmap>( index.model()->data( index, Qt::DecorationRole ));
+        isCut = index.model()->data( index, Qt::UserRole + 1 ).toBool();
+        pixmapRect = option.rect;
+        width = option.decorationSize.width();
+        height = option.decorationSize.height();
+
+        // properly position pixmap
+        if ( width < pixmapRect.width()) {
+            if ( viewMode == QListView::IconMode ) {
+                offset = pixmapRect.width() - width;
+                pixmapRect.setX( pixmapRect.x() + offset / 2 );
+            }
+
+            pixmapRect.setWidth( width );
         }
 
-        pixmapRect.setWidth( width );
+        if ( isCut )
+            painter->setOpacity( 0.5f );
+
+        // draw pixmap
+        pixmapRect.setHeight( height );
+        painter->drawPixmap( pixmapRect, pixmap );
+
+        if ( isCut )
+            painter->setOpacity( 1.0f );
     }
-
-    if ( isCut )
-        painter->setOpacity( 0.5f );
-
-    // draw pixmap
-    pixmapRect.setHeight( height );
-    painter->drawPixmap( pixmapRect, pixmap );
-
-    if ( isCut )
-        painter->setOpacity( 1.0f );
 
     //
     // STAGE 3: display text

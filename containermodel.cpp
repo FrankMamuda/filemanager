@@ -168,7 +168,7 @@ void ContainerModel::setMode( ContainerModel::Modes mode ) {
     this->m_mode = mode;
 
     if ( m.gui() != NULL )
-        this->buildList( PathUtils::toWindowsPath( m.gui()->currentPath()));
+        this->buildList( PathUtils::toWindowsPath( pathUtils.currentPath ));
     else
         this->buildList( QDir::currentPath());
 }

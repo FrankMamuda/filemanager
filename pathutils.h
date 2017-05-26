@@ -37,6 +37,9 @@ public:
     static QString toWindowsPath( const QString &path ) { return QDir::toNativeSeparators( toWindowsPathE( path )); }
     static bool isWindowsDevicePath( const QString &path );
     static QString windowsDevicePath( const QString &path );
+    QString currentPath;
 };
+
+extern class PathUtils pathUtils;
 
 #endif // PATHUTILS_H

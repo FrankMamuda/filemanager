@@ -24,6 +24,11 @@
 #include <QDir>
 #include "pathutils.h"
 
+//
+// class: PathUtils
+//
+class PathUtils pathUtils;
+
 /**
  * @brief PathUtils::isUnixPath
  * @param path
