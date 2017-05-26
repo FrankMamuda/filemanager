@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef CONTAINERSTYLE_H
-#define CONTAINERSTYLE_H
+#pragma once
 
 //
 // includes
@@ -29,11 +28,9 @@
  */
 class ContainerStyle : public QProxyStyle {
 public:
-    ContainerStyle( QStyle *style = NULL ) : QProxyStyle( style ) {}
+    ContainerStyle( QStyle *style = nullptr ) : QProxyStyle( style ) {}
     void drawPrimitive( PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget ) const {
         if ( element != QStyle::PE_IndicatorItemViewItemDrop )
             QProxyStyle::drawPrimitive( element, option, painter, widget );
     }
 };
-
-#endif // CONTAINERSTYLE_H

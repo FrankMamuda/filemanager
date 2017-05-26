@@ -60,7 +60,7 @@ void Properties::setDeviceUsage( const QString &path ) {
  * @param entry
  */
 void Properties::setEntry( Entry *entry ) {
-    if ( entry == NULL )
+    if ( entry == nullptr )
         return;
 
     this->entry = entry;

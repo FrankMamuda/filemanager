@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef TABLEVIEW_H
-#define TABLEVIEW_H
+#pragma once
 
 //
 // includes
@@ -68,5 +67,3 @@ private:
     ContainerModel *m_model;
     ContainerStyle *m_style;
 };
-
-#endif // TABLEVIEW_H

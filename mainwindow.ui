@@ -147,19 +147,13 @@
        <property name="defaultDropAction">
         <enum>Qt::MoveAction</enum>
        </property>
-       <property name="iconSize">
-        <size>
-         <width>32</width>
-         <height>32</height>
-        </size>
-       </property>
        <property name="resizeMode">
         <enum>QListView::Adjust</enum>
        </property>
        <property name="gridSize">
         <size>
          <width>96</width>
-         <height>34</height>
+         <height>24</height>
         </size>
        </property>
        <property name="wordWrap">

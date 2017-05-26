@@ -45,7 +45,7 @@
  */
 ContainerModel::ContainerModel( QAbstractItemView *view, ContainerModel::Modes mode, Containers container ) : m_parent( view ), m_mode( mode ), m_iconSize( Common::DefaultListIconSize ), m_selectionLocked( false ), m_container( container ) {
     // create rubber band
-    if ( this->parent() != NULL )
+    if ( this->parent() != nullptr )
         this->m_rubberBand = new QRubberBand( QRubberBand::Rectangle, this->parent()->viewport());
 
     // listen to cache updates
@@ -79,7 +79,7 @@ int ContainerModel::columnCount( const QModelIndex & ) const {
  * @param force
  */
 void ContainerModel::reset( bool force ) {
-    if ( this->parent() == NULL )
+    if ( this->parent() == nullptr )
         return;
 
     if ( !this->parent()->isVisible() && !force )
@@ -135,12 +135,12 @@ Entry *ContainerModel::indexToEntry( const QModelIndex &index ) const {
         row = index.row();
 
         if ( row < 0 || row >= this->numItems())
-            return NULL;
+            return nullptr;
 
         return this->list.at( row );
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /**
@@ -167,7 +167,7 @@ void ContainerModel::setIconSize( int iconSize ) {
 void ContainerModel::setMode( ContainerModel::Modes mode ) {
     this->m_mode = mode;
 
-    if ( m.gui() != NULL )
+    if ( m.gui() != nullptr )
         this->buildList( PathUtils::toWindowsPath( pathUtils.currentPath ));
     else
         this->buildList( QDir::currentPath());
@@ -205,7 +205,7 @@ QVariant ContainerModel::data( const QModelIndex &modelIndex, int role ) const {
     ContainerItem item;
 
     entry = this->indexToEntry( modelIndex );
-    if ( entry == NULL )
+    if ( entry == nullptr )
         return QVariant();
 
     if ( this->container() == ListContainer ) {
@@ -329,7 +329,7 @@ void ContainerModel::setSelection( const QModelIndexList &selection ) {
             Entry *entry;
 
             entry = this->indexToEntry( index );
-            if ( entry != NULL )
+            if ( entry != nullptr )
                 this->selectionList << entry;
         }
     }
@@ -341,7 +341,7 @@ void ContainerModel::setSelection( const QModelIndexList &selection ) {
 void ContainerModel::processEntries() {
     int y;
 
-    if ( this->parent() == NULL )
+    if ( this->parent() == nullptr )
         return;
 
     // this is only needed for list containers
@@ -361,7 +361,7 @@ void ContainerModel::processEntries() {
 
         // get parent listview
         view = qobject_cast<QListView*>( this->parent());
-        if ( view == NULL )
+        if ( view == nullptr )
             return;
 
         // get font metrics from parent
@@ -410,7 +410,7 @@ void ContainerModel::processEntries() {
 void ContainerModel::processMouseRelease( QMouseEvent *e ) {
     QModelIndex index;
 
-    if ( this->parent() == NULL )
+    if ( this->parent() == nullptr )
         return;
 
     this->rubberBand()->hide();
@@ -431,7 +431,7 @@ void ContainerModel::processMouseRelease( QMouseEvent *e ) {
 void ContainerModel::processMouseMove( QMouseEvent *e ) {
     QModelIndex index;
 
-    if ( this->parent() == NULL )
+    if ( this->parent() == nullptr )
         return;
 
     this->currentMousePos = e->pos();
@@ -460,7 +460,7 @@ void ContainerModel::processMouseMove( QMouseEvent *e ) {
 void ContainerModel::processMousePress( QMouseEvent *e ) {
     QModelIndex index;
 
-    if ( this->parent() == NULL )
+    if ( this->parent() == nullptr )
         return;
 
     index = this->parent()->indexAt( e->pos());
@@ -481,7 +481,7 @@ void ContainerModel::updateRubberBand() {
     QPoint origin;
     int y, k;
 
-    if ( this->parent() == NULL )
+    if ( this->parent() == nullptr )
         return;
 
     if ( !this->rubberBand()->isHidden()) {
@@ -508,7 +508,7 @@ void ContainerModel::updateRubberBand() {
  * @brief ContainerModel::selectCurrent
  */
 void ContainerModel::selectCurrent() {
-    if ( this->parent() == NULL )
+    if ( this->parent() == nullptr )
         return;
 
     if ( !this->currentIndex.isValid() || !this->parent()->underMouse())
@@ -525,7 +525,7 @@ void ContainerModel::selectCurrent() {
  * @brief ContainerModel::deselectCurrent
  */
 void ContainerModel::deselectCurrent() {
-    if ( this->parent() == NULL )
+    if ( this->parent() == nullptr )
         return;
 
     if ( !this->parent()->underMouse())
@@ -565,7 +565,7 @@ void ContainerModel::determineMimeTypes() {
                 continue;
 
             rect = this->parent()->visualRect( index );
-            if ( entry != NULL && this->parent()->viewport()->rect().intersects( rect )) {
+            if ( entry != nullptr && this->parent()->viewport()->rect().intersects( rect )) {
                 this->fileHash.insert( entry->path(), index );
                 m.cache->process( entry->path());
                 //z++;
@@ -600,7 +600,7 @@ void ContainerModel::mimeTypeDetected( const QString &fileName, const DataEntry 
         Entry *entry;
 
         entry = this->indexToEntry( values.at( y ));
-        if ( entry != NULL ) {
+        if ( entry != nullptr ) {
             if ( !QString::compare( entry->path(), fileName )) {
                 if ( data.pixmapList.count() == 4 ) {
                     index = this->iconSize() / 16;
@@ -639,7 +639,7 @@ void ContainerModel::processDropEvent( const QModelIndex &index, const QPoint &p
 
     entry = this->indexToEntry( index );
 
-    if ( entry == NULL )
+    if ( entry == nullptr )
         return;
 
     foreach ( QModelIndex modelIndex, this->selection ) {
@@ -649,7 +649,7 @@ void ContainerModel::processDropEvent( const QModelIndex &index, const QPoint &p
             continue;
 
         modelEntry = this->indexToEntry( modelIndex );
-        if ( modelEntry != NULL )
+        if ( modelEntry != nullptr )
             items << modelEntry->alias();
     }
 
@@ -660,7 +660,7 @@ void ContainerModel::processDropEvent( const QModelIndex &index, const QPoint &p
     menu.addAction( "Link here" );
 
     // TODO: support executables
-    if ( entry != NULL ) {
+    if ( entry != nullptr ) {
         if ( !entry->isDirectory())
             m.notifications()->push( NotificationPanel::Warning, "Invalid drop", this->tr( "Cannot drop files on '%1'" ).arg( entry->alias()));
         else {
@@ -680,7 +680,7 @@ void ContainerModel::processContextMenu( const QModelIndex &index, const QPoint 
     Entry *entry;
 
     entry = this->indexToEntry( index );
-    if ( entry == NULL )
+    if ( entry == nullptr )
         return;
 
     // a dummy menu for now
@@ -711,7 +711,7 @@ void ContainerModel::processItemOpen( const QModelIndex &index ) {
         return;
 
     entry = this->indexToEntry( index );
-    if ( entry == NULL )
+    if ( entry == nullptr )
         return;
 
     if ( entry->isDirectory()) {
@@ -846,7 +846,7 @@ QMimeData *ContainerModel::mimeData( const QModelIndexList &indexes ) const {
 
         if ( index.isValid()) {
             entry = this->indexToEntry( index );
-            if ( entry == NULL )
+            if ( entry == nullptr )
                 continue;
 
             urlList << QUrl::fromLocalFile( entry->path());

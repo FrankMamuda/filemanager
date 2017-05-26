@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef ICONCACHE_H
-#define ICONCACHE_H
+#pragma once
 
 //
 // includes
@@ -117,7 +116,5 @@ private:
 
     bool m_updateRequested;
 };
-
-#endif // ICONCACHE_H
 
 

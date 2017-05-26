@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef WORKER_H
-#define WORKER_H
+#pragma once
 
 //
 // includes
@@ -54,5 +53,3 @@ private:
     QList<Work> workList;
     mutable QMutex m_mutex;
 };
-
-#endif // WORKER_H

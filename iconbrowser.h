@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef ICONBROWSER_H
-#define ICONBROWSER_H
+#pragma once
 
 //
 // includes
@@ -62,5 +61,3 @@ private:
     IconModel *iconModel;
     QModelIndex currentIndex;
 };
-
-#endif // ICONBROWSER_H

@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef MAIN_H
-#define MAIN_H
+#pragma once
 
 //
 // includes
@@ -58,5 +57,3 @@ private:
 };
 
 extern class Main m;
-
-#endif // MAIN_H

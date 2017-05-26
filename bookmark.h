@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef BOOKMARK_H
-#define BOOKMARK_H
+#pragma once
 
 //
 // includes
@@ -99,5 +98,3 @@ private:
     QDir bookmarkDir;
     FileStream data;
 };
-
-#endif // BOOKMARK_H

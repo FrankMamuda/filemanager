@@ -209,6 +209,6 @@ void SideView::changeBookmarkIcon() {
         if ( pixmap.isNull())
             return;
 
-        this->model()->bookmarks()->setValue( this->currentIndex().row(), Bookmark::Pixmap, pixmap.scaledToHeight( 32, Qt::SmoothTransformation ));
+        this->model()->bookmarks()->setValue( this->currentIndex().row(), Bookmark::Pixmap, pixmap.scaledToHeight( 16, Qt::SmoothTransformation ));
     }
 }

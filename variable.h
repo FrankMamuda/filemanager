@@ -17,8 +17,7 @@
  *
  */
 
-#ifndef VARIABLE_H
-#define VARIABLE_H
+#pragma once
 
 //
 // includes
@@ -65,5 +64,3 @@ flags readOnly admin archive temporary nodefault etc.
 
 or move to something other than Qt... like XML?
 */
-
-#endif // VARIABLE_H

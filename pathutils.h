@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef PATHUTILS_H
-#define PATHUTILS_H
+#pragma once
 
 //
 // includes
@@ -41,5 +40,3 @@ public:
 };
 
 extern class PathUtils pathUtils;
-
-#endif // PATHUTILS_H

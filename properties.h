@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef PROPERTIES_H
-#define PROPERTIES_H
+#pragma once
 
 //
 // includes
@@ -57,5 +56,3 @@ private:
     Ui::Properties *ui;
     Entry *entry;
 };
-
-#endif // PROPERTIES_H

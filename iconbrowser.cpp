@@ -39,7 +39,7 @@ IconBrowser::IconBrowser( QWidget *parent ) : QDialog( parent ), ui( new Ui::Ico
  * @brief IconBrowser::~IconBrowser
  */
 IconBrowser::~IconBrowser() {
-    if ( this->iconModel != NULL )
+    if ( this->iconModel != nullptr )
         this->iconModel->deleteLater();
 
     delete ui;

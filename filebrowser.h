@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef FILEBROWSER_H
-#define FILEBROWSER_H
+#pragma once
 
 //
 // includes
@@ -118,5 +117,3 @@ private:
 };
 
 Q_DECLARE_METATYPE( FileBrowser::ViewModes )
-
-#endif // FILEBROWSER_H

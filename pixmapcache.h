@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef PIXMAPCACHE_H
-#define PIXMAPCACHE_H
+#pragma once
 
 //
 // includes
@@ -56,5 +55,3 @@ private:
 };
 
 extern class PixmapCache pixmapCache;
-
-#endif // PIXMAPCACHE_H

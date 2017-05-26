@@ -172,6 +172,6 @@ void ListView::updateRubberBand() {
 void ListView::resizeEvent( QResizeEvent *e ) {
     QListView::resizeEvent( e );
 
-    if ( this->model() != NULL )
+    if ( this->model() != nullptr )
         this->model()->softReset();
 }

@@ -139,7 +139,7 @@ void TableView::selectionChanged( const QItemSelection &selected, const QItemSel
 void TableView::resizeEvent( QResizeEvent *e ) {
     QTableView::resizeEvent( e );
 
-    if ( this->model() != NULL )
+    if ( this->model() != nullptr )
         this->model()->softReset();
 }
 

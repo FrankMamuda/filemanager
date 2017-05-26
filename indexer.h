@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef INDEXER_H
-#define INDEXER_H
+#pragma once
 
 //
 // includes
@@ -50,5 +49,3 @@ private:
     QStringList workList;
     mutable QMutex m_mutex;
 };
-
-#endif // INDEXER_H

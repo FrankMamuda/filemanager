@@ -33,6 +33,11 @@
 //
 class PixmapCache pixmapCache;
 
+//
+// add support for forced icon size (not pixmap)
+// add support for multiple themes (for example sideview need dark icons)
+//
+
 /**
  * @brief PixmapCache::pixmap
  * @param name

@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef FILESTREAM_H
-#define FILESTREAM_H
+#pragma once
 
 //
 // includes
@@ -53,5 +52,3 @@ public:
 private:
     QFile m_file;
 };
-
-#endif // FILESTREAM_H

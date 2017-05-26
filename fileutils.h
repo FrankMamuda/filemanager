@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef FILEUTILS_H
-#define FILEUTILS_H
+#pragma once
 
 //
 // includes
@@ -140,4 +139,3 @@ private:
     mutable QMutex m_mutex;
 };
 #endif
-#endif // FILEUTILS_H

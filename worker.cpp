@@ -48,7 +48,7 @@ QPixmap Worker::extractPixmap( const QString &path, bool &ok, bool jumbo ) {
     if ( SUCCEEDED( SHGetFileInfo( reinterpret_cast<const wchar_t *>( QDir::toNativeSeparators( path ).utf16()), 0, &shellInfo, sizeof( SHFILEINFO ), SHGFI_ICON | SHGFI_SYSICONINDEX | SHGFI_ICONLOCATION | SHGFI_USEFILEATTRIBUTES | SHGFI_LARGEICON ))) {
         if ( shellInfo.hIcon ) {
             if ( QSysInfo::windowsVersion() >= QSysInfo::WV_VISTA ) {
-                IImageList *imageList = NULL;
+                IImageList *imageList = nullptr;
                 index = 0x2;
 
                 if ( jumbo )

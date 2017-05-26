@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef ENTRY_H
-#define ENTRY_H
+#pragma once
 
 //
 // includes
@@ -105,5 +104,3 @@ private:
 };
 
 Q_DECLARE_METATYPE( Entry::EntryTypes )
-
-#endif // ENTRY_H

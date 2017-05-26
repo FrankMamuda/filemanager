@@ -52,9 +52,7 @@ QSize ListViewDelegate::sizeHint( const QStyleOptionViewItem &option, const QMod
     item = qvariant_cast<ContainerItem>( index.model()->data( index, Qt::UserRole + ContainerModel::DisplayItem ));
     size = QStyledItemDelegate::sizeHint( option, index );
 
-    if ( viewMode == QListView::ListMode )
-        size.setHeight( option.decorationSize.height());
-    else
+    if ( viewMode != QListView::ListMode )
         size.setHeight( option.decorationSize.height() + item.lines.count() * item.textHeight );
 
     return size;
@@ -72,7 +70,7 @@ void ListViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &opt
 
     // get view mode
     viewMode = qobject_cast<QListView*>( this->parent())->viewMode();
-    bookMarkView = qobject_cast<SideView*>( this->parent()) != NULL;
+    bookMarkView = qobject_cast<SideView*>( this->parent()) != nullptr;
 
     //
     // STAGE 0: display hilight

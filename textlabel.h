@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef TEXTLABEL_H
-#define TEXTLABEL_H
+#pragma once
 
 //
 // defines
@@ -95,6 +94,3 @@ private:
     bool m_pixmapSet;
     QPixmap m_pixmap;
 };
-
-
-#endif // TEXTLABEL_H

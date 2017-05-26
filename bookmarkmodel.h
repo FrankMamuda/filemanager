@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef BOOKMARKMODEL_H
-#define BOOKMARKMODEL_H
+#pragma once
 
 //
 // includes
@@ -59,5 +58,3 @@ private:
     QAbstractItemView *m_parent;
     Bookmark *m_bookmarks;
 };
-
-#endif // BOOKMARKMODEL_H

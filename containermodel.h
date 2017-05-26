@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef CONTAINERMODEL_H
-#define CONTAINERMODEL_H
+#pragma once
 
 //
 // includes
@@ -191,5 +190,3 @@ Q_DECLARE_METATYPE( ContainerModel::Modes )
 Q_DECLARE_METATYPE( ContainerModel::Containers )
 Q_DECLARE_METATYPE( ContainerModel::Data )
 Q_DECLARE_METATYPE( ContainerModel::Sections )
-
-#endif // CONTAINERMODEL_H

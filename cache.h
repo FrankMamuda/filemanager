@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef CACHE_H
-#define CACHE_H
+#pragma once
 
 //
 // includes
@@ -136,5 +135,3 @@ private:
     Worker *worker;
     Indexer *indexer;
 };
-
-#endif // CACHE_H

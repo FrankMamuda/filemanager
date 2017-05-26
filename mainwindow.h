@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 //
 // includes
@@ -126,5 +125,3 @@ private:
 };
 
 Q_DECLARE_METATYPE( MainWindow::IconScale )
-
-#endif // MAINWINDOW_H

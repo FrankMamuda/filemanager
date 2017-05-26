@@ -35,7 +35,7 @@
 IconModel::IconModel( QObject *listView ) {
     // set parent
     this->parent = qobject_cast<QListView *>( listView );
-    if ( this->parent == NULL )
+    if ( this->parent == nullptr )
         return;
 
     // listen to cache updates
@@ -53,7 +53,7 @@ IconModel::IconModel( QObject *listView ) {
  */
 IconModel::~IconModel() {
     this->clear();
-    this->parent = NULL;
+    this->parent = nullptr;
 }
 
 /**

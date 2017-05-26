@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef LISTVIEWDELEGATE_H
-#define LISTVIEWDELEGATE_H
+#pragma once
 
 //
 // includes
@@ -45,5 +44,3 @@ protected:
     void paint( QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index ) const;
     QSize sizeHint( const QStyleOptionViewItem &option, const QModelIndex &index ) const;
 };
-
-#endif // LISTVIEWDELEGATE_H

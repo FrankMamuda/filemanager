@@ -86,10 +86,10 @@ NotificationPanel::~NotificationPanel() {
     delete ui;
     this->opacityEffect->deleteLater();
 
-    if ( this->historyManager() != NULL )
+    if ( this->historyManager() != nullptr )
         delete this->m_historyManager;
 
-    if ( this->animation() != NULL )
+    if ( this->animation() != nullptr )
         delete this->m_animation;
 }
 

@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef NOTIFICATIONPANEL_H
-#define NOTIFICATIONPANEL_H
+#pragma once
 
 //
 // includes
@@ -119,5 +118,3 @@ private:
     int m_timeout;
 };
 Q_DECLARE_METATYPE( Notification )
-
-#endif // NOTIFICATIONPANEL_H

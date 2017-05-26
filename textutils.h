@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef TEXTUTILS_H
-#define TEXTUTILS_H
+#pragma once
 
 //
 // includes
@@ -32,5 +31,3 @@ public:
     TextUtils();
     static QString sizeToText( const quint64 bytes );
 };
-
-#endif // TEXTUTILS_H

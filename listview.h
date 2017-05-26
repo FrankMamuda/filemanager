@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef LISTVIEW_H
-#define LISTVIEW_H
+#pragma once
 
 //
 // includes
@@ -71,5 +70,3 @@ private:
     ContainerStyle *m_style;
     ListViewDelegate *m_delegate;
 };
-
-#endif // LISTVIEW_H

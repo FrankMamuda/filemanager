@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef ICONFETCHER_H
-#define ICONFETCHER_H
+#pragma once
 
 //
 // includes
@@ -46,5 +45,3 @@ private:
     QList<IconIndex> workList;
     mutable QMutex m_mutex;
 };
-
-#endif // ICONFETCHER_H

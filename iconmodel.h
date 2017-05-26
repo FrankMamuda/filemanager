@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef ICONMODEL_H
-#define ICONMODEL_H
+#pragma once
 
 //
 // includes
@@ -54,5 +53,3 @@ private:
     QStringList iconNames;
     QList<QPixmap>pixmapList;
 };
-
-#endif // ICONMODEL_H

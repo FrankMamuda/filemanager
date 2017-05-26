@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef TABLEVIEWDELEGATE_H
-#define TABLEVIEWDELEGATE_H
+#pragma once
 
 //
 // includes
@@ -29,11 +28,9 @@
  */
 class TableViewDelegate : public QStyledItemDelegate {
 public:
-    TableViewDelegate( QObject *parent = NULL ) : QStyledItemDelegate( parent ) {}
+    TableViewDelegate( QObject *parent = nullptr ) : QStyledItemDelegate( parent ) {}
     ~TableViewDelegate() {}
 
 protected:
     void paint( QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index ) const;
 };
-
-#endif // TABLEVIEWDELEGATE_H

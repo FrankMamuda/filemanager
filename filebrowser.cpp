@@ -103,6 +103,11 @@ void FileBrowser::setupNavigationBar() {
     this->ui->actionUp->setIcon( pixmapCache.fromTheme( "go-up" ));
     this->ui->actionForward->setIcon( pixmapCache.fromTheme( "go-next" ));
     this->ui->navigationToolbar->addWidget( this->ui->pathEdit );
+
+    // TODO: deleteme
+    //QWidget* spacer = new QWidget();
+    //spacer->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
+   // this->ui->navigationToolbar->addWidget( spacer );
 }
 
 /**
@@ -256,7 +261,7 @@ void FileBrowser::updateInfoPanel() {
         if ( model->selectionList.count() == 1 || ( model->container() == ContainerModel::TableContainer && model->selectionList.count() == 4 )) {
             entry = model->selectionList.first();
 
-            if ( entry == NULL )
+            if ( entry == nullptr )
                 return;
 
             if ( entry->type() == Entry::Thumbnail || entry->type() == Entry::Executable ) {

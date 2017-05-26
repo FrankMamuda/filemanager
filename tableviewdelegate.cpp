@@ -39,7 +39,7 @@ void TableViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &op
 
     // get parent container
     tableParent = qobject_cast<QTableView*>( this->parent());
-    if ( tableParent == NULL )
+    if ( tableParent == nullptr )
         return;
 
     // save painter state & get hilight brush
