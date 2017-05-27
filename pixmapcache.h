@@ -42,16 +42,17 @@ class PixmapCache {
 public:
     PixmapCache() {}
     QPixmap pixmap( const QString &name, int scale, bool thumbnail = false );
-    QIcon fromTheme( const QString &name );
-    void buildIndex();
+    QIcon findIcon( const QString &name, int scale = 0, const QString &themeName = QString::null );
+    void buildIndex( const QString &themeName );
     int parseSVG( const QString &buffer );
     IconMatch readIconFile( const QString &buffer, bool &ok, int recursionLevel = 2 );
-    QPixmap findPixmap( const QString &name, int scale );
-    IconMatchList getIconMatchList( const QString &name );
+    QPixmap findPixmap( const QString &name, int scale, const QString &themeName = QString::null );
+    IconMatchList getIconMatchList( const QString &name, const QString &themeName );
 
 private:
     QHash<QString, QPixmap> pixmapCache;
-    QStringList index;
+    QHash<QString, QStringList> index;
+    QString defaultTheme;
 };
 
 extern class PixmapCache pixmapCache;

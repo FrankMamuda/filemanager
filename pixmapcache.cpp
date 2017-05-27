@@ -36,7 +36,7 @@ class PixmapCache pixmapCache;
 //
 // add support for forced icon size (not pixmap)
 // add support for multiple themes (for example sideview need dark icons)
-//
+// TODO: use FALLBACK!!!
 
 /**
  * @brief PixmapCache::pixmap
@@ -115,15 +115,19 @@ QPixmap PixmapCache::pixmap( const QString &name, int scale, bool thumbnail ) {
 /**
  * @brief PixmapCache::buildIndex
  */
-void PixmapCache::buildIndex() {
+void PixmapCache::buildIndex( const QString &themeName ) {
     QString iconPath, buffer;
     QFile index;
     QRegExp rx;
     QStringList dirList;
     int pos;
 
+    // set first as default theme
+    if ( this->defaultTheme.isEmpty())
+        this->defaultTheme = themeName;
+
     // currently get the first theme search path
-    iconPath = QIcon::themeSearchPaths().first() + "/" + QIcon::themeName();
+    iconPath = QIcon::themeSearchPaths().first() + "/" + themeName;//QIcon::themeName();
 
     // open theme index file
     index.setFileName( iconPath + "/" + "index.theme" );
@@ -134,7 +138,6 @@ void PixmapCache::buildIndex() {
     buffer = QString( index.readAll().constData());
 
     // set pattern to extract icon directories
-   // rx.setPattern( "Directories=((?:[A-z]+\\/[A-z0-9]+,?)+)" );
     rx.setPattern( "Directories=(.+)\\s" );
 
     // extract icon directories
@@ -151,7 +154,7 @@ void PixmapCache::buildIndex() {
     // append directories to index
     dirList = dirList.first().split( "," );
     foreach ( QString dir, dirList )
-        this->index << iconPath + "/" + dir;
+        this->index[themeName] << iconPath + "/" + dir;
 
     // close index file
     index.close();
@@ -299,12 +302,12 @@ IconMatch PixmapCache::readIconFile( const QString &fileName, bool &ok, int recu
  * @return
  */
 // FIXME: precache icons???
-QPixmap PixmapCache::findPixmap( const QString &name, int scale ) {
+QPixmap PixmapCache::findPixmap( const QString &name, int scale, const QString &themeName ) {
     int y = 0, bestIndex = 0, bestScale = 0;
     IconMatchList matchList;
 
     // get icon match list
-    matchList = this->getIconMatchList( name );
+    matchList = this->getIconMatchList( name, themeName );
 
     // don't bother if no matches
     if ( matchList.isEmpty())
@@ -337,25 +340,41 @@ QPixmap PixmapCache::findPixmap( const QString &name, int scale ) {
  */
 
 // TODO: early quit if matching size found?
-QIcon PixmapCache::fromTheme( const QString &name ) {
+QIcon PixmapCache::findIcon( const QString &name, int scale, const QString &themeName ) {
     int y = 0, bestIndex = 0, bestScale = 0;
     IconMatchList matchList;
 
     // get icon match list
-    matchList = this->getIconMatchList( name );
+    matchList = this->getIconMatchList( name, themeName );
 
     // don't bother if no matches
     if ( matchList.isEmpty())
         return QIcon();
 
     // go through all matches
-    foreach ( IconMatch iconMatch, matchList ) {
-        if ( iconMatch.scale > bestScale ) {
-            bestScale = iconMatch.scale;
-            bestIndex = y;
-        }
+    // TODO: optimize code
+    if ( scale == 0 ) {
+        foreach ( IconMatch iconMatch, matchList ) {
+            if ( iconMatch.scale > bestScale ) {
+                bestScale = iconMatch.scale;
+                bestIndex = y;
+            }
 
-        y++;
+            y++;
+        }
+    } else {
+        foreach ( IconMatch iconMatch, matchList ) {
+            if ( iconMatch.scale == scale ) {
+                bestIndex = y;
+                bestScale = iconMatch.scale;
+                break;
+            } else if ( iconMatch.scale > bestScale ) {
+                bestScale = iconMatch.scale;
+                bestIndex = y;
+            }
+
+            y++;
+        }
     }
 
     return QIcon( matchList.at( bestIndex ).fileName );
@@ -366,17 +385,28 @@ QIcon PixmapCache::fromTheme( const QString &name ) {
  * @param name
  * @return
  */
-IconMatchList PixmapCache::getIconMatchList( const QString &name ) {
+IconMatchList PixmapCache::getIconMatchList( const QString &name, const QString &themeName ) {
     QDir dir;
     QStringList iconPathList;
     IconMatchList matchList;
     int recursionLevel = 2;
+    QString theme;
+
+    // revert to default if no theme is specified
+    if ( themeName.isEmpty())
+        theme = this->defaultTheme;
+    else
+        theme = themeName;
+
+    // check theme name
+    if ( !this->index.contains( theme ))
+        return matchList;
 
     // set directory filter to find png and svg icons only
     dir.setNameFilters( QStringList() << ( name + ".png" ) << ( name + ".svg" ));
 
     // go through all directories
-    foreach ( QString path, this->index ) {
+    foreach ( QString path, this->index[theme] ) {
         dir.setPath( path );
 
         // append all matched paths

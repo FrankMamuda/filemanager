@@ -55,9 +55,9 @@ NotificationPanel::NotificationPanel( QWidget *parent ) : QWidget( parent ), ui(
     this->setAutoFillBackground( true );
 
     // set up buttons
-    this->ui->closeButton->setIcon( pixmapCache.fromTheme( /*QIcon::fromTheme(*/ "dialog-ok" ));
-    this->ui->nextButton->setIcon( pixmapCache.fromTheme( /*QIcon::fromTheme(*/ "go-next" ));
-    this->ui->prevButton->setIcon( pixmapCache.fromTheme( /*QIcon::fromTheme(*/ "go-previous" ));
+    this->ui->closeButton->setIcon( pixmapCache.findIcon( /*QIcon::fromTheme(*/ "dialog-ok" ));
+    this->ui->nextButton->setIcon( pixmapCache.findIcon( /*QIcon::fromTheme(*/ "go-next" ));
+    this->ui->prevButton->setIcon( pixmapCache.findIcon( /*QIcon::fromTheme(*/ "go-previous" ));
 
     // set up animation timer
     this->timer.setSingleShot( true );

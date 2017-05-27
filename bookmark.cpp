@@ -116,7 +116,7 @@ void Bookmark::remove( int pos ) {
  * @param iconName
  */
 QPixmap Bookmark::iconNameToPixmap( const QString &iconName ) {
-    return pixmapCache.findPixmap( iconName, 16 );//32 );// QIcon::fromTheme( iconName ).pixmap( 32, 32 );
+    return pixmapCache.findPixmap( iconName, 16, "breeze-dark" );
 }
 
 /**

@@ -59,14 +59,18 @@ FileBrowser::FileBrowser( QWidget *parent ) : QMainWindow( parent ), ui( new Ui:
 
     // setup view mode and actions
     this->setupViewModes();
+
+    // remove dock titlebar
+    // TODO: deleteme
+    this->ui->dockInfo->setTitleBarWidget( new QWidget());
 }
 
 /**
  * @brief FileBrowser::setupToolBar
  */
 void FileBrowser::setupToolBar() {
-    this->ui->actionBookmarks->setIcon( pixmapCache.fromTheme( "folder-bookmark" ));
-    this->ui->actionInfo->setIcon( pixmapCache.fromTheme( "dialog-information" ));
+    this->ui->actionBookmarks->setIcon( pixmapCache.findIcon( "folder-bookmark", this->ui->mainToolBar->iconSize().width()));
+    this->ui->actionInfo->setIcon( pixmapCache.findIcon( "dialog-information", this->ui->mainToolBar->iconSize().width()));
 
     // FIXME: a little messy
     Variable::add( "mainWindow/bookmarkPanelVisible", true );
@@ -86,9 +90,9 @@ void FileBrowser::setupFrameBar() {
     spacer->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
 
     this->ui->frameToolbar->addWidget( spacer );
-    this->ui->actionMinimize->setIcon( pixmapCache.fromTheme( "window-minimize-symbolic" ));
-    this->ui->actionMaximize->setIcon( pixmapCache.fromTheme( "window-maximize-symbolic" ));
-    this->ui->actionClose->setIcon( pixmapCache.fromTheme( "window-close-symbolic" ));
+    this->ui->actionMinimize->setIcon( pixmapCache.findIcon( "window-minimize-symbolic" ));
+    this->ui->actionMaximize->setIcon( pixmapCache.findIcon( "window-maximize-symbolic" ));
+    this->ui->actionClose->setIcon( pixmapCache.findIcon( "window-close-symbolic" ));
     this->ui->frameToolbar->addAction( this->ui->actionMinimize );
     this->ui->frameToolbar->addAction( this->ui->actionMaximize );
     this->ui->frameToolbar->addAction( this->ui->actionClose );
@@ -99,9 +103,9 @@ void FileBrowser::setupFrameBar() {
  */
 void FileBrowser::setupNavigationBar() {
     this->insertToolBarBreak( this->ui->navigationToolbar );
-    this->ui->actionBack->setIcon( pixmapCache.fromTheme( "go-previous" ));
-    this->ui->actionUp->setIcon( pixmapCache.fromTheme( "go-up" ));
-    this->ui->actionForward->setIcon( pixmapCache.fromTheme( "go-next" ));
+    this->ui->actionBack->setIcon( pixmapCache.findIcon( "go-previous" ));
+    this->ui->actionUp->setIcon( pixmapCache.findIcon( "go-up" ));
+    this->ui->actionForward->setIcon( pixmapCache.findIcon( "go-next" ));
     this->ui->navigationToolbar->addWidget( this->ui->pathEdit );
 
     // TODO: deleteme
@@ -122,9 +126,9 @@ void FileBrowser::setupViewModes() {
     this->viewModeMenu->setStyle( this->menuStyle );
 
     // add actions
-    this->actionViewGrid = new QAction( pixmapCache.fromTheme( "preferences-desktop-icons" ), this->tr( "Grid view" ));
-    this->actionViewList = new QAction( pixmapCache.fromTheme( "view-media-playlist" ), this->tr( "List view" ));
-    this->actionViewDetails = new QAction( pixmapCache.fromTheme( "x-office-spreadsheet" ), this->tr( "Detail view" ));
+    this->actionViewGrid = new QAction( pixmapCache.findIcon( "preferences-desktop-icons" ), this->tr( "Grid view" ));
+    this->actionViewList = new QAction( pixmapCache.findIcon( "view-media-playlist" ), this->tr( "List view" ));
+    this->actionViewDetails = new QAction( pixmapCache.findIcon( "x-office-spreadsheet" ), this->tr( "Detail view" ));
     this->connect( this->actionViewGrid, SIGNAL( triggered( bool )), this, SLOT( setGridView()));
     this->connect( this->actionViewList, SIGNAL( triggered( bool )), this, SLOT( setListView()));
     this->connect( this->actionViewDetails, SIGNAL( triggered( bool )), this, SLOT( setDetailView()));
@@ -134,7 +138,7 @@ void FileBrowser::setupViewModes() {
 
     // set view mode list to view mode action
     this->ui->actionViewMode->setMenu( this->viewModeMenu );
-    this->ui->actionViewMode->setIcon( pixmapCache.fromTheme( "preferences-system-windows-actions" ));
+    this->ui->actionViewMode->setIcon( pixmapCache.findIcon( "preferences-system-windows-actions" ));
 
     // restore view mode
     viewMode = Variable::value<ViewModes>( "mainWindow/viewMode", IconMode );

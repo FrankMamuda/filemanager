@@ -5,3 +5,8 @@ icons/*
 *.autosave
 .cache/index.cache
 .cache/data.cache
+.config/bookmarks
+.cache/icons.index
+.cache/files.data
+.cache/files.index
+.cache/icons.data

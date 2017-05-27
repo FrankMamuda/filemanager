@@ -72,7 +72,9 @@ int main( int argc, char *argv[] ) {
     QIcon::setThemeName( "breeze" );
 
     // build pixmap index
-    pixmapCache.buildIndex();
+    qDebug() << QDir::currentPath();
+    pixmapCache.buildIndex( "breeze" );
+    pixmapCache.buildIndex( "breeze-dark" );
 
     // init cache, run it from a separate thread
     m.cache = new Cache( QDir::currentPath() + "/.cache" );
