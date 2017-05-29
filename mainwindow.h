@@ -45,6 +45,8 @@ namespace Ui {
 class MainWindow;
 static const int BorderWidth = 8;
 static const int MouseGrabAreas = 8;
+static const QString lightIconTheme = "breeze";
+static const QString darkIconTheme = "breeze-dark";
 }
 
 /**

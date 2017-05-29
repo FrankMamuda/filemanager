@@ -51,7 +51,7 @@ void IconFetcher::run() {
             QPixmap pixmap;
 
             index = this->workList.takeLast();
-            pixmap = pixmapCache.findPixmap( index.first, index.second );//QIcon::fromTheme( index.first ).pixmap( index.second, index.second );
+            pixmap = pixmapCache.pixmap( index.first, index.second );
 
             if ( !pixmap.isNull() && pixmap.width())
                 emit this->workDone( index.first, index.second, pixmap );

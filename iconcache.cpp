@@ -199,12 +199,7 @@ void IconCache::run() {
                 emit this->finished( iconName, iconScale, this->pixmap( iconName, iconScale ));
                 continue;
             }
-
-            /*if ( QIcon::hasThemeIcon( iconName ))
-                pixmap = QIcon::fromTheme( iconName ).pixmap( iconScale, iconScale );
-            else
-                continue;*/
-            pixmap = pixmapCache.findPixmap( iconName, iconScale );
+            pixmap = pixmapCache.pixmap( iconName, iconScale );
 
             if ( !pixmap.isNull() && pixmap.width()) {
                 // cache to disk

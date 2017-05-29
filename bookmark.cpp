@@ -25,13 +25,25 @@
 #include "pathutils.h"
 #include "entry.h"
 #include "pixmapcache.h"
+#include "mainwindow.h"
+#include <QStandardPaths>
 
 /**
  * @brief Bookmark::Bookmark
  * @param path
  */
-Bookmark::Bookmark(const QString &path) : m_path( path ), m_valid( true ) {
+Bookmark::Bookmark( const QString &path, QAbstractItemView *parent ) : m_path( path ), m_valid( true ), m_parent( parent ) {
+    //int iconScale;
+
+    // set bookmark dir
     this->bookmarkDir = QDir( this->path());
+
+    // check for parent container
+    if ( this->parent() == nullptr )
+        return;
+
+    // get icon scale
+    //iconScale = this->parent()->iconSize().width();
 
     // check if bookmark dir exists
     if ( !this->bookmarkDir.exists()) {
@@ -62,14 +74,19 @@ Bookmark::Bookmark(const QString &path) : m_path( path ), m_valid( true ) {
     // add default bookmarks if none
     if ( !this->count()) {
         QFileInfoList infoList;
-        this->add( "Root", "/", Bookmark::iconNameToPixmap( "folder-red" ), false );
-        this->add( "Home", "/home", Bookmark::iconNameToPixmap( "user-home" ), false );
+        this->add( "Root", "/", QPixmap(), "folder-red", false );
+        this->add( "Home", "/home", QPixmap(), "user-home", false );
+        this->add( "Desktop", PathUtils::toUnixPath( QStandardPaths::standardLocations( QStandardPaths::DesktopLocation ).first()), QPixmap(), "user-desktop", false );
+        this->add( "Downloads", PathUtils::toUnixPath( QStandardPaths::standardLocations( QStandardPaths::DownloadLocation ).first()), QPixmap(), "folder-downloads", false );
+        this->add( "Pictures", PathUtils::toUnixPath( QStandardPaths::standardLocations( QStandardPaths::PicturesLocation ).first()), QPixmap(), "folder-pictures", false );
+        this->add( "Music", PathUtils::toUnixPath( QStandardPaths::standardLocations( QStandardPaths::MusicLocation ).first()), QPixmap(), "folder-music", false );
+        this->add( "Movies", PathUtils::toUnixPath( QStandardPaths::standardLocations( QStandardPaths::MoviesLocation ).first()), QPixmap(), "folder-videos", false );
 
         infoList = QDir::drives();
         foreach ( QFileInfo driveInfo, infoList )
-            this->add( PathUtils::toUnixPath( driveInfo.absolutePath()), PathUtils::toUnixPath( driveInfo.absolutePath()), Bookmark::iconNameToPixmap( Entry::getDriveIconName( driveInfo )), false );
+            this->add( PathUtils::toUnixPath( driveInfo.absolutePath()), PathUtils::toUnixPath( driveInfo.absolutePath()), QPixmap(), Entry::getDriveIconName( driveInfo ), false );
 
-        this->add( "Trash", "trash://", Bookmark::iconNameToPixmap( "user-trash" ), false );
+        this->add( "Trash", "trash://", QPixmap(), "user-trash", false );
 
         // write out
         this->write();
@@ -112,22 +129,25 @@ void Bookmark::remove( int pos ) {
 }
 
 /**
- * @brief Bookmark::iconNameToPixmap
- * @param iconName
- */
-QPixmap Bookmark::iconNameToPixmap( const QString &iconName ) {
-    return pixmapCache.findPixmap( iconName, 16, "breeze-dark" );
-}
-
-/**
  * @brief Bookmark::value
  * @param index
  * @param field
  * @return
  */
 QVariant Bookmark::value( int index, BookmarkData field ) {
+    QString stockIcon;
+    int iconScale;
+
     if ( index < 0 || index >= this->count())
         return QVariant();
+
+    // check for parent container
+    if ( this->parent() == nullptr )
+        return QVariant();
+
+    // get icon scale
+    iconScale = this->parent()->iconSize().width();
+    stockIcon = this->list.at( index ).stockIcon;
 
     switch ( field ) {
     case Alias:
@@ -137,7 +157,13 @@ QVariant Bookmark::value( int index, BookmarkData field ) {
         return this->list.at( index ).path;
 
     case Pixmap:
-        return this->list.at( index ).pixmap;
+        if ( stockIcon.isEmpty())
+            return this->list.at( index ).pixmap;
+        else
+            return pixmapCache.pixmap( stockIcon, iconScale, Ui::darkIconTheme );
+
+    case Stock:
+        return this->list.at( index ).stockIcon;
 
     default:
         break;
@@ -171,6 +197,10 @@ void Bookmark::setValue( int index, Bookmark::BookmarkData field, const QVariant
 
     case Pixmap:
         entry.pixmap = value.value<QPixmap>();
+        break;
+
+    case Stock:
+        entry.stockIcon = value.toString();
         break;
 
     default:

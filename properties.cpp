@@ -83,7 +83,7 @@ void Properties::setEntries( QList<Entry *> entries ) {
     quint64 size = 0;
     QIcon icon;
 
-    icon = pixmapCache.findIcon( /*QIcon::fromTheme(*/ "document-multiple" );
+    icon = pixmapCache.icon( "document-multiple" );
 
     foreach ( Entry *entry, entries )
         size += entry->info().size();

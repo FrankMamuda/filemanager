@@ -43,7 +43,7 @@ class PixmapCache pixmapCache;
  * @param name
  * @return
  */
-QPixmap PixmapCache::pixmap( const QString &name, int scale, bool thumbnail ) {
+QPixmap PixmapCache::pixmap( const QString &name, int scale, const QString themeName, bool thumbnail ) {
     QPixmap pixmap;
     QString cache;
 
@@ -55,7 +55,7 @@ QPixmap PixmapCache::pixmap( const QString &name, int scale, bool thumbnail ) {
         // jpeg/png/etc. generate square thunbnails from the actual images
         // other file use icons based on the mime-type
         if ( !thumbnail )
-            pixmap = this->findPixmap( name, scale );// QIcon::fromTheme( name ).pixmap( scale, scale );
+            pixmap = this->findPixmap( name, scale, themeName );
         else {
             QFileInfo info( name );
 
@@ -67,15 +67,16 @@ QPixmap PixmapCache::pixmap( const QString &name, int scale, bool thumbnail ) {
 
         // handle missing icons
         if ( pixmap.isNull() || !pixmap.width()) {
-            pixmap = this->findPixmap( "application-x-zerosize", scale ); //QIcon::fromTheme( "application-x-zerosize" ).pixmap( scale, scale );
+            pixmap = this->findPixmap( "application-x-zerosize", scale, themeName );
 
             // failsafe, in case something doesn't work as intended
             // NOTE: for some reason some icons fail to load
             if ( pixmap.width() == 0 ) {
                 // try one more time with QFileIconProvider
                 QFileIconProvider p;
-                if ( pixmap.isNull() || !pixmap.width())
-                    pixmap = p.icon( QFileInfo( name )).pixmap( scale, scale );
+                //if ( pixmap.isNull() || !pixmap.width())
+
+                 pixmap = p.icon( QFileInfo( name )).pixmap( scale, scale );
 
                 if ( pixmap.isNull() || !pixmap.width())
                     return QPixmap();
@@ -110,6 +111,49 @@ QPixmap PixmapCache::pixmap( const QString &name, int scale, bool thumbnail ) {
     // retrieve and return the pixmap
     pixmap = this->pixmapCache[cache];
     return pixmap;
+}
+
+/**
+ * @brief PixmapCache::icon
+ * @param name
+ * @param scale
+ * @param themeName
+ * @return
+ */
+QIcon PixmapCache::icon( const QString &name, int scale, const QString themeName ) {
+    QIcon icon;
+    QString cache;
+
+    // make unique icons for different sizes
+    cache = QString( "%1_%2" ).arg( name ).arg( scale );
+
+    // search in hash table
+    if ( !this->iconCache.contains( cache )) {
+        icon = this->findIcon( name, scale, themeName );
+
+        // handle missing icons
+        if ( icon.isNull()) {
+            icon = this->findIcon( "application-x-zerosize", scale, themeName );
+
+            // failsafe
+            if ( icon.isNull()) {
+                // try one more time with QFileIconProvider
+                QFileIconProvider p;
+
+                icon = p.icon( QFileInfo( name ));
+
+                if ( icon.isNull())
+                    return QIcon();
+            }
+        }
+
+        // add icon to cache
+        this->iconCache[cache] = icon;
+    }
+
+    // retrieve and return the icon
+    icon = this->iconCache[cache];
+    return icon;
 }
 
 /**
@@ -331,7 +375,7 @@ QPixmap PixmapCache::findPixmap( const QString &name, int scale, const QString &
 }
 
 /**
- * @brief PixmapCache::fromTheme some icon themes from have folders full of symlinks to avoid duplicate icons
+ * @brief PixmapCache::findIcon some icon themes from have folders full of symlinks to avoid duplicate icons
  * unfortunately QIcon does not handle these symlinks (plain text files). Moreover, since we cannot reliably
  * get a filename from QIcon::fromTheme, we must manually find the best matching icon here while resolving all
  * symlinks

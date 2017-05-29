@@ -56,6 +56,7 @@ private slots:
     void changeBookmarkTarget();
     void removeBookmark();
     void changeBookmarkIcon();
+    //void rebuildIcons();
 
 protected:
     // overrides

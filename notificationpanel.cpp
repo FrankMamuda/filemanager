@@ -55,9 +55,9 @@ NotificationPanel::NotificationPanel( QWidget *parent ) : QWidget( parent ), ui(
     this->setAutoFillBackground( true );
 
     // set up buttons
-    this->ui->closeButton->setIcon( pixmapCache.findIcon( /*QIcon::fromTheme(*/ "dialog-ok" ));
-    this->ui->nextButton->setIcon( pixmapCache.findIcon( /*QIcon::fromTheme(*/ "go-next" ));
-    this->ui->prevButton->setIcon( pixmapCache.findIcon( /*QIcon::fromTheme(*/ "go-previous" ));
+    this->ui->closeButton->setIcon( pixmapCache.icon( "dialog-ok" ));
+    this->ui->nextButton->setIcon( pixmapCache.icon( "go-next" ));
+    this->ui->prevButton->setIcon( pixmapCache.icon( "go-previous" ));
 
     // set up animation timer
     this->timer.setSingleShot( true );
@@ -172,18 +172,15 @@ void NotificationPanel::push( Types type, const QString &title, const QString &m
     // determine message type
     switch ( type ) {
     case Information:
-        //this->ui->pixmapLabel->setPixmap( QIcon::fromTheme( "dialog-information" ).pixmap( 16, 16 ));
-        this->ui->pixmapLabel->setPixmap( pixmapCache.findPixmap( "dialog-information", 16 ));
+        this->ui->pixmapLabel->setPixmap( pixmapCache.pixmap( "dialog-information", 16 ));
         break;
 
     case Warning:
-        //this->ui->pixmapLabel->setPixmap( QIcon::fromTheme( "dialog-warning" ).pixmap( 16, 16 ));
-        this->ui->pixmapLabel->setPixmap( pixmapCache.findPixmap( "dialog-warning", 16 ));
+        this->ui->pixmapLabel->setPixmap( pixmapCache.pixmap( "dialog-warning", 16 ));
         break;
 
     case Error:
-        //this->ui->pixmapLabel->setPixmap( QIcon::fromTheme( "dialog-error" ).pixmap( 16, 16 ));
-        this->ui->pixmapLabel->setPixmap( pixmapCache.findPixmap( "dialog-error", 16 ));
+        this->ui->pixmapLabel->setPixmap( pixmapCache.pixmap( "dialog-error", 16 ));
         break;
 
     case Progress:

@@ -105,20 +105,21 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
         this->resize( size );
 
     // notification icons
-    this->ui->notificationInfo->setIcon( pixmapCache.findIcon( /*QIcon::fromTheme(*/ "dialog-information" ));
+    this->ui->notificationInfo->setIcon( pixmapCache.icon( "dialog-information" ));
 
     // make sidebar dark
     this->ui->dockBookmarks->setStyleSheet( "QDockWidget { background: #353535; }" );
     this->ui->dockBookmarksContents->setStyleSheet( "QWidget { background: #353535; }" );
     this->ui->sideView->setStyleSheet( "QListView { background: #353535; color: #8c8c8c; } QListWidget::item { color: #8c8c8c; }" );
     this->ui->dockBookmarks->setTitleBarWidget( new QWidget());
+    this->ui->dockBookmarks->setVisible( Variable::isEnabled( "mainWindow/bookmarkPanelVisible" ));
 
     // add file browser widget
     this->fileBrowser->parentWindow = this;
     this->ui->centralLayout->addWidget( this->fileBrowser );
 
     // change window icon
-    this->setWindowIcon( pixmapCache.findIcon( "document-open-folder" ));
+    this->setWindowIcon( pixmapCache.icon( "document-open-folder" ));
 
     // remove frame
     this->removeFrame();

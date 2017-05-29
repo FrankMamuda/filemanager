@@ -24,6 +24,7 @@
 #include "filestream.h"
 #include <QDir>
 #include <QPixmap>
+#include <QAbstractItemView>
 
 //
 // classes
@@ -34,7 +35,7 @@ class SideView;
  * @brief The BookMarkSystem namespace
  */
 namespace BookMarkSystem {
-    static const quint8 Version = 1;
+    static const quint8 Version = 2;
     static const QString DataFilename( "bookmarks" );
 }
 
@@ -42,16 +43,17 @@ namespace BookMarkSystem {
  * @brief The BookmarkEntry struct
  */
 struct BookmarkEntry {
-    BookmarkEntry( const QString &a = QString::null, const QString &p = QString::null, const QPixmap &pm = QPixmap()) : alias( a ), path( p ), pixmap( pm ) {}
+    BookmarkEntry( const QString &a = QString::null, const QString &p = QString::null, const QPixmap &pm = QPixmap(), const QString s = QString::null ) : alias( a ), path( p ), pixmap( pm ), stockIcon( s ) {}
     QString alias;
     QString path;
     QPixmap pixmap;
+    QString stockIcon;
 };
 Q_DECLARE_METATYPE( BookmarkEntry )
 
 // read/write operators
-inline static QDataStream &operator<<( QDataStream &out, const BookmarkEntry &e ) { out << e.alias << e.path << e.pixmap; return out; }
-inline static QDataStream &operator>>( QDataStream &in, BookmarkEntry &e ) { in >> e.alias >> e.path >> e.pixmap; return in; }
+inline static QDataStream &operator<<( QDataStream &out, const BookmarkEntry &e ) { out << e.alias << e.path << e.pixmap << e.stockIcon; return out; }
+inline static QDataStream &operator>>( QDataStream &in, BookmarkEntry &e ) { in >> e.alias >> e.path >> e.pixmap >> e.stockIcon; return in; }
 
 /**
  * @brief The Bookmark class
@@ -66,20 +68,23 @@ public:
     enum BookmarkData {
         Alias = 0,
         Path,
-        Pixmap
+        Pixmap,
+        Stock
     };
     Q_ENUMS( BookmarkData )
 
-    Bookmark( const QString &path );
+    Bookmark( const QString &path, QAbstractItemView *parent );
     ~Bookmark() {}
     int count() { return this->list.count(); }
-    void add( const QString &alias, const QString &path, const QPixmap &pixmap = QPixmap(), bool writeOut = true ) { this->add( BookmarkEntry( alias, path, pixmap ), writeOut ); }
+    void add( const QString &alias, const QString &path, const QPixmap &pixmap = QPixmap(), const QString &stockIcon = QString::null, bool writeOut = true ) { this->add( BookmarkEntry( alias, path, pixmap, stockIcon ), writeOut ); }
     void add( const BookmarkEntry &entry, bool writeOut = true );
     void remove( int pos );
     void shutdown() { this->setValid( false ); this->data.close(); }
-    static QPixmap iconNameToPixmap( const QString &iconName );
     QVariant value( int index, BookmarkData field );
     void setValue( int index, BookmarkData field, const QVariant &value );
+
+    // parent widget
+    QAbstractItemView *parent() const { return this->m_parent; }
 
 private slots:
     void write();
@@ -97,4 +102,5 @@ private:
     bool m_valid;
     QDir bookmarkDir;
     FileStream data;
+    QAbstractItemView *m_parent;
 };

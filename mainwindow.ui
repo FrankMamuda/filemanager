@@ -19,10 +19,16 @@
      <number>0</number>
     </property>
     <property name="leftMargin">
-     <number>0</number>
+     <number>2</number>
     </property>
     <property name="topMargin">
-     <number>6</number>
+     <number>2</number>
+    </property>
+    <property name="rightMargin">
+     <number>2</number>
+    </property>
+    <property name="bottomMargin">
+     <number>2</number>
     </property>
     <item>
      <layout class="QVBoxLayout" name="centralLayout"/>
@@ -146,6 +152,12 @@
        </property>
        <property name="defaultDropAction">
         <enum>Qt::MoveAction</enum>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>16</width>
+         <height>16</height>
+        </size>
        </property>
        <property name="resizeMode">
         <enum>QListView::Adjust</enum>

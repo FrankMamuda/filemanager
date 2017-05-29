@@ -41,16 +41,18 @@ typedef QList<IconMatch> IconMatchList;
 class PixmapCache {
 public:
     PixmapCache() {}
-    QPixmap pixmap( const QString &name, int scale, bool thumbnail = false );
-    QIcon findIcon( const QString &name, int scale = 0, const QString &themeName = QString::null );
+    QPixmap pixmap( const QString &name, int scale, const QString themeName = QString::null, bool thumbnail = false );
+    QIcon icon( const QString &name, int scale = 0, const QString themeName = QString::null );
     void buildIndex( const QString &themeName );
     int parseSVG( const QString &buffer );
     IconMatch readIconFile( const QString &buffer, bool &ok, int recursionLevel = 2 );
-    QPixmap findPixmap( const QString &name, int scale, const QString &themeName = QString::null );
     IconMatchList getIconMatchList( const QString &name, const QString &themeName );
 
 private:
+    QIcon findIcon( const QString &name, int scale = 0, const QString &themeName = QString::null );
+    QPixmap findPixmap( const QString &name, int scale, const QString &themeName = QString::null );
     QHash<QString, QPixmap> pixmapCache;
+    QHash<QString, QIcon> iconCache;
     QHash<QString, QStringList> index;
     QString defaultTheme;
 };

@@ -69,12 +69,12 @@ int main( int argc, char *argv[] ) {
     // set up icon theme
     QDir iconDir( QDir::currentPath() + "/icons" );
     QIcon::setThemeSearchPaths( QStringList( iconDir.absolutePath()));
-    QIcon::setThemeName( "breeze" );
+    QIcon::setThemeName( Ui::lightIconTheme );
 
     // build pixmap index
     qDebug() << QDir::currentPath();
-    pixmapCache.buildIndex( "breeze" );
-    pixmapCache.buildIndex( "breeze-dark" );
+    pixmapCache.buildIndex( Ui::lightIconTheme );
+    pixmapCache.buildIndex( Ui::darkIconTheme );
 
     // init cache, run it from a separate thread
     m.cache = new Cache( QDir::currentPath() + "/.cache" );

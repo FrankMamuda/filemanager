@@ -33,6 +33,7 @@
 #include "containerstyle.h"
 #include "notificationpanel.h"
 #include "iconbrowser.h"
+#include "pixmapcache.h"
 
 /**
  * @brief SideView::SideView
@@ -125,7 +126,7 @@ void SideView::dropEvent( QDropEvent *e ) {
         return;
     }
 
-    this->model()->bookmarks()->add( info.fileName(), info.absoluteFilePath(), Bookmark::iconNameToPixmap( "inode-directory" ));
+    this->model()->bookmarks()->add( info.fileName(), info.absoluteFilePath(), QPixmap(), "inode-directory" );
     this->model()->reset();
     e->accept();
 }
@@ -154,6 +155,8 @@ void SideView::processContextMenu( const QModelIndex &index, const QPoint &pos )
     menu.addAction( this->tr( "Change target" ), this, SLOT( changeBookmarkTarget()));
     menu.addSeparator();
     menu.addAction( this->tr( "Remove bookmark" ), this, SLOT( removeBookmark()));
+    menu.addSeparator();
+    //menu.addAction( this->tr( "Rebuild icons" ), this, SLOT( rebuildIcons()));
     menu.exec( pos );
 
     this->currentIndex() = index;
@@ -197,6 +200,17 @@ void SideView::removeBookmark() {
 }
 
 /**
+ * @brief SideView::rebuildIcons
+ */
+/*void SideView::rebuildIcons() {
+    //foreach ( Bookmark *bookmark, this->model()->bookmarks())
+
+   // this->model()->bookmarks()->remove( this->currentIndex().row());
+    //this->model()->reset();
+}*/
+
+
+/**
  * @brief SideView::changeBookmarkIcon
  */
 void SideView::changeBookmarkIcon() {
@@ -209,6 +223,7 @@ void SideView::changeBookmarkIcon() {
         if ( pixmap.isNull())
             return;
 
-        this->model()->bookmarks()->setValue( this->currentIndex().row(), Bookmark::Pixmap, pixmap.scaledToHeight( 16, Qt::SmoothTransformation ));
+        this->model()->bookmarks()->setValue( this->currentIndex().row(), Bookmark::Stock, "" );
+        this->model()->bookmarks()->setValue( this->currentIndex().row(), Bookmark::Pixmap, pixmap.scaledToHeight( this->iconSize().width(), Qt::SmoothTransformation ));
     }
 }

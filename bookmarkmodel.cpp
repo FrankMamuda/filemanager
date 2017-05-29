@@ -23,13 +23,15 @@
 #include "bookmark.h"
 #include "sideview.h"
 #include <QMimeData>
+#include "pixmapcache.h"
+#include "mainwindow.h"
 
 /**
  * @brief BookmarkModel::BookmarkModel
  * @param parent
  */
 BookmarkModel::BookmarkModel( QAbstractItemView *parent ) : m_parent( parent ) {
-    this->m_bookmarks = new Bookmark( QDir::currentPath() + "/.config" );
+    this->m_bookmarks = new Bookmark( QDir::currentPath() + "/.config", parent );
 }
 
 /**
@@ -55,9 +57,27 @@ int BookmarkModel::rowCount( const QModelIndex & ) const {
  * @return
  */
 QVariant BookmarkModel::data( const QModelIndex &modelIndex, int role ) const {
+    QAbstractItemView *parentView;
+    QPixmap pixmap;
+    QString stockIcon;
+
+    parentView = qobject_cast<QAbstractItemView *>( this->parent());
+    if ( parentView == nullptr )
+        return QVariant();
+
     switch ( role )  {
     case Qt::DecorationRole:
-        return this->bookmarks()->list.at( modelIndex.row()).pixmap;
+        stockIcon = this->bookmarks()->list.at( modelIndex.row()).stockIcon;
+
+        if ( stockIcon.isEmpty() )
+            pixmap = this->bookmarks()->list.at( modelIndex.row()).pixmap;
+        else
+            pixmap = pixmapCache.pixmap( stockIcon, parentView->iconSize().width(), Ui::darkIconTheme );
+
+        if ( !pixmap.isNull())
+            return pixmap.scaled( parentView->iconSize(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation );
+        else
+            return QVariant();
 
     case Qt::DisplayRole:
         return this->bookmarks()->list.at( modelIndex.row()).alias;
