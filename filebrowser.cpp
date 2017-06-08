@@ -42,6 +42,7 @@ FileBrowser::FileBrowser( QWidget *parent ) : QMainWindow( parent ), ui( new Ui:
     this->ui->setupUi( this );
 
     // set current path
+    this->ui->navigationBar->setFileBrowser( this );
     this->setCurrentPath( QDir::currentPath(), false );
 
     // make history!
@@ -106,7 +107,7 @@ void FileBrowser::setupNavigationBar() {
     this->ui->actionBack->setIcon( pixmapCache.icon( "go-previous" ));
     this->ui->actionUp->setIcon( pixmapCache.icon( "go-up" ));
     this->ui->actionForward->setIcon( pixmapCache.icon( "go-next" ));
-    this->ui->navigationToolbar->addWidget( this->ui->pathEdit );
+    this->ui->navigationToolbar->addWidget( this->ui->navigationBar );
 
     // TODO: deleteme
     //QWidget* spacer = new QWidget();
@@ -161,13 +162,6 @@ void FileBrowser::setupViewModes() {
 FileBrowser::~FileBrowser() {
     delete ui;
 
-    // view mode related
-    this->viewModeMenu->deleteLater();
-    this->menuStyle->deleteLater();
-    this->actionViewGrid->deleteLater();
-    this->actionViewList->deleteLater();
-    this->actionViewDetails->deleteLater();
-
     // sever signals/slots connections
     this->disconnect( this->ui->listView->selectionModel(), SIGNAL( selectionChanged( QItemSelection, QItemSelection )));
     this->disconnect( this->ui->tableView->selectionModel(), SIGNAL( selectionChanged( QItemSelection, QItemSelection )));
@@ -175,6 +169,13 @@ FileBrowser::~FileBrowser() {
     this->disconnect( this->actionViewList, SIGNAL( triggered( bool )));
     this->disconnect( this->actionViewDetails, SIGNAL( triggered( bool )));
     this->disconnect( this->historyManager(), SIGNAL( changed()));
+
+    // view mode related
+    this->viewModeMenu->deleteLater();
+    this->menuStyle->deleteLater();
+    this->actionViewGrid->deleteLater();
+    this->actionViewList->deleteLater();
+    this->actionViewDetails->deleteLater();
 
     // delete objects
     this->m_historyManager->deleteLater();
@@ -406,7 +407,6 @@ void FileBrowser::setCurrentPath( const QString &path, bool saveToHistory ) {
     //
     // FIXME: this is a mess
     //
-
     QDir directory;
     QString windowsPath, unixPath;
 
@@ -417,15 +417,15 @@ void FileBrowser::setCurrentPath( const QString &path, bool saveToHistory ) {
     if ( !QString::compare( path, "/" )) {
         this->ui->listView->model()->setMode( ContainerModel::SideMode );
         this->ui->tableView->model()->setMode( ContainerModel::SideMode );
-        this->ui->pathEdit->setText( "/" );
+        this->ui->navigationBar->setPath( "/" );
         pathUtils.currentPath = "/";
         this->ui->actionUp->setDisabled( true );
     } else if ( !QString::compare( path, "trash://" )) {
-        this->ui->pathEdit->setText( path );
+        this->ui->navigationBar->setPath( path );
         pathUtils.currentPath = "trash://";
         this->ui->actionUp->setDisabled( true );
     } else if ( !QString::compare( path, "bookmarks://" )) {
-        this->ui->pathEdit->setText( path );
+        this->ui->navigationBar->setPath( path );
         pathUtils.currentPath= "bookmarks://";
         this->ui->actionUp->setDisabled( true );
     } else {
@@ -449,7 +449,7 @@ void FileBrowser::setCurrentPath( const QString &path, bool saveToHistory ) {
 
         unixPath = PathUtils::toUnixPath( windowsPath );
         pathUtils.currentPath = unixPath;
-        this->ui->pathEdit->setText( unixPath );
+        this->ui->navigationBar->setPath( unixPath );
 
         this->ui->listView->model()->setMode( ContainerModel::FileMode );
         this->ui->tableView->model()->setMode( ContainerModel::FileMode );
@@ -503,11 +503,4 @@ void FileBrowser::on_actionForward_triggered() {
 void FileBrowser::checkHistoryPosition() {
     this->ui->actionBack->setEnabled( this->historyManager()->isBackEnabled());
     this->ui->actionForward->setEnabled( this->historyManager()->isForwardEnabled());
-}
-
-/**
- * @brief FileBrowser::on_pathEdit_returnPressed
- */
-void FileBrowser::on_pathEdit_returnPressed() {
-    this->setCurrentPath( this->ui->pathEdit->text());
 }

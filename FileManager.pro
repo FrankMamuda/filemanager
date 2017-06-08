@@ -37,7 +37,8 @@ SOURCES += main.cpp\
     iconcache.cpp \
     iconfetcher.cpp \
     fileutils.cpp \
-    filebrowser.cpp
+    filebrowser.cpp \
+    navigationbar.cpp
 
 HEADERS  += mainwindow.h \
     pixmapcache.h \
@@ -68,7 +69,8 @@ HEADERS  += mainwindow.h \
     iconcache.h \
     iconfetcher.h \
     fileutils.h \
-    filebrowser.h
+    filebrowser.h \
+    navigationbar.h
     common.h
 
 FORMS    += mainwindow.ui \

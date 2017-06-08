@@ -1,12 +1,6 @@
 FileManager.pro.user
-icons/*
 *.cpp~
 *.h~
 *.autosave
-.cache/index.cache
-.cache/data.cache
-.config/bookmarks
-.cache/icons.index
-.cache/files.data
-.cache/files.index
-.cache/icons.data
+.config/*
+.cache/*

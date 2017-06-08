@@ -90,7 +90,6 @@ private slots:
     void on_actionUp_triggered();
     void on_actionBack_triggered();
     void on_actionForward_triggered();
-    void on_pathEdit_returnPressed();
 
     // custom slots
     void setGridView();

@@ -1,1 +1,14 @@
-<RCC/>
+<RCC>
+    <qresource prefix="/icons">
+        <file alias="path_edit">icons/path_edit.png</file>
+        <file alias="path_edit_light">icons/path_edit_light.png</file>
+        <file alias="path_splitter">icons/path_splitter.png</file>
+        <file alias="path_splitter_light">icons/path_splitter_light.png</file>
+        <file alias="scroll_left">icons/scroll_left.png</file>
+        <file alias="scroll_right">icons/scroll_right.png</file>
+        <file alias="edit_back">icons/edit_back.png</file>
+        <file alias="edit_back_light">icons/edit_back_light.png</file>
+        <file alias="edit_clear">icons/edit_clear.png</file>
+        <file alias="edit_clear_light">icons/edit_clear_light.png</file>
+    </qresource>
+</RCC>

@@ -30,9 +30,6 @@
     <property name="spacing">
      <number>0</number>
     </property>
-    <item row="0" column="0">
-     <widget class="QLineEdit" name="pathEdit"/>
-    </item>
     <item row="1" column="0">
      <widget class="QWidget" name="midWidget" native="true">
       <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -409,6 +406,9 @@
       </layout>
      </widget>
     </item>
+    <item row="0" column="0">
+     <widget class="NavigationBar" name="navigationBar" native="true"/>
+    </item>
    </layout>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
@@ -693,6 +693,12 @@ p, li { white-space: pre-wrap; }
    <class>TableView</class>
    <extends>QTableView</extends>
    <header>tableview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>NavigationBar</class>
+   <extends>QWidget</extends>
+   <header>navigationbar.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>
