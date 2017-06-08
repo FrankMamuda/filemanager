@@ -64,6 +64,11 @@ FileBrowser::FileBrowser( QWidget *parent ) : QMainWindow( parent ), ui( new Ui:
     // remove dock titlebar
     // TODO: deleteme
     this->ui->dockInfo->setTitleBarWidget( new QWidget());
+
+    // FOR NOW
+    this->ui->tabWidget->setTabText( 0, "File manager" );
+    this->ui->tabWidget->setTabIcon( 0, pixmapCache.icon( "inode-folder", 16 ));
+    this->ui->tabWidget->removeTab( 1 );
 }
 
 /**

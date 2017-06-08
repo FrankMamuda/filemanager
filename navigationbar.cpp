@@ -21,9 +21,11 @@
 //
 #include <QScrollBar>
 #include <QDebug>
+#include <QCoreApplication>
 #include "navigationbar.h"
 #include "pathutils.h"
 #include "filebrowser.h"
+#include "pixmapcache.h"
 
 /**
  * @brief PathBar::PathBar
@@ -82,12 +84,15 @@ NavigationBar::NavigationBar( QWidget *parent ) : QWidget( parent ), navigationW
     this->connect( this->navigationEdit, SIGNAL( clicked( bool )), this, SLOT( spacerClicked()));
     this->connect( this->navigationSpacer, SIGNAL( clicked( bool )), this, SLOT( spacerClicked()));
     this->connect( this->lineEdit, SIGNAL( returnPressed()), this, SLOT( editFinished()));
-    this->connect( this->buttonClear, SIGNAL( clicked( bool )), this->lineEdit, SLOT( clear()));
+    this->connect( this->buttonClear, SIGNAL( clicked( bool )), this, SLOT( clearLine()));
     this->connect( this->buttonBack, SIGNAL( clicked( bool )), this, SLOT( back()));
     this->connect( this->lineEdit, SIGNAL( returnPressed()), this, SLOT( editFinished()));
 
     // limit height for now
     this->setMaximumHeight( 28 );
+
+    // style menu
+    this->menu->setStyleSheet( NavigationBarNamespace::stylesheet );
 }
 
 /**
@@ -167,13 +172,11 @@ void NavigationBar::setPath( const QString &path ) {
     // display navigationBar widget in scrollarea
     this->scrollArea->setWidget( this->navigationBar );
 
-    // force visibility test
-    this->scrollBar()->setRange( 0, this->navigationBar->width());
-    this->scrollBar()->setValue( this->scrollBar()->maximum());
-    this->checkBounds();
-
     // store path
     this->currentPath = path;
+
+    // NOTE: force visibility test - this is ugly but it works
+    QCoreApplication::postEvent( this, new QResizeEvent( this->size(), this->size()));
 }
 
 /**
@@ -221,13 +224,6 @@ void NavigationBar::clear() {
  * @brief NavigationBar::checkBounds
  */
 void NavigationBar::checkBounds() {
-    //
-    // this still works bad
-    //
-    //qDebug() << "pos" << this->scrollBar()->value() << "max" << this->scrollBar()->maximum() << this->scrollBar()->width();
-    //qDebug() << this->scrollArea->viewport()->visibleRegion().boundingRect().width();
-    //qDebug() << this->scrollArea->viewport()->width();
-
     // make sure scroll buttons are hidden when not needed
     if ( this->scrollBar()->value() >= this->scrollBar()->maximum())
         this->scrollRightButton->setEnabled( false );
@@ -255,7 +251,7 @@ void NavigationBar::spacerClicked() {
     QFontMetrics fm( this->lineEdit->font());
     this->stack->setCurrentIndex( 1 );
     this->lineEdit->setText( this->currentPath );
-    this->lineEdit->setFixedWidth( fm.width( this->lineEdit->text()) + 2 );
+    this->lineEdit->setFixedWidth( qMax( fm.width( this->lineEdit->text()) + 8, 200 ));
 }
 
 /**
@@ -270,6 +266,14 @@ void NavigationBar::editFinished() {
  */
 void NavigationBar::back() {
     this->stack->setCurrentIndex( 0 );
+}
+
+/**
+ * @brief NavigationBar::clearLine
+ */
+void NavigationBar::clearLine() {
+    this->lineEdit->clear();
+    this->lineEdit->setFixedWidth( 200 );
 }
 
 /**
@@ -377,6 +381,7 @@ void Crumb::buttonPressed() {
         foreach ( QString folder, dir.entryList( QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name )) {
             QAction *action = this->parentBar->addMenuAction( folder );
             action->setData( PathUtils::toUnixPath( dir.absolutePath() + "/" + folder + "/" ));
+            action->setIcon( pixmapCache.icon( "inode-folder", 16 ));
         }
 
         if ( !this->parentBar->actionCount())

@@ -48,6 +48,7 @@ QPushButton#crumb {\
     padding-bottom: 2px;\
     padding-left: 6px;\
     padding-right: 6px;\
+    border-radius: 4px;\
 }\
 QPushButton#crumb:hover {\
     background-color: rgb( 64, 64, 64, 196 );\
@@ -69,6 +70,7 @@ QPushButton#pathSeparator {\
     border-width: 0px;\
     border-style: solid;\
     padding: 4px;\
+    border-radius: 2px;\
 }\
 \
 QPushButton#pathSeparator:hover {\
@@ -95,6 +97,7 @@ QPushButton#scrollButtonLeft {\
     padding-bottom: 4px;\
     padding-left: 2px;\
     padding-right: 2px;\
+    border-radius: 2px;\
 }\
 \
 QPushButton#scrollButtonLeft:hover {\
@@ -120,6 +123,7 @@ QPushButton#scrollButtonRight {\
     padding-bottom: 4px;\
     padding-left: 2px;\
     padding-right: 2px;\
+    border-radius: 2px;\
 }\
 \
 QPushButton#scrollButtonRight:hover {\
@@ -167,7 +171,7 @@ QPushButton#editButton {\
     margin: 0px;\
     border-width: 0px;\
     border-style: solid;\
-    padding: 4px;\
+    border-radius: 4px;\
 }\
 \
 QPushButton#editButton:hover {\
@@ -193,6 +197,8 @@ QLineEdit {\
     font-weight: bold;\
     color: white;\
     border: none;\
+    margin-left: 4px;\
+    border-radius: 4px;\
     background-color: rgb( 64, 64, 64, 196 );\
 }\
 \
@@ -205,7 +211,7 @@ QPushButton#editClear {\
     margin: 0px;\
     border-width: 0px;\
     border-style: solid;\
-    padding: 4px;\
+    border-radius: 4px;\
 }\
 \
 QPushButton#editClear:hover {\
@@ -227,7 +233,8 @@ QPushButton#editBack {\
     margin: 0px;\
     border-width: 0px;\
     border-style: solid;\
-    padding: 4px;\
+    border-radius: 4px;\
+    padding: 0px;\
 }\
 \
 QPushButton#editBack:hover {\
@@ -238,6 +245,10 @@ QPushButton#editBack:hover {\
 QPushButton#editBack:pressed {\
     background-image: url(:/icons/edit_back_light);\
     background-color: rgb( 32, 32, 32, 196 );\
+}\
+\
+QMenu {\
+    menu-scrollable: 1;\
 }\
 \
 " );
@@ -308,6 +319,7 @@ private slots:
     void spacerClicked();
     void editFinished();
     void back();
+    void clearLine();
 
 private:
     // widget factory
