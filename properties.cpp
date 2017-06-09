@@ -26,6 +26,7 @@
 #include "pixmapcache.h"
 #include "pathutils.h"
 #include "textutils.h"
+#include "main.h"
 #include <QTimer>
 
 /**
@@ -83,14 +84,14 @@ void Properties::setEntries( QList<Entry *> entries ) {
     quint64 size = 0;
     QIcon icon;
 
-    icon = pixmapCache.icon( "document-multiple" );
+    icon = m.pixmapCache->icon( "document-multiple" );
 
     foreach ( Entry *entry, entries )
         size += entry->info().size();
 
     this->setWindowIcon( icon );
     this->ui->path->setText( PathUtils::toUnixPath( entries.first()->path()), false );
-    this->ui->labelIcon->setPixmap( pixmapCache.pixmap( "document-multiple", 48 ));
+    this->ui->labelIcon->setPixmap( m.pixmapCache->pixmap( "document-multiple", 48 ));
     this->ui->type->setText( "multiple entries", false );
     this->ui->fileName->setText( QString( "%1 item(s)" ).arg( entries.count()));
     this->ui->size->setText( TextUtils::sizeToText( size ), false );

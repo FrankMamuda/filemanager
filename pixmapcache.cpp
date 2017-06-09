@@ -29,14 +29,136 @@
 #include <QDomDocument>
 
 //
-// class: PixmapCache
+// TODO: cache accessed icon locations since resolving symlinks in realtime is slow
+// overall code is a little messy. must do a rewrite
 //
-class PixmapCache pixmapCache;
 
-//
-// add support for forced icon size (not pixmap)
-// add support for multiple themes (for example sideview need dark icons)
-// TODO: use FALLBACK!!!
+/**
+ * @brief PixmapCache::PixmapCache
+ * @param path
+ */
+PixmapCache::PixmapCache( const QString &path ) : m_path( path ), m_valid( true ) {
+    this->cacheDir = QDir( this->path());
+
+    // check if cache dir exists
+    if ( !this->cacheDir.exists()) {
+        qDebug() << this->tr( "PixmapCache: creating non-existant cache dir" );
+        this->cacheDir.mkpath( this->path());
+
+        // additional failsafe
+        if ( !this->cacheDir.exists()) {
+            this->shutdown();
+            return;
+        }
+    }
+
+    // set up index file
+    this->indexFile.setFilename( cacheDir.absolutePath() + "/" + PixmapCacheSystem::IndexFilename );
+    if ( !this->indexFile.open()) {
+        qDebug() << this->tr( "PixmapCache: index file non-writable" );
+        this->shutdown();
+        return;
+    } else {
+        if ( !this->indexFile.size())
+            this->indexFile << PixmapCacheSystem::Version;
+    }
+
+    // reead data
+    if ( !this->read()) {
+        qDebug() << this->tr( "PixmapCache: failed to read cache" );
+        this->shutdown();
+        return;
+    }
+}
+
+/**
+ * @brief PixmapCache::read
+ * @return
+ */
+bool PixmapCache::read() {
+    // failsafe
+    if ( !this->isValid())
+        return false;
+
+    // read index file version
+    quint8 version;
+    this->indexFile.toStart();
+    this->indexFile >> version;
+
+    // check version
+    if ( version != PixmapCacheSystem::Version ) {
+        qDebug() << this->tr( "PixmapCache::read: version mismatch for index file" );
+        this->shutdown();
+        return false;
+    }
+
+    // read indexes
+    while ( !this->indexFile.atEnd()) {
+        PixmapEntry pixmapEntry;
+        this->indexFile >> pixmapEntry;
+        this->hash[pixmapEntry.cachedName] = pixmapEntry;
+    }
+
+    // report
+    qDebug() << this->tr( "PixmapCache::read: found %1 entries in index file" ).arg( this->hash.count());
+
+    // return success
+    return true;
+}
+
+/**
+ * @brief PixmapCache::write
+ * @param iconName
+ * @param themeName
+ * @param iconScale
+ * @param fileName
+ * @return
+ */
+bool PixmapCache::write( const QString &iconName, const QString &themeName, int iconScale, const QString &fileName ) {
+    QString cachedName;
+
+    // failsafe
+    if ( !this->isValid())
+        return false;
+
+    // ignore placeholder icons
+    if ( !QString::compare( "application-x-zerosize", iconName ))
+        return false;
+
+    // check hash
+    if ( iconName.isEmpty() || iconScale < 0 ) {
+        qDebug() << this->tr( "PixmapCache::write: invalid iconName or scale" );
+        return false;
+    }
+
+    // generate cachedName
+    cachedName = QString( "%1_%2_%3" ).arg( iconName ).arg( themeName ).arg( iconScale );//iconName + "_" + themeName + "_" + iconScale;
+
+    // check for duplicates
+    if ( this->contains( cachedName ))
+        return true;
+
+    // create new pixmap entry
+    PixmapEntry pixmapEntry( cachedName, fileName );
+    this->indexFile.seek( FileStream::End );
+    this->indexFile << pixmapEntry;
+
+    // add new enty to list
+    this->hash[pixmapEntry.cachedName] = pixmapEntry;
+
+    // flush to disk immediately
+    this->indexFile.sync();
+
+    return true;
+}
+
+/**
+ * @brief PixmapCache::shutdown
+ */
+void PixmapCache::shutdown() {
+    this->setValid( false );
+    this->indexFile.close();
+}
 
 /**
  * @brief PixmapCache::pixmap
@@ -45,18 +167,28 @@ class PixmapCache pixmapCache;
  */
 QPixmap PixmapCache::pixmap( const QString &name, int scale, const QString themeName, bool thumbnail ) {
     QPixmap pixmap;
-    QString cache;
+    QString cachedName;
 
     // make unique pixmaps for different sizes
-    cache = QString( "%1_%2" ).arg( name ).arg( scale );
+    cachedName = QString( "%1_%2_%3" ).arg( name ).arg( themeName ).arg( scale );
 
-    // search in hash table
-    if ( !this->pixmapCache.contains( cache )) {
+    // search in hash table for LOADED PIXMAPs
+    if ( !this->pixmapCache.contains( cachedName )) {
+        // if none are loaded, resolve paths from FILENAME CACHE
+        if ( this->hash.contains( cachedName )) {
+            // load pixmap filename and add it to LOADED PIXMAP cache
+            pixmap.load( this->hash[cachedName].fileName );
+            if ( !pixmap.isNull()) {
+                this->pixmapCache[cachedName] = pixmap;
+                return pixmap;
+            }
+        }
+
         // jpeg/png/etc. generate square thunbnails from the actual images
         // other file use icons based on the mime-type
-        if ( !thumbnail )
+        if ( !thumbnail ) {
             pixmap = this->findPixmap( name, scale, themeName );
-        else {
+        } else {
             QFileInfo info( name );
 
             if ( info.isSymLink())
@@ -74,9 +206,7 @@ QPixmap PixmapCache::pixmap( const QString &name, int scale, const QString theme
             if ( pixmap.width() == 0 ) {
                 // try one more time with QFileIconProvider
                 QFileIconProvider p;
-                //if ( pixmap.isNull() || !pixmap.width())
-
-                 pixmap = p.icon( QFileInfo( name )).pixmap( scale, scale );
+                pixmap = p.icon( QFileInfo( name )).pixmap( scale, scale );
 
                 if ( pixmap.isNull() || !pixmap.width())
                     return QPixmap();
@@ -105,11 +235,11 @@ QPixmap PixmapCache::pixmap( const QString &name, int scale, const QString theme
         }
 
         // add pixmap to cache
-        this->pixmapCache[cache] = pixmap;
+        this->pixmapCache[cachedName] = pixmap;
     }
 
     // retrieve and return the pixmap
-    pixmap = this->pixmapCache[cache];
+    pixmap = this->pixmapCache[cachedName];
     return pixmap;
 }
 
@@ -122,13 +252,20 @@ QPixmap PixmapCache::pixmap( const QString &name, int scale, const QString theme
  */
 QIcon PixmapCache::icon( const QString &name, int scale, const QString themeName ) {
     QIcon icon;
-    QString cache;
+    QString cachedName;
 
     // make unique icons for different sizes
-    cache = QString( "%1_%2" ).arg( name ).arg( scale );
+    cachedName = QString( "%1_%2_%3" ).arg( name ).arg( themeName ).arg( scale );
 
     // search in hash table
-    if ( !this->iconCache.contains( cache )) {
+    if ( !this->iconCache.contains( cachedName )) {
+        // if none are loaded, resolve paths from FILENAME CACHE
+        if ( this->hash.contains( cachedName )) {
+            // load pixmap filename and add it to LOADED PIXMAP cache
+            icon = QIcon( this->hash[cachedName].fileName );
+            if ( !icon.isNull())
+                return icon;
+        }
         icon = this->findIcon( name, scale, themeName );
 
         // handle missing icons
@@ -148,11 +285,11 @@ QIcon PixmapCache::icon( const QString &name, int scale, const QString themeName
         }
 
         // add icon to cache
-        this->iconCache[cache] = icon;
+        this->iconCache[cachedName] = icon;
     }
 
     // retrieve and return the icon
-    icon = this->iconCache[cache];
+    icon = this->iconCache[cachedName];
     return icon;
 }
 
@@ -233,7 +370,7 @@ int PixmapCache::parseSVG( const QString &buffer ) {
         if ( element.hasAttribute( "height" ))
             height = element.attribute( "height" ).toInt();
 
-         // extract width and height from viewBox (override)
+        // extract width and height from viewBox (override)
         if ( element.hasAttribute( "viewBox" )) {
             QStringList parms;
 
@@ -371,6 +508,11 @@ QPixmap PixmapCache::findPixmap( const QString &name, int scale, const QString &
         y++;
     }
 
+    // write out to cache
+    if ( scale >= 0 )
+        this->write( name, themeName, scale, matchList.at( bestIndex ).fileName );
+
+    // return best pixmap
     return QPixmap( matchList.at( bestIndex ).fileName ).scaled( scale, scale, Qt::IgnoreAspectRatio, Qt::SmoothTransformation );
 }
 
@@ -421,6 +563,11 @@ QIcon PixmapCache::findIcon( const QString &name, int scale, const QString &them
         }
     }
 
+    // write out to cache
+    if ( scale >= 0 )
+        this->write( name, themeName, scale, matchList.at( bestIndex ).fileName );
+
+    // return best icon
     return QIcon( matchList.at( bestIndex ).fileName );
 }
 

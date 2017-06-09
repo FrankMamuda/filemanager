@@ -65,6 +65,7 @@ int main( int argc, char *argv[] ) {
     qRegisterMetaType<Work>( "Work" );
     qRegisterMetaType<IconEntry>( "IconEntry" );
     qRegisterMetaType<IconIndex>( "IconIndex" );
+    qRegisterMetaType<PixmapEntry>( "PixmapEntry" );
 
     // set up icon theme
     QDir iconDir( QDir::currentPath() + "/icons" );
@@ -72,9 +73,9 @@ int main( int argc, char *argv[] ) {
     QIcon::setThemeName( Ui::lightIconTheme );
 
     // build pixmap index
-    qDebug() << QDir::currentPath();
-    pixmapCache.buildIndex( Ui::lightIconTheme );
-    pixmapCache.buildIndex( Ui::darkIconTheme );
+    m.pixmapCache = new PixmapCache( QDir::currentPath() + "/.cache" );
+    m.pixmapCache->buildIndex( Ui::lightIconTheme );
+    m.pixmapCache->buildIndex( Ui::darkIconTheme );
 
     // init cache, run it from a separate thread
     m.cache = new Cache( QDir::currentPath() + "/.cache" );
@@ -110,11 +111,10 @@ int main( int argc, char *argv[] ) {
         QMessageBox::warning( &w, "Warning", "Icon directory does not exist", QMessageBox::Ok );
 
     // default icon
-    if ( pixmapCache.pixmap( "application-x-zerosize", 48 ).width() == 0 )
+    if ( m.pixmapCache->pixmap( "application-x-zerosize", 48 ).width() == 0 )
         QMessageBox::warning( &w, QObject::tr( "Warning" ), QObject::tr( "Invalid icon theme" ), QMessageBox::Ok );
 
-    // test
-    //FileUtils::copy2( "/c/Private/zzz.xcf", "/c/Private/Downloads" );
+    // tm.pmc->   //FileUtils::copy2( "/c/Private/zzz.xcf", "/c/Private/Downloads" );
 
     // return success
     return a.exec();
@@ -134,4 +134,5 @@ Main::~Main() {
     delete this->settings;
     this->cache->deleteLater();
     this->iconCache->deleteLater();
+    this->pixmapCache->deleteLater();
 }

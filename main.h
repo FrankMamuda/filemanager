@@ -32,6 +32,7 @@ class MainWindow;
 class NotificationPanel;
 class Cache;
 class IconCache;
+class PixmapCache;
 
 /**
  * @brief The Main class
@@ -50,6 +51,7 @@ public:
     QSettings *settings;
     Cache *cache;
     IconCache *iconCache;
+    PixmapCache *pixmapCache;
 
 private:
     MainWindow *m_gui;

@@ -25,6 +25,7 @@
 #include "iconcache.h"
 #include "iconfetcher.h"
 #include "pixmapcache.h"
+#include "main.h"
 
 /**
  * @brief IconCache::IconCache
@@ -199,7 +200,7 @@ void IconCache::run() {
                 emit this->finished( iconName, iconScale, this->pixmap( iconName, iconScale ));
                 continue;
             }
-            pixmap = pixmapCache.pixmap( iconName, iconScale );
+            pixmap = m.pixmapCache->pixmap( iconName, iconScale );
 
             if ( !pixmap.isNull() && pixmap.width()) {
                 // cache to disk

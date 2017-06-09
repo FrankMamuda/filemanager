@@ -25,6 +25,7 @@
 #include <QMimeData>
 #include "pixmapcache.h"
 #include "mainwindow.h"
+#include "main.h"
 
 /**
  * @brief BookmarkModel::BookmarkModel
@@ -72,7 +73,7 @@ QVariant BookmarkModel::data( const QModelIndex &modelIndex, int role ) const {
         if ( stockIcon.isEmpty() )
             pixmap = this->bookmarks()->list.at( modelIndex.row()).pixmap;
         else
-            pixmap = pixmapCache.pixmap( stockIcon, parentView->iconSize().width(), Ui::darkIconTheme );
+            pixmap = m.pixmapCache->pixmap( stockIcon, parentView->iconSize().width(), Ui::darkIconTheme );
 
         if ( !pixmap.isNull())
             return pixmap.scaled( parentView->iconSize(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation );

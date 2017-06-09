@@ -67,7 +67,7 @@ FileBrowser::FileBrowser( QWidget *parent ) : QMainWindow( parent ), ui( new Ui:
 
     // FOR NOW
     this->ui->tabWidget->setTabText( 0, "File manager" );
-    this->ui->tabWidget->setTabIcon( 0, pixmapCache.icon( "inode-folder", 16 ));
+    this->ui->tabWidget->setTabIcon( 0, m.pixmapCache->icon( "inode-folder", 16 ));
     this->ui->tabWidget->removeTab( 1 );
 }
 
@@ -75,8 +75,8 @@ FileBrowser::FileBrowser( QWidget *parent ) : QMainWindow( parent ), ui( new Ui:
  * @brief FileBrowser::setupToolBar
  */
 void FileBrowser::setupToolBar() {
-    this->ui->actionBookmarks->setIcon( pixmapCache.icon( "folder-bookmark", this->ui->mainToolBar->iconSize().width()));
-    this->ui->actionInfo->setIcon( pixmapCache.icon( "dialog-information", this->ui->mainToolBar->iconSize().width()));
+    this->ui->actionBookmarks->setIcon( m.pixmapCache->icon( "folder-bookmark", this->ui->mainToolBar->iconSize().width()));
+    this->ui->actionInfo->setIcon( m.pixmapCache->icon( "dialog-information", this->ui->mainToolBar->iconSize().width()));
 
     // FIXME: a little messy
     Variable::add( "mainWindow/bookmarkPanelVisible", true );
@@ -96,9 +96,9 @@ void FileBrowser::setupFrameBar() {
     spacer->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
 
     this->ui->frameToolbar->addWidget( spacer );
-    this->ui->actionMinimize->setIcon( pixmapCache.icon( "window-minimize-symbolic" ));
-    this->ui->actionMaximize->setIcon( pixmapCache.icon( "window-maximize-symbolic" ));
-    this->ui->actionClose->setIcon( pixmapCache.icon( "window-close-symbolic" ));
+    this->ui->actionMinimize->setIcon( m.pixmapCache->icon( "window-minimize-symbolic" ));
+    this->ui->actionMaximize->setIcon( m.pixmapCache->icon( "window-maximize-symbolic" ));
+    this->ui->actionClose->setIcon( m.pixmapCache->icon( "window-close-symbolic" ));
     this->ui->frameToolbar->addAction( this->ui->actionMinimize );
     this->ui->frameToolbar->addAction( this->ui->actionMaximize );
     this->ui->frameToolbar->addAction( this->ui->actionClose );
@@ -109,9 +109,9 @@ void FileBrowser::setupFrameBar() {
  */
 void FileBrowser::setupNavigationBar() {
     this->insertToolBarBreak( this->ui->navigationToolbar );
-    this->ui->actionBack->setIcon( pixmapCache.icon( "go-previous" ));
-    this->ui->actionUp->setIcon( pixmapCache.icon( "go-up" ));
-    this->ui->actionForward->setIcon( pixmapCache.icon( "go-next" ));
+    this->ui->actionBack->setIcon( m.pixmapCache->icon( "go-previous" ));
+    this->ui->actionUp->setIcon( m.pixmapCache->icon( "go-up" ));
+    this->ui->actionForward->setIcon( m.pixmapCache->icon( "go-next" ));
     this->ui->navigationToolbar->addWidget( this->ui->navigationBar );
 
     // TODO: deleteme
@@ -132,9 +132,9 @@ void FileBrowser::setupViewModes() {
     this->viewModeMenu->setStyle( this->menuStyle );
 
     // add actions
-    this->actionViewGrid = new QAction( pixmapCache.icon( "preferences-desktop-icons" ), this->tr( "Grid view" ));
-    this->actionViewList = new QAction( pixmapCache.icon( "view-media-playlist" ), this->tr( "List view" ));
-    this->actionViewDetails = new QAction( pixmapCache.icon( "x-office-spreadsheet" ), this->tr( "Detail view" ));
+    this->actionViewGrid = new QAction( m.pixmapCache->icon( "preferences-desktop-icons" ), this->tr( "Grid view" ));
+    this->actionViewList = new QAction( m.pixmapCache->icon( "view-media-playlist" ), this->tr( "List view" ));
+    this->actionViewDetails = new QAction( m.pixmapCache->icon( "x-office-spreadsheet" ), this->tr( "Detail view" ));
     this->connect( this->actionViewGrid, SIGNAL( triggered( bool )), this, SLOT( setGridView()));
     this->connect( this->actionViewList, SIGNAL( triggered( bool )), this, SLOT( setListView()));
     this->connect( this->actionViewDetails, SIGNAL( triggered( bool )), this, SLOT( setDetailView()));
@@ -144,7 +144,7 @@ void FileBrowser::setupViewModes() {
 
     // set view mode list to view mode action
     this->ui->actionViewMode->setMenu( this->viewModeMenu );
-    this->ui->actionViewMode->setIcon( pixmapCache.icon( "preferences-system-windows-actions" ));
+    this->ui->actionViewMode->setIcon( m.pixmapCache->icon( "preferences-system-windows-actions" ));
 
     // restore view mode
     viewMode = Variable::value<ViewModes>( "mainWindow/viewMode", IconMode );
@@ -266,7 +266,7 @@ void FileBrowser::updateInfoPanel() {
         QMimeType mimeType;
 
         mimeType = mdb.mimeTypeForFile( info );
-        pixmap = pixmapCache.pixmap( mimeType.iconName(), 64 );
+        pixmap = m.pixmapCache->pixmap( mimeType.iconName(), 64 );
         fileName = info.fileName();
         typeString = mimeType.iconName();
         sizeString = this->tr( "%1 items" ).arg( directory.entryList( QDir::NoDotAndDotDot | QDir::AllEntries, QDir::IgnoreCase | QDir::DirsFirst ).count());
@@ -295,13 +295,13 @@ void FileBrowser::updateInfoPanel() {
                 if ( pixmap.width() > this->ui->dockInfo->width() * 2 )
                     pixmap = pixmap.scaledToWidth( this->ui->dockInfo->width() * 2, Qt::FastTransformation );
             } else
-                pixmap = pixmapCache.pixmap( entry->iconName(), 64 );
+                pixmap = m.pixmapCache->pixmap( entry->iconName(), 64 );
 
             fileName = entry->alias();
             typeString = entry->mimeType().iconName();
             sizeString = TextUtils::sizeToText( entry->info().size());
         } else {
-            pixmap = pixmapCache.pixmap( "document-multiple", 64 );
+            pixmap = m.pixmapCache->pixmap( "document-multiple", 64 );
             // TODO: use COLUMN COUNT as global constant
             if ( model->container() == ContainerModel::ListContainer )
                 fileName = this->tr( "%1 files" ).arg( model->selectionList.count());

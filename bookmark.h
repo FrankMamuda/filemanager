@@ -74,7 +74,7 @@ public:
     Q_ENUMS( BookmarkData )
 
     Bookmark( const QString &path, QAbstractItemView *parent );
-    ~Bookmark() {}
+    ~Bookmark() { this->shutdown(); }
     int count() { return this->list.count(); }
     void add( const QString &alias, const QString &path, const QPixmap &pixmap = QPixmap(), const QString &stockIcon = QString::null, bool writeOut = true ) { this->add( BookmarkEntry( alias, path, pixmap, stockIcon ), writeOut ); }
     void add( const BookmarkEntry &entry, bool writeOut = true );

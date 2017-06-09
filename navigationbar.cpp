@@ -26,6 +26,7 @@
 #include "pathutils.h"
 #include "filebrowser.h"
 #include "pixmapcache.h"
+#include "main.h"
 
 /**
  * @brief PathBar::PathBar
@@ -381,7 +382,7 @@ void Crumb::buttonPressed() {
         foreach ( QString folder, dir.entryList( QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name )) {
             QAction *action = this->parentBar->addMenuAction( folder );
             action->setData( PathUtils::toUnixPath( dir.absolutePath() + "/" + folder + "/" ));
-            action->setIcon( pixmapCache.icon( "inode-folder", 16 ));
+            action->setIcon( m.pixmapCache->icon( "inode-folder", 16 ));
         }
 
         if ( !this->parentBar->actionCount())

@@ -26,6 +26,7 @@
 #include "pixmapcache.h"
 #include "containermodel.h"
 #include "pathutils.h"
+#include "main.h"
 
 /**
  * @brief Entry::Entry
@@ -170,10 +171,10 @@ QPixmap Entry::pixmap( int scale ) const {
     if ( this->type() == Thumbnail || this->type() == Executable )
         pixmap = this->iconPixmap();
     else
-        pixmap = pixmapCache.pixmap( this->iconName(), scale );
+        pixmap = m.pixmapCache->pixmap( this->iconName(), scale );
 
     if ( pixmap.isNull() || !pixmap.width())
-        return pixmapCache.pixmap( this->info().absoluteFilePath(), scale );
+        return m.pixmapCache->pixmap( this->info().absoluteFilePath(), scale );
 
     return pixmap;
 }

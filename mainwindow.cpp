@@ -105,7 +105,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
         this->resize( size );
 
     // notification icons
-    this->ui->notificationInfo->setIcon( pixmapCache.icon( "dialog-information" ));
+    this->ui->notificationInfo->setIcon( m.pixmapCache->icon( "dialog-information" ));
 
     // make sidebar dark
     this->ui->dockBookmarks->setStyleSheet( "QDockWidget { background: #353535; }" );
@@ -119,7 +119,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->ui->centralLayout->addWidget( this->fileBrowser );
 
     // change window icon
-    this->setWindowIcon( pixmapCache.icon( "document-open-folder" ));
+    this->setWindowIcon( m.pixmapCache->icon( "document-open-folder" ));
 
     // remove frame
     this->removeFrame();

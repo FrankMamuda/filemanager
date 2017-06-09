@@ -27,6 +27,7 @@
 #include "pixmapcache.h"
 #include "mainwindow.h"
 #include <QStandardPaths>
+#include "main.h"
 
 /**
  * @brief Bookmark::Bookmark
@@ -160,7 +161,7 @@ QVariant Bookmark::value( int index, BookmarkData field ) {
         if ( stockIcon.isEmpty())
             return this->list.at( index ).pixmap;
         else
-            return pixmapCache.pixmap( stockIcon, iconScale, Ui::darkIconTheme );
+            return m.pixmapCache->pixmap( stockIcon, iconScale, Ui::darkIconTheme );
 
     case Stock:
         return this->list.at( index ).stockIcon;
