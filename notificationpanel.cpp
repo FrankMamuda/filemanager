@@ -25,6 +25,7 @@
 #include <QPainter>
 #include <QApplication>
 #include <QPalette>
+#include <QDesktopWidget>
 #include <QTimer>
 #include <QIcon>
 #include <QPixmap>
@@ -43,10 +44,12 @@
  * @brief NotificationPanel::NotificationPanel
  * @param parent
  */
-NotificationPanel::NotificationPanel( QWidget *parent ) : QWidget( parent ), ui( new Ui::NotificationPanel ), m_opacity( 0.75f ) {
+NotificationPanel::NotificationPanel( QWidget *parent ) : QWidget( parent ), ui( new Ui::NotificationPanel ), m_opacity( 0.85f ) {
     // set up ui
     this->ui->setupUi( this );
-    this->setWindowFlags( Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint );
+    this->setWindowFlags( Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool );
+    this->setAttribute( Qt::WA_NoSystemBackground );
+    this->setAttribute( Qt::WA_TranslucentBackground );
 
     // set up window opacity
     this->opacityEffect = new QGraphicsOpacityEffect( this );
@@ -120,10 +123,16 @@ void NotificationPanel::paintEvent( QPaintEvent *event ) {
     painter.save();
     painter.setPen( pen );
 
-    // draw border
+    // set up rectangle
     rect = this->rect();
     rect.setWidth( rect.width() - 1 );
     rect.setHeight( rect.height() - 1 );
+
+    // fill background
+    QBrush brush( qApp->palette().color( QPalette::Background ));
+    painter.fillRect( rect, brush );
+
+    // draw border
     painter.drawRect( rect );
 
     // restore and draw the rest
@@ -148,8 +157,11 @@ void NotificationPanel::raise( int timeOut ) {
         return;
 
     // move back into place
-    this->move( m.gui()->geometry().width() - this->geometry().width() - 11,
-                m.gui()->geometry().height() - this->geometry().height() - 26 );
+    QDesktopWidget desktop;
+    this->move( desktop.width() - this->geometry().width() - 16,
+               desktop.height() - this->geometry().height() - 48 );
+    //this->move( m.gui()->geometry().width() - this->geometry().width() - 11,
+    //            m.gui()->geometry().height() - this->geometry().height() - 26 );
 
     // show if hidden
     if ( this->isHidden())

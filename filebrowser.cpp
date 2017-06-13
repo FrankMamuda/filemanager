@@ -69,6 +69,9 @@ FileBrowser::FileBrowser( QWidget *parent ) : QMainWindow( parent ), ui( new Ui:
     this->ui->tabWidget->setTabText( 0, "File manager" );
     this->ui->tabWidget->setTabIcon( 0, m.pixmapCache->icon( "inode-folder", 16 ));
     this->ui->tabWidget->removeTab( 1 );
+
+    // filesystem updates
+    this->connect( &pathUtils.watcher, SIGNAL( directoryChanged( QString )), this, SLOT( directoryChanged( QString )));
 }
 
 /**
@@ -92,7 +95,7 @@ void FileBrowser::setupToolBar() {
  */
 void FileBrowser::setupFrameBar() {
     // TODO: deleteme
-    QWidget* spacer = new QWidget();
+    QWidget* spacer = new QWidget( this );
     spacer->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
 
     this->ui->frameToolbar->addWidget( spacer );
@@ -117,7 +120,7 @@ void FileBrowser::setupNavigationBar() {
     // TODO: deleteme
     //QWidget* spacer = new QWidget();
     //spacer->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
-   // this->ui->navigationToolbar->addWidget( spacer );
+    // this->ui->navigationToolbar->addWidget( spacer );
 }
 
 /**
@@ -162,6 +165,26 @@ void FileBrowser::setupViewModes() {
 }
 
 /**
+ * @brief FileBrowser::directoryChanged
+ * @param directory
+ */
+void FileBrowser::directoryChanged( const QString &directory ) {
+    if ( !QString::compare( PathUtils::toUnixPath( directory ), pathUtils.currentPath )) {
+        qDebug() << "current directory" << directory << "has changed";
+        this->populate();
+    }
+}
+
+/**
+ * @brief FileBrowser::populate
+ */
+void FileBrowser::populate() {
+    // populate views
+    this->ui->listView->model()->populate();
+    this->ui->tableView->model()->populate();
+}
+
+/**
  * @brief FileBrowser::~FileBrowser
  */
 FileBrowser::~FileBrowser() {
@@ -174,6 +197,7 @@ FileBrowser::~FileBrowser() {
     this->disconnect( this->actionViewList, SIGNAL( triggered( bool )));
     this->disconnect( this->actionViewDetails, SIGNAL( triggered( bool )));
     this->disconnect( this->historyManager(), SIGNAL( changed()));
+    this->disconnect( &pathUtils.watcher, SIGNAL( directoryChanged( QString )));
 
     // view mode related
     this->viewModeMenu->deleteLater();
@@ -194,7 +218,7 @@ void FileBrowser::on_actionBookmarks_toggled( bool toggled ) {
     if ( this->parentWindow == nullptr )
         return;
 
- /*  if ( toggled )
+    /*  if ( toggled )
         this->parentWindow->showBookmarkDock();
     else
         this->parentWindow->hideBookmarkDock();
@@ -253,9 +277,6 @@ void FileBrowser::updateInfoPanel() {
         model = this->ui->listView->model();
     else
         model = this->ui->tableView->model();
-
-    if ( model->mode() != ContainerModel::FileMode )
-        return;
 
     // FIXME/TODO: update info panel on mime type detection?
     if ( model->selectionList.isEmpty()) {
@@ -408,35 +429,44 @@ void FileBrowser::on_actionViewMode_triggered() {
  * @param saveToHistory
  */
 void FileBrowser::setCurrentPath( const QString &path, bool saveToHistory ) {
-
-    //
-    // FIXME: this is a mess
-    //
     QDir directory;
     QString windowsPath, unixPath;
 
-    this->ui->tableView->model()->selectionList.clear();
-    this->ui->listView->model()->selectionList.clear();
+    // clear all selections
+    if ( QString::compare( pathUtils.currentPath, PathUtils::toUnixPath( path ))) {
+        this->ui->tableView->model()->selectionList.clear();
+        this->ui->listView->model()->selectionList.clear();
+    }
 
-    // build special file list for root
-    if ( !QString::compare( path, "/" )) {
-        this->ui->listView->model()->setMode( ContainerModel::SideMode );
-        this->ui->tableView->model()->setMode( ContainerModel::SideMode );
-        this->ui->navigationBar->setPath( "/" );
-        pathUtils.currentPath = "/";
+    // determine directory type
+    switch ( SpecialDirectory::pathToType( path )) {
+    case SpecialDirectory::Root:
+    case SpecialDirectory::Trash:
+    case SpecialDirectory::Bookmarks:
+        pathUtils.currentPath = path;
+
+        // populate views
+        this->populate();
+
+        // disable up button since we're at root already
         this->ui->actionUp->setDisabled( true );
-    } else if ( !QString::compare( path, "trash://" )) {
-        this->ui->navigationBar->setPath( path );
-        pathUtils.currentPath = "trash://";
-        this->ui->actionUp->setDisabled( true );
-    } else if ( !QString::compare( path, "bookmarks://" )) {
-        this->ui->navigationBar->setPath( path );
-        pathUtils.currentPath= "bookmarks://";
-        this->ui->actionUp->setDisabled( true );
-    } else {
+        break;
+
+    case SpecialDirectory::General:
+    {
+        // enable up button
         this->ui->actionUp->setEnabled( true );
 
+        // convert path to windows path
         windowsPath = PathUtils::toWindowsPath( path );
+
+        // remove previous path from watch
+        if ( !PathUtils::toWindowsPath( pathUtils.currentPath ).isEmpty())
+            pathUtils.watcher.removePath( PathUtils::toWindowsPath( pathUtils.currentPath ));
+
+        // add the new path to watch
+        if ( !path.isEmpty())
+            pathUtils.watcher.addPath( path );
 
         // handle symlinks
         QFileInfo info( windowsPath );
@@ -447,23 +477,39 @@ void FileBrowser::setCurrentPath( const QString &path, bool saveToHistory ) {
         }
         directory.cd( windowsPath );
 
+        // notify on non-existant directories
         if ( !directory.exists( windowsPath )) {
             m.notifications()->push( NotificationPanel::Error, this->tr( "Error" ), this->tr( "Path does not exist" ));
             return;
         }
 
+        // convert path back to unix path
         unixPath = PathUtils::toUnixPath( windowsPath );
-        pathUtils.currentPath = unixPath;
+
+        // update navigation bar
         this->ui->navigationBar->setPath( unixPath );
 
-        this->ui->listView->model()->setMode( ContainerModel::FileMode );
-        this->ui->tableView->model()->setMode( ContainerModel::FileMode );
+        // no use checking the same path
+        if ( !QString::compare( pathUtils.currentPath, unixPath ))
+            return;
+
+        // store current path
+        pathUtils.currentPath = unixPath;
+
+        // populate views
+        this->populate();
+
+        // update info panel
+        this->updateInfoPanel();
+    }
+        break;
+
+    case SpecialDirectory::NoType:
+    default:
+        return;
     }
 
-    //this->ui->statusBar->setText( this->tr( "%1 items" ).arg( this->ui->listView->model()->numItems()));
-
-    this->updateInfoPanel();
-
+    // save path to history
     if ( saveToHistory )
         this->historyManager()->addItem( pathUtils.currentPath );
 }

@@ -32,7 +32,7 @@
  * @brief ListView::ListView
  * @param parent
  */
-ListView::ListView( QWidget* parent ) : QListView( parent ), m_model( new ContainerModel( this, ContainerModel::FileMode, ContainerModel::ListContainer )) {
+ListView::ListView( QWidget* parent ) : QListView( parent ), m_model( new ContainerModel( this, ContainerModel::ListContainer )) {
     // set model
     this->setModel( this->m_model );
     this->connect( this, SIGNAL( clicked( QModelIndex )), this->model(), SLOT( processItemOpen( QModelIndex )));

@@ -44,6 +44,34 @@ class TableView;
 class Entry;
 
 /**
+ * @brief The SpecialDirectory struct
+ */
+struct SpecialDirectory {
+    enum Types {
+        NoType = -1,
+        General,
+        Root,
+        Trash,
+        Bookmarks
+    };
+    SpecialDirectory( Types t, const QString &p ) : type( t ), path( p ) {}
+    Types type;
+    QString path;
+    static Types pathToType( const QString &path );
+};
+
+/**
+ * @brief The ContainerNamespace class
+ */
+namespace ContainerNamespace {
+static const QList<SpecialDirectory> SpecialDirectories =
+        ( QList<SpecialDirectory>() <<
+          SpecialDirectory( SpecialDirectory::Root, "/" ) <<
+          SpecialDirectory( SpecialDirectory::Trash, "trash://" ) <<
+          SpecialDirectory( SpecialDirectory::Bookmarks, "bookmarks://" ));
+}
+
+/**
  * @brief The ContainerItem class
  */
 class ContainerItem {
@@ -61,18 +89,10 @@ class ContainerModel : public QAbstractTableModel {
     Q_OBJECT
     Q_PROPERTY( int iconSize READ iconSize WRITE setIconSize )
     Q_PROPERTY( Containers container READ container )
-    Q_PROPERTY( Modes mode READ mode WRITE setMode )
     Q_PROPERTY( int verticalOffset READ verticalOffset WRITE setVerticalOffset )
     Q_PROPERTY( bool selectionLocked READ selectionLocked )
 
 public:
-    enum Modes {
-        NoMode = -1,
-        FileMode,
-        SideMode
-    };
-    Q_ENUMS( Modes )
-
     enum Containers {
         NoContainer = -1,
         ListContainer,
@@ -94,7 +114,7 @@ public:
     Q_ENUMS( Sections )
 
     // constructor
-    explicit ContainerModel( QAbstractItemView *view, Modes mode = FileMode, Containers container = ListContainer );
+    explicit ContainerModel( QAbstractItemView *view, Containers container = ListContainer );
     ~ContainerModel();
 
     // overrides
@@ -104,15 +124,14 @@ public:
     void softReset();
     QVariant data( const QModelIndex &index, int role ) const;
     QVariant headerData( int section, Qt::Orientation orientation, int role = Qt::DisplayRole ) const;
-    Qt::DropActions supportedDropActions() const { if ( this->mode() == FileMode ) return Qt::CopyAction; return Qt::IgnoreAction; }
-    Qt::DropActions supportedDragActions() const { if ( this->mode() == FileMode ) return Qt::CopyAction; return Qt::IgnoreAction; }
+    Qt::DropActions supportedDropActions() const;
+    Qt::DropActions supportedDragActions() const;
     Qt::ItemFlags flags( const QModelIndex &index ) const;
     QMimeData *mimeData( const QModelIndexList &indexes ) const;
 
     // properties
     int iconSize() const;
     Containers container() const { return this->m_container; }
-    Modes mode() const { return this->m_mode; }
     int verticalOffset() const { return this->m_verticalOffset; }
     bool selectionLocked() const { return this->m_selectionLocked; }
 
@@ -132,7 +151,6 @@ signals:
 public slots:
     // properties
     void setIconSize( int iconSize = Common::DefaultListIconSize );
-    void setMode( Modes mode = FileMode );
     void setVerticalOffset( int offset ) { this->m_verticalOffset = offset; }
 
     // custom slots
@@ -141,6 +159,7 @@ public slots:
     void processEntries();
     void updateRubberBand();
     void determineMimeTypes();
+    void populate();
 
     // conatiner event handlers
     void processDropEvent( const QModelIndex &index, const QPoint &pos );
@@ -176,7 +195,6 @@ private:
     QPoint currentMousePos;
 
     // properties
-    Modes m_mode;
     int m_iconSize;
     int m_verticalOffset;
     bool m_selectionLocked;
@@ -186,7 +204,6 @@ private:
     QMultiHash<QString, QModelIndex> fileHash;
 };
 
-Q_DECLARE_METATYPE( ContainerModel::Modes )
 Q_DECLARE_METATYPE( ContainerModel::Containers )
 Q_DECLARE_METATYPE( ContainerModel::Data )
 Q_DECLARE_METATYPE( ContainerModel::Sections )

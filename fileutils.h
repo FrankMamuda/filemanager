@@ -23,9 +23,55 @@
 //
 #include <QFile>
 #include <QDir>
-#include <QMultiHash>
-#include <QMutexLocker>
-#include <QThread>
+//#include <QMultiHash>
+//#include <QMutexLocker>
+//#include <QThread>
+
+#if 0
+// must use filesystem watcher even when using native dialogs
+// since we cannot reliably generate folder unique hashes
+// one option would be list its contents (names+sizes) and hash
+// that string. although that is useless for empty folders
+// might also add creation date, etc.
+
+struct FileDescriptor {
+public:
+    enum Mode {
+        NoMode = -1,
+        Copy,
+        Move
+    };
+
+    QString absolutePath;
+    quint8 hash;
+    bool isDir;
+};
+
+struct FileOperation {
+public:
+    enum Mode {
+        NoMode = -1,
+        Copy,
+        Move
+    };
+
+    Mode mode;
+    QList<FileDescriptor>files;
+};
+#endif
+
+/**
+ * @brief The FileUtils class
+ */
+class FileUtils : public QObject {
+    Q_OBJECT
+
+public:
+    FileUtils();
+
+private:
+
+};
 
 #if 0
 /**

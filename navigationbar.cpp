@@ -28,11 +28,15 @@
 #include "pixmapcache.h"
 #include "main.h"
 
+//
+// TODO: show edit button only on hover over navigationSpacer
+//
+
 /**
  * @brief PathBar::PathBar
  * @param parent
  */
-NavigationBar::NavigationBar( QWidget *parent ) : QWidget( parent ), navigationWidget( new QWidget()), scrollArea( new QScrollArea()), navigationBar( new QWidget()), navigationLayout( nullptr ), menu( new QMenu()), editWidget( new QWidget()), lineEdit( new QLineEdit()) {
+NavigationBar::NavigationBar( QWidget *parent ) : QWidget( parent ), navigationWidget( new QWidget( this )), scrollArea( new QScrollArea( this )), navigationBar( new QWidget( this )), navigationLayout( nullptr ), menu( new QMenu()), editWidget( new QWidget( this )), lineEdit( new QLineEdit( this )), onEditButton( false ) {
     // enable mouse tracking
     this->setMouseTracking( true );
 
@@ -46,10 +50,10 @@ NavigationBar::NavigationBar( QWidget *parent ) : QWidget( parent ), navigationW
 
     // set up scroll buttons
     this->baseLayout = NavigationBar::makeLayout<QHBoxLayout>();
-    this->scrollLeftButton = this->makeWidget<QPushButton>( "scrollButtonLeft", NavigationBarNamespace::stylesheet );
+    this->scrollLeftButton = this->makeWidget<QPushButton>( "scrollButtonLeft", NavigationBarNamespace::stylesheet, this );
     this->baseLayout->addWidget( this->scrollLeftButton );
     this->baseLayout->addWidget( this->scrollArea );
-    this->scrollRightButton = this->makeWidget<QPushButton>( "scrollButtonRight", NavigationBarNamespace::stylesheet );
+    this->scrollRightButton = this->makeWidget<QPushButton>( "scrollButtonRight", NavigationBarNamespace::stylesheet, this );
     this->baseLayout->addWidget( this->scrollRightButton );
     this->navigationWidget->setLayout( this->baseLayout );
 
@@ -57,11 +61,11 @@ NavigationBar::NavigationBar( QWidget *parent ) : QWidget( parent ), navigationW
     this->editLayout = NavigationBar::makeLayout<QHBoxLayout>();
     this->lineEdit->setStyleSheet( NavigationBarNamespace::stylesheet );
     this->editLayout->addWidget( this->lineEdit );
-    this->buttonClear = NavigationBar::makeWidget<QPushButton>( "editClear", NavigationBarNamespace::stylesheet );
+    this->buttonClear = NavigationBar::makeWidget<QPushButton>( "editClear", NavigationBarNamespace::stylesheet, this );
     this->editLayout->addWidget( this->buttonClear );
-    this->buttonBack = NavigationBar::makeWidget<QPushButton>( "editBack", NavigationBarNamespace::stylesheet );
+    this->buttonBack = NavigationBar::makeWidget<QPushButton>( "editBack", NavigationBarNamespace::stylesheet, this );
     this->editLayout->addWidget( this->buttonBack );
-    this->editSpacer = NavigationBar::makeSpacer<QWidget>();
+    this->editSpacer = NavigationBar::makeSpacer<QWidget>( "", "", this );
     this->editLayout->addWidget( this->editSpacer );
     this->editWidget->setLayout( this->editLayout );
 
@@ -75,8 +79,8 @@ NavigationBar::NavigationBar( QWidget *parent ) : QWidget( parent ), navigationW
     this->setLayout( this->stack );
 
     // set up spacer
-    this->navigationEdit = NavigationBar::makeWidget<QPushButton>( "editButton", NavigationBarNamespace::stylesheet );
-    this->navigationSpacer = NavigationBar::makeSpacer<QPushButton>( "spacerButton", NavigationBarNamespace::stylesheet );
+    this->navigationEdit = NavigationBar::makeWidget<HoverButton>( "editButton", NavigationBarNamespace::stylesheet, this );
+    this->navigationSpacer = NavigationBar::makeSpacer<HoverButton>( "spacerButton", NavigationBarNamespace::stylesheet, this );
 
     // connect signals/slots
     this->connect( this->scrollLeftButton, SIGNAL( clicked( bool )), this, SLOT( scrollLeft()));
@@ -88,12 +92,20 @@ NavigationBar::NavigationBar( QWidget *parent ) : QWidget( parent ), navigationW
     this->connect( this->buttonClear, SIGNAL( clicked( bool )), this, SLOT( clearLine()));
     this->connect( this->buttonBack, SIGNAL( clicked( bool )), this, SLOT( back()));
     this->connect( this->lineEdit, SIGNAL( returnPressed()), this, SLOT( editFinished()));
+    this->connect( this->navigationSpacer, SIGNAL( enter()), this, SLOT( showEditButton()));
+    this->connect( this->navigationSpacer, SIGNAL( leave()), this, SLOT( hideEditButton()));
+    this->connect( this->navigationEdit, SIGNAL( enter()), this, SLOT( showEditButton()));
+    this->connect( this->navigationEdit, SIGNAL( enter()), this, SLOT( editEnter()));
+    this->connect( this->navigationEdit, SIGNAL( leave()), this, SLOT( editLeave()));
 
     // limit height for now
     this->setMaximumHeight( 28 );
 
     // style menu
     this->menu->setStyleSheet( NavigationBarNamespace::stylesheet );
+
+    // hide edit button
+    this->hideEditButton();
 }
 
 /**
@@ -111,6 +123,10 @@ NavigationBar::~NavigationBar() {
     this->disconnect( this->buttonClear, SIGNAL( clicked( bool )));
     this->disconnect( this->buttonBack, SIGNAL( clicked( bool )));
     this->disconnect( this->lineEdit, SIGNAL( returnPressed()));
+    this->disconnect( this->navigationSpacer, SIGNAL( enter()));
+    this->disconnect( this->navigationSpacer, SIGNAL( leave()));
+    this->disconnect( this->navigationEdit, SIGNAL( enter()));
+    this->disconnect( this->navigationEdit, SIGNAL( leave()));
 
     // destory widgets
     delete this->menu;
@@ -141,6 +157,10 @@ void NavigationBar::setPath( const QString &path ) {
 
     // set navigation mode
     this->stack->setCurrentIndex( 0 );
+
+    // check if the same path
+    if ( !QString::compare( pathUtils.currentPath, path ))
+        return;
 
     // clean up
     this->clear();
@@ -278,13 +298,28 @@ void NavigationBar::clearLine() {
 }
 
 /**
+ * @brief NavigationBar::showEditButton
+ */
+void NavigationBar::showEditButton() {
+    this->navigationEdit->setEnabled( true );
+}
+
+/**
+ * @brief NavigationBar::hideEditButton
+ */
+void NavigationBar::hideEditButton() {
+    if ( !this->onEditButton )
+        this->navigationEdit->setDisabled( true );
+}
+
+/**
  * @brief NavigationBar::makeSpacer
  * @return
  */
 template<class T>
-T *NavigationBar::makeSpacer( const QString &objectName, const QString &styleSheet ) {
+T *NavigationBar::makeSpacer( const QString &objectName, const QString &styleSheet, QWidget *parent  ) {
     T *widget;
-    widget = NavigationBar::makeWidget<T>( objectName, styleSheet );
+    widget = NavigationBar::makeWidget<T>( objectName, styleSheet, parent );
     widget->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
     widget->setMinimumWidth( 0 );
 
@@ -309,9 +344,9 @@ T *NavigationBar::makeLayout() {
  * @return
  */
 template<class T>
-T *NavigationBar::makeWidget( const QString &objectName, const QString &styleSheet ) {
+T *NavigationBar::makeWidget( const QString &objectName, const QString &styleSheet, QWidget *parent ) {
     T *widget;
-    widget = new T();
+    widget = new T( qobject_cast<T*>( parent ));
 
     if ( !objectName.isEmpty())
         widget->setObjectName( objectName );
@@ -336,17 +371,17 @@ Crumb::Crumb( NavigationBar *bar, QLayout *layout, Crumb::Types type, const QStr
     // set up button
     switch ( type ) {
     case Root:
-        this->button = new QPushButton( "/" );
+        this->button = new QPushButton( "/", bar );
         this->button->setObjectName( "crumb" );
         break;
 
     case Separator:
-        this->button = new QPushButton();
+        this->button = new QPushButton( bar);
         this->button->setObjectName( "pathSeparator" );
         break;
 
     case Path:
-        this->button = new QPushButton( text );
+        this->button = new QPushButton( text, bar );
         this->button->setObjectName( "crumb" );
         break;
 

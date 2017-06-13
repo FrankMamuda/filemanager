@@ -111,7 +111,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->ui->dockBookmarks->setStyleSheet( "QDockWidget { background: #353535; }" );
     this->ui->dockBookmarksContents->setStyleSheet( "QWidget { background: #353535; }" );
     this->ui->sideView->setStyleSheet( "QListView { background: #353535; color: #8c8c8c; } QListWidget::item { color: #8c8c8c; }" );
-    this->ui->dockBookmarks->setTitleBarWidget( new QWidget());
+    this->ui->dockBookmarks->setTitleBarWidget( new QWidget( this ));
     this->ui->dockBookmarks->setVisible( Variable::isEnabled( "mainWindow/bookmarkPanelVisible" ));
 
     // add file browser widget

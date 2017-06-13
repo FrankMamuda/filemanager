@@ -23,6 +23,7 @@
 //
 #include <QString>
 #include <QDir>
+#include <QFileSystemWatcher>
 
 /**
  * @brief The PathUtils class
@@ -37,6 +38,7 @@ public:
     static bool isWindowsDevicePath( const QString &path );
     static QString windowsDevicePath( const QString &path );
     QString currentPath;
+    QFileSystemWatcher watcher;
 };
 
 extern class PathUtils pathUtils;

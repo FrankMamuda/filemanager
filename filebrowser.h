@@ -100,6 +100,8 @@ private slots:
     void setupFrameBar();
     void setupNavigationBar();
     void setupViewModes();
+    void directoryChanged( const QString &directory );
+    void populate();
 
 private:
     Ui::FileBrowser *ui;

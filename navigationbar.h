@@ -184,6 +184,10 @@ QPushButton#editButton:pressed {\
     background-color: rgb( 32, 32, 32, 196 );\
 }\
 \
+QPushButton#editButton:disabled {\
+    background-image: url();\
+}\
+\
 QPushButton#spacerButton {\
     margin: 0px;\
     border-width: 0px;\
@@ -261,6 +265,25 @@ class NavigationBar;
 class FileBrowser;
 
 /**
+ * @brief The HoverButton class
+ */
+class HoverButton : public QPushButton {
+    Q_OBJECT
+
+public:
+    explicit HoverButton( QPushButton *parent = 0 ) : QPushButton( parent ) {}
+
+signals:
+    void enter();
+    void leave();
+
+protected:
+    void enterEvent( QEvent *event ) { QPushButton::enterEvent( event ); emit this->enter(); }
+    void leaveEvent( QEvent *event ) { QPushButton::leaveEvent( event ); emit this->leave(); }
+};
+
+
+/**
  * @brief The Crumb class
  */
 class Crumb : public QObject {
@@ -320,15 +343,19 @@ private slots:
     void editFinished();
     void back();
     void clearLine();
+    void showEditButton();
+    void hideEditButton();
+    void editEnter() { this->onEditButton = true; }
+    void editLeave() { this->onEditButton = false; }
 
 private:
     // widget factory
     template<class T>
-    static T *makeSpacer( const QString &objectName = QString::null, const QString &styleSheet = QString::null );
+    static T *makeSpacer( const QString &objectName = QString::null, const QString &styleSheet = QString::null, QWidget *parent = nullptr );
     template<class T>
     static T *makeLayout();
     template<class T>
-    static T *makeWidget( const QString &objectName = QString::null, const QString &styleSheet = QString::null );
+    static T *makeWidget( const QString &objectName = QString::null, const QString &styleSheet = QString::null, QWidget *parent = nullptr );
 
     // easy scrollbar access
     QScrollBar *scrollBar() { return this->scrollArea->horizontalScrollBar(); }
@@ -338,8 +365,8 @@ private:
     //                            [1:editWidget]))]
     QWidget *navigationWidget;
     QScrollArea *scrollArea;
-    QPushButton *navigationEdit;
-    QPushButton *navigationSpacer;
+    HoverButton *navigationEdit;
+    HoverButton *navigationSpacer;
     QWidget *navigationBar;
     QHBoxLayout *navigationLayout;
     QHBoxLayout *baseLayout;
@@ -358,4 +385,5 @@ private:
     QString currentPath;
     QList<Crumb*> crumbs;
     FileBrowser *m_fileBrowser;
+    bool onEditButton;
 };

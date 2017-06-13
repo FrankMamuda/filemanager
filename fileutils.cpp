@@ -37,6 +37,12 @@
 //
 //       must allow forcing of similar operations within a single operation group
 //
+//       for now use native dialogs
+//
+
+FileUtils::FileUtils() {
+
+}
 
 #if 0
 /**

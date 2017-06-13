@@ -22,17 +22,18 @@
 #include <QApplication>
 #include <QDir>
 #include <QMessageBox>
+#include <QHBoxLayout>
+#include <QStyleFactory>
+#include <QThread>
+#include <QDebug>
+#include <QDesktopWidget>
 #include "main.h"
 #include "mainwindow.h"
 #include "pixmapcache.h"
 #include "notificationpanel.h"
-#include <QStyleFactory>
-#include <QThread>
-#include <QDebug>
 #include "cache.h"
 #include "iconcache.h"
 #include "fileutils.h"
-#include <QHBoxLayout>
 
 //
 // classes
@@ -102,7 +103,8 @@ int main( int argc, char *argv[] ) {
 
     // create notification widget
     NotificationPanel *notify;
-    notify = new NotificationPanel( &w );
+    QDesktopWidget desktop;
+    notify = new NotificationPanel( &desktop );// &w );
     notify->hide();
     m.setNotifications( notify );
 

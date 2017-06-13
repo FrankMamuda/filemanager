@@ -43,7 +43,7 @@
  * @param mode
  * @param iconSize
  */
-ContainerModel::ContainerModel( QAbstractItemView *view, ContainerModel::Modes mode, Containers container ) : m_parent( view ), m_mode( mode ), m_iconSize( Common::DefaultListIconSize ), m_selectionLocked( false ), m_container( container ) {
+ContainerModel::ContainerModel( QAbstractItemView *view, Containers container ) : m_parent( view ), m_iconSize( Common::DefaultListIconSize ), m_selectionLocked( false ), m_container( container ) {
     // create rubber band
     if ( this->parent() != nullptr )
         this->m_rubberBand = new QRubberBand( QRubberBand::Rectangle, this->parent()->viewport());
@@ -161,26 +161,14 @@ void ContainerModel::setIconSize( int iconSize ) {
 }
 
 /**
- * @brief ContainerModel::setMode
- * @param mode
+ * @brief ContainerModel::populate
  */
-void ContainerModel::setMode( ContainerModel::Modes mode ) {
-    this->m_mode = mode;
-
-    if ( m.gui() != nullptr )
-        this->buildList( PathUtils::toWindowsPath( pathUtils.currentPath ));
-    else
+void ContainerModel::populate() {
+    if ( m.gui() != nullptr ) {
+        this->buildList( pathUtils.currentPath );
+    } else
         this->buildList( QDir::currentPath());
 }
-
-/**
- * @brief ContainerModel::setActiveContainer
- * @param container
- */
-/*void ContainerModel::setActiveContainer( ContainerModel::Containers container ) {
-    this->m_container = container;
-    this->m_rubberBand->setParent( this->parent());
-}*/
 
 /**
  * @brief ContainerModel::flags
@@ -188,10 +176,20 @@ void ContainerModel::setMode( ContainerModel::Modes mode ) {
  * @return
  */
 Qt::ItemFlags ContainerModel::flags( const QModelIndex &index ) const {
-    if ( index.isValid() && this->mode() == FileMode )
+    if ( !index.isValid())
+        return Qt::NoItemFlags;
+
+    switch ( SpecialDirectory::pathToType( pathUtils.currentPath )) {
+    case SpecialDirectory::General:
         return ( Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled );
 
-    return Qt::ItemIsEnabled;
+    case SpecialDirectory::Root:
+    case SpecialDirectory::NoType:
+    case SpecialDirectory::Trash:
+    case SpecialDirectory::Bookmarks:
+    default:
+        return Qt::ItemIsEnabled;
+    }
 }
 
 /**
@@ -278,23 +276,53 @@ QVariant ContainerModel::headerData( int section, Qt::Orientation orientation, i
 }
 
 /**
+ * @brief ContainerModel::supportedDropActions
+ * @return
+ */
+Qt::DropActions ContainerModel::supportedDropActions() const {
+    switch ( SpecialDirectory::pathToType( pathUtils.currentPath )) {
+    case SpecialDirectory::General:
+        return Qt::CopyAction;
+
+    case SpecialDirectory::Root:
+    case SpecialDirectory::NoType:
+    case SpecialDirectory::Trash:
+    case SpecialDirectory::Bookmarks:
+    default:
+        return Qt::IgnoreAction;
+    }
+}
+
+/**
+ * @brief ContainerModel::supportedDragActions
+ * @return
+ */
+Qt::DropActions ContainerModel::supportedDragActions() const {
+    return this->supportedDropActions();
+}
+
+/**
  * @brief ContainerModel::buildList
  * @param path
  */
 void ContainerModel::buildList( const QString &path ) {
     QFileInfoList infoList;
-    QDir directory( path );
+    QDir directory;
 
     // clear previous list
     qDeleteAll( this->list );
     this->list.clear();
 
     // get filelist
-    if ( this->mode() == FileMode ) {
+    switch ( SpecialDirectory::pathToType( path )) {
+    case SpecialDirectory::General:
+        directory.setPath( PathUtils::toWindowsPath( path ));
         infoList = directory.entryInfoList( QDir::NoDotAndDotDot | QDir::AllEntries, QDir::IgnoreCase | QDir::DirsFirst );
         foreach ( QFileInfo info, infoList )
             this->list << new Entry( Entry::FileFolder, info, this );
-    } else if ( this->mode() == SideMode ) {
+        break;
+
+    case SpecialDirectory::Root:
         // add root pseudo-folder
         this->list << new Entry( Entry::Root, QFileInfo(), this );
         this->list << new Entry( Entry::Home, QFileInfo( QDir::home().absolutePath()), this );
@@ -305,8 +333,13 @@ void ContainerModel::buildList( const QString &path ) {
             this->list << new Entry( Entry::HardDisk, driveInfo, this );
 
         this->list << new Entry( Entry::Trash, QFileInfo(), this );
-    } else {
-        return;
+        break;
+
+    case SpecialDirectory::NoType:
+    case SpecialDirectory::Trash:
+    case SpecialDirectory::Bookmarks:
+    default:
+        break;
     }
 
     // reset view
@@ -546,7 +579,7 @@ void ContainerModel::determineMimeTypes() {
     Entry *entry;
     int y, k;//, z = 0;
 
-    if ( this->mode() != FileMode )
+    if ( SpecialDirectory::pathToType( pathUtils.currentPath ) != SpecialDirectory::General )
         return;
 
     // TODO: must read files in batches via QDirIterator from a separate thread?
@@ -717,8 +750,18 @@ void ContainerModel::processItemOpen( const QModelIndex &index ) {
     if ( entry->isDirectory()) {
         m.gui()->setCurrentPath( entry->path());
     } else {
-        if ( this->mode() == ContainerModel::FileMode )
+        switch ( SpecialDirectory::pathToType( pathUtils.currentPath )) {
+        case SpecialDirectory::General:
             QDesktopServices::openUrl( QUrl::fromLocalFile( entry->path()));
+            return;
+
+        case SpecialDirectory::Root:
+        case SpecialDirectory::NoType:
+        case SpecialDirectory::Trash:
+        case SpecialDirectory::Bookmarks:
+        default:
+            return;
+        }
     }
 }
 
@@ -866,4 +909,23 @@ int ContainerModel::iconSize() const {
         return Common::DefaultTableIconSize;
 
     return this->m_iconSize;
+}
+
+/**
+ * @brief SpecialDirectory::pathToType
+ * @param path
+ * @return
+ */
+SpecialDirectory::Types SpecialDirectory::pathToType( const QString &path ) {
+    SpecialDirectory::Types type = SpecialDirectory::General;
+
+    // determine directory type
+    foreach ( SpecialDirectory sd, ContainerNamespace::SpecialDirectories ) {
+        if ( /*path.startsWith( sd.path )*/ !QString::compare( path, sd.path )) {
+            type = sd.type;
+            break;
+        }
+    }
+
+    return type;
 }
