@@ -110,6 +110,7 @@ QMimeData *BookmarkModel::mimeData( const QModelIndexList &indexes ) const {
     QMimeData *mimeData;
     mimeData = QAbstractItemModel::mimeData( indexes );
     mimeData->setText( "bookmark" );
+   // mimeData->setUserData( );
     mimeData->setObjectName( "bookmark" );
     return mimeData;
 }

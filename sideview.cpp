@@ -103,14 +103,33 @@ void SideView::dropEvent( QDropEvent *e ) {
     QList<QUrl> urls = e->mimeData()->urls();
     QString path;
     QFileInfo info;
+    int y;
+
+    // construct drop-in-between regions
+    QRegion region( this->viewport()->rect());
+    for ( y = 0; y < this->model()->rowCount(); y++ )
+        region -= this->rectForIndex( this->model()->index( y ));
 
     // detect bookmark drop
     // handle differently since this is internal move
     if ( e->mimeData()->text().startsWith( "bookmark" )) {
-        qDebug() << "drop bookmark";
+        if ( this->currentDragRow == -1 )
+            return;
+
+        // determine if we are dropping item in between two others
+        for ( y = 0; y < region.rects().size(); y++ ) {
+            if ( region.rects().at( y ).contains( this->mapFromGlobal( QCursor::pos()))) {
+                this->model()->bookmarks()->move( this->currentDragRow, y );
+                break;
+            }
+        }
+
+        // reset model
+        this->model()->reset();
         return;
     }
 
+    // make sure we only add one bookmark
     if ( urls.count() > 1 ) {
         m.notifications()->push( NotificationPanel::Error, "Bookmarks", "Can add only one bookmark at a time" );
         return;
@@ -118,17 +137,74 @@ void SideView::dropEvent( QDropEvent *e ) {
         return;
     }
 
+    // accept only folders, ignore files
     path = urls.first().toLocalFile();
-
     info.setFile( path );
     if ( !info.isDir()) {
         m.notifications()->push( NotificationPanel::Error, "Bookmarks", "Cannot add files as bookmarks" );
         return;
     }
 
-    this->model()->bookmarks()->add( info.fileName(), info.absoluteFilePath(), QPixmap(), "inode-directory" );
+    // determine position
+    for ( y = 0; y < region.rects().size(); y++ ) {
+        if ( region.rects().at( y ).contains( this->mapFromGlobal( QCursor::pos()))) {
+            this->model()->bookmarks()->add( info.fileName(), info.absoluteFilePath(), QPixmap(), "inode-directory", true, y + 1 );
+            break;
+        }
+    }
+
+    // reset model
     this->model()->reset();
     e->accept();
+}
+
+/**
+ * @brief SideView::paintEvent
+ */
+void SideView::paintEvent( QPaintEvent *event ) {
+    if ( QApplication::mouseButtons() & Qt::LeftButton ) {
+        QPainter painter( this->viewport());
+        QRegion region( this->viewport()->rect());
+        int y;
+
+        painter.save();
+        painter.setBrush( QColor::fromRgb( 255, 255, 255, 64 ));
+
+        // subtract item rects
+        for ( y = 0; y < this->model()->rowCount(); y++ )
+            region -= this->rectForIndex( this->model()->index( y ));;
+
+        for ( y = 0; y < region.rects().size(); y++ ) {
+            QRect rect;
+
+            rect = region.rects().at( y );
+            if ( rect.contains( this->mapFromGlobal( QCursor::pos()))) {
+                 rect.setHeight( rect.height() - 2 );
+                 painter.drawRoundedRect( rect, 2, 2 );
+            }
+        }
+
+        painter.restore();
+    }
+
+    QListView::paintEvent( event );
+}
+
+/**
+ * @brief SideView::dragEnterEvent
+ */
+void SideView::dragEnterEvent( QDragEnterEvent *event ) {
+    this->currentDragRow = this->currentIndex().row();
+    QListView::dragEnterEvent( event );
+}
+
+/**
+ * @brief SideView::dragLeaveEvent
+ * @param event
+ */
+void SideView::dragLeaveEvent( QDragLeaveEvent *event ) {
+    this->currentDragRow = -1;
+    QListView::dragLeaveEvent( event );
 }
 
 /**
@@ -155,8 +231,8 @@ void SideView::processContextMenu( const QModelIndex &index, const QPoint &pos )
     menu.addAction( this->tr( "Change target" ), this, SLOT( changeBookmarkTarget()));
     menu.addSeparator();
     menu.addAction( this->tr( "Remove bookmark" ), this, SLOT( removeBookmark()));
-    menu.addSeparator();
-    //menu.addAction( this->tr( "Rebuild icons" ), this, SLOT( rebuildIcons()));
+    //menu.addSeparator();
+    //menu.addAction( this->tr( "Default bookmarks" ), this, SLOT( rebuildIcons()));
     menu.exec( pos );
 
     this->currentIndex() = index;
@@ -175,7 +251,6 @@ void SideView::renameBookmark() {
         this->model()->reset();
     }
 }
-
 
 /**
  * @brief SideView::changeBookmarkTarget
@@ -198,17 +273,6 @@ void SideView::removeBookmark() {
     this->model()->bookmarks()->remove( this->currentIndex().row());
     this->model()->reset();
 }
-
-/**
- * @brief SideView::rebuildIcons
- */
-/*void SideView::rebuildIcons() {
-    //foreach ( Bookmark *bookmark, this->model()->bookmarks())
-
-   // this->model()->bookmarks()->remove( this->currentIndex().row());
-    //this->model()->reset();
-}*/
-
 
 /**
  * @brief SideView::changeBookmarkIcon

@@ -43,7 +43,6 @@ class Main m;
 //
 // defines
 //
-//#define DARK_PALETTE
 #define THREADED_CACHE
 struct Work;
 
@@ -74,13 +73,13 @@ int main( int argc, char *argv[] ) {
     QIcon::setThemeName( Ui::lightIconTheme );
 
     // build pixmap index
-    m.pixmapCache = new PixmapCache( QDir::currentPath() + "/.cache" );
+    m.pixmapCache = new PixmapCache( QDir::homePath() + "/.filemanager/cache" );
     m.pixmapCache->buildIndex( Ui::lightIconTheme );
     m.pixmapCache->buildIndex( Ui::darkIconTheme );
 
     // init cache, run it from a separate thread
-    m.cache = new Cache( QDir::currentPath() + "/.cache" );
-    m.iconCache = new IconCache( QDir::currentPath() + "/.cache" );
+    m.cache = new Cache( QDir::homePath() + "/.filemanager/cache" );
+    m.iconCache = new IconCache( QDir::homePath() + "/.filemanager/cache" );
 #ifdef THREADED_CACHE
     QThread thread;
 
@@ -115,8 +114,6 @@ int main( int argc, char *argv[] ) {
     // default icon
     if ( m.pixmapCache->pixmap( "application-x-zerosize", 48 ).width() == 0 )
         QMessageBox::warning( &w, QObject::tr( "Warning" ), QObject::tr( "Invalid icon theme" ), QMessageBox::Ok );
-
-    // tm.pmc->   //FileUtils::copy2( "/c/Private/zzz.xcf", "/c/Private/Downloads" );
 
     // return success
     return a.exec();

@@ -76,8 +76,8 @@ public:
     Bookmark( const QString &path, QAbstractItemView *parent );
     ~Bookmark() { this->shutdown(); }
     int count() { return this->list.count(); }
-    void add( const QString &alias, const QString &path, const QPixmap &pixmap = QPixmap(), const QString &stockIcon = QString::null, bool writeOut = true ) { this->add( BookmarkEntry( alias, path, pixmap, stockIcon ), writeOut ); }
-    void add( const BookmarkEntry &entry, bool writeOut = true );
+    void add( const QString &alias, const QString &path, const QPixmap &pixmap = QPixmap(), const QString &stockIcon = QString::null, bool writeOut = true, int position = -1 ) { this->add( BookmarkEntry( alias, path, pixmap, stockIcon ), writeOut, position ); }
+    void add( const BookmarkEntry &entry, bool writeOut = true, int position = -1 );
     void remove( int pos );
     void shutdown() { this->setValid( false ); this->data.close(); }
     QVariant value( int index, BookmarkData field );
@@ -85,6 +85,9 @@ public:
 
     // parent widget
     QAbstractItemView *parent() const { return this->m_parent; }
+
+public slots:
+    void move( int oldPosition, int to );
 
 private slots:
     void write();

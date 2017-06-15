@@ -98,17 +98,39 @@ Bookmark::Bookmark( const QString &path, QAbstractItemView *parent ) : m_path( p
  * @brief Bookmark::add
  * @param entry
  */
-void Bookmark::add( const BookmarkEntry &entry, bool writeOut ) {
+void Bookmark::add( const BookmarkEntry &entry, bool writeOut, int position ) {
     // failsafe
     if ( !this->isValid())
         return;
 
     // add item and commit
-    this->list << entry;
+    if ( position == -1 ) {
+        this->list << entry;
+    } else {
+        if ( position <= 0 || position > this->count())
+            return;
+
+        this->list.insert( position, entry );
+    }
 
     // write out
     if ( writeOut )
         this->write();
+}
+
+/**
+ * @brief Bookmark::move
+ * @param oldPosition
+ * @param newPosition
+ */
+void Bookmark::move( int from, int to ) {
+    if ( from < 0 || to < 0 || from > this->list.count() || to > this->list.count()) {
+        qDebug() << "invalid move";
+        return;
+    }
+
+    this->list.move( from, to );
+    this->write();
 }
 
 /**

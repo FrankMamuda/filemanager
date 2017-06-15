@@ -26,6 +26,7 @@
 #include <QDragLeaveEvent>
 #include <QMouseEvent>
 #include <QDropEvent>
+#include <QPainter>
 
 //
 // classes
@@ -62,11 +63,15 @@ protected:
     // overrides
     void mouseReleaseEvent( QMouseEvent * );
     void dropEvent( QDropEvent * );
+    void paintEvent( QPaintEvent * );
+    void dragEnterEvent( QDragEnterEvent * );
+    void dragLeaveEvent( QDragLeaveEvent * );
 
 private:
     BookmarkModel *m_model;
     QModelIndex index;
     ContainerStyle *m_style;
     ListViewDelegate *m_delegate;
+    int currentDragRow;
 };
 

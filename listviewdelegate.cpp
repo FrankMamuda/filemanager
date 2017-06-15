@@ -19,6 +19,7 @@
 //
 // includes
 //
+#include <QApplication>
 #include "listviewdelegate.h"
 #include "listview.h"
 #include "containermodel.h"
@@ -31,6 +32,7 @@
  * @param parent
  */
 ListViewDelegate::ListViewDelegate( QListView *parent ) {
+    // set parent
     this->setParent( qobject_cast<QObject*>( parent ));
 }
 
@@ -137,6 +139,7 @@ void ListViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &opt
             painter->setOpacity( 1.0f );
     }
 
+
     //
     // STAGE 3: display text
     //
@@ -179,12 +182,4 @@ void ListViewDelegate::paint( QPainter *painter, const QStyleOptionViewItem &opt
         // paint it exactly the same as before, yet ignoring selections
         QStyledItemDelegate::paint( painter, optionNoSelection, index );
     }
-
-    // the in-between line
-#if 0
-    if ( bookMarkView ) {
-        int lineY = qobject_cast<SideView*>( this->parent())->mapFromGlobal( QCursor::pos()).y();
-        painter->drawLine( 0, lineY, option.widget->width(), lineY );
-    }
-#endif
 }
