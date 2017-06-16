@@ -185,6 +185,22 @@ void FileBrowser::populate() {
 }
 
 /**
+ * @brief FileBrowser::horizontalSliderMoved
+ * @param value
+ */
+void FileBrowser::horizontalSliderMoved( int value ) {
+    Variable::setValue( "mainWindow/iconSize/sliderPosition", value );
+
+    // TODO: fix view mode switching to avoid too frequent mime type detection
+    //  ..if ( this->ui->stackedWidget->currentIndex() == 1 )
+    // ./     return;
+
+    value *= 16;
+    this->ui->listView->model()->setIconSize( value );
+    this->ui->listView->switchDisplayMode( this->ui->listView->viewMode());
+}
+
+/**
  * @brief FileBrowser::~FileBrowser
  */
 FileBrowser::~FileBrowser() {
@@ -215,15 +231,8 @@ FileBrowser::~FileBrowser() {
  * @param toggled
  */
 void FileBrowser::on_actionBookmarks_toggled( bool toggled ) {
-    if ( this->parentWindow == nullptr )
-        return;
-
-    /*  if ( toggled )
-        this->parentWindow->showBookmarkDock();
-    else
-        this->parentWindow->hideBookmarkDock();
-
-    Variable::setValue( "mainWindow/bookmarkPanelVisible", toggled );*/
+    emit this->bookmarkPanelToggled( toggled );
+    Variable::setValue( "mainWindow/bookmarkPanelVisible", toggled );
 }
 
 /**
@@ -366,7 +375,7 @@ void FileBrowser::setGridView() {
 
     this->ui->stackedWidget->setCurrentIndex( 0 );
     this->ui->listView->switchDisplayMode( QListView::IconMode );
-    //this->ui->horizontalSlider->setEnabled( true );
+    // this->ui->horizontalSlider->setEnabled( true );
 
     Variable::setValue( "mainWindow/viewMode", IconMode );
 }
@@ -450,6 +459,9 @@ void FileBrowser::setCurrentPath( const QString &path, bool saveToHistory ) {
 
         // disable up button since we're at root already
         this->ui->actionUp->setDisabled( true );
+
+        // update navigation bar
+        this->ui->navigationBar->setPath( unixPath );
         break;
 
     case SpecialDirectory::General:

@@ -126,6 +126,9 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
 
     // update info panel
     this->fileBrowser->updateInfoPanel();
+
+    // connect bookmark toggle button
+    this->connect( this->fileBrowser, SIGNAL( bookmarkPanelToggled( bool )), this, SLOT( bookmarkPanelToggled( bool )));
 }
 
 /**
@@ -281,17 +284,11 @@ bool MainWindow::eventFilter( QObject *object, QEvent *event ) {
 }
 
 /**
- * @brief MainWindow::showBookmarkDock
+ * @brief MainWindow::bookmarkPanelToggled
+ * @param toggled
  */
-void MainWindow::showBookmarkDock() {
-    this->ui->dockBookmarks->show();
-}
-
-/**
- * @brief MainWindow::hideBookmarkDock
- */
-void MainWindow::hideBookmarkDock() {
-    this->ui->dockBookmarks->close();
+void MainWindow::bookmarkPanelToggled( bool toggled ) {
+    this->ui->dockBookmarks->setVisible( toggled );
 }
 
 /**
@@ -351,6 +348,7 @@ MainWindow::~MainWindow() {
     // get rid of ui
     delete ui;
 
+    this->disconnect( this->fileBrowser, SIGNAL( bookmarkPanelToggled( bool )));
     this->fileBrowser->deleteLater();
 }
 
@@ -378,17 +376,7 @@ void MainWindow::closeEvent( QCloseEvent *e ) {
  * @param value
  */
 void MainWindow::on_horizontalSlider_valueChanged( int value ) {
-/* AAAA
-    Variable::setValue( "mainWindow/iconSize/sliderPosition", value );
-
-    // TODO: fix view mode switching to avoid too frequent mime type detection
-    //  ..if ( this->ui->stackedWidget->currentIndex() == 1 )
-    // ./     return;
-
-    value *= 16;
-    this->ui->listView->model()->setIconSize( value );
-    this->ui->listView->switchDisplayMode( this->ui->listView->viewMode());
-*/
+    this->fileBrowser->horizontalSliderMoved( value );
 }
 
 /**

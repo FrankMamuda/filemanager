@@ -79,6 +79,10 @@ public:
 public slots:
     void updateInfoPanel();
     void setCurrentPath( const QString &path = QDir::currentPath(), bool saveToHistory = true );
+    void horizontalSliderMoved( int value );
+
+signals:
+    void bookmarkPanelToggled( bool );
 
 private slots:
     void on_actionBookmarks_toggled( bool toggled );

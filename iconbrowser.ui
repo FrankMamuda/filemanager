@@ -27,8 +27,8 @@
      </property>
      <property name="iconSize">
       <size>
-       <width>48</width>
-       <height>48</height>
+       <width>16</width>
+       <height>16</height>
       </size>
      </property>
      <property name="verticalScrollMode">
@@ -39,8 +39,8 @@
      </property>
      <property name="gridSize">
       <size>
-       <width>48</width>
-       <height>96</height>
+       <width>64</width>
+       <height>64</height>
       </size>
      </property>
      <property name="viewMode">

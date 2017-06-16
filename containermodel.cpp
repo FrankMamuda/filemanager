@@ -36,6 +36,8 @@
 #include "notificationpanel.h"
 #include "cache.h"
 #include <QInputDialog>
+#include <QMimeData>
+#include <QClipboard>
 
 /**
  * @brief ContainerModel::ContainerModel
@@ -718,12 +720,25 @@ void ContainerModel::processContextMenu( const QModelIndex &index, const QPoint 
 
     // a dummy menu for now
     QMenu menu;
-    menu.addAction( "Open", this, SLOT( open()));
-    menu.addAction( "Open With", this, SLOT( openWith()));
-    menu.addSeparator();
+
+    // open only single files and dirs
+    if ( this->selectionList.count() == 1 ) {
+        menu.addAction( "Open", this, SLOT( open()));
+
+        if ( !entry->isDirectory())
+            menu.addAction( "Open With", this, SLOT( openWith()));
+
+        menu.addSeparator();
+    }
+
+    // cut and copy multiple files and dirs
     menu.addAction( "Cut", this, SLOT( cut()));
     menu.addAction( "Copy", this, SLOT( copy()));
-    menu.addAction( "Paste", this, SLOT( paste()));
+
+    // paste only to single directories
+    if ( entry->isDirectory() && this->selectionList.count() == 1 )
+        menu.addAction( "Paste", this, SLOT( paste()));
+
     menu.addSeparator();
     menu.addAction( "Recycle", this, SLOT( recycle()));
     menu.addSeparator();
@@ -805,14 +820,36 @@ void ContainerModel::displayProperties() {
  * @brief ContainerModel::copy
  */
 void ContainerModel::copy() {
-    qDebug() << "copy";
+    QMimeData *mimeData;
+    QList<QUrl> pathList;
+
+    // NOTE: use clipboard at all?
+    // just offload this to YET*TO*BE*CREATED fileUtils
+    // and add fileSystemWatcher to prevent changes
+
+    // build file list
+    foreach ( Entry *entry, this->selectionList )
+        pathList << QUrl( entry->info().absoluteFilePath());
+
+    // create mime data
+    mimeData = new QMimeData();
+    mimeData->setUrls( pathList );
+
+    // add data to clipboard
+    QApplication::clipboard()->setMimeData( mimeData );
 }
 
 /**
  * @brief ContainerModel::paste
  */
 void ContainerModel::paste() {
-    qDebug() << "paste";
+    if ( !QApplication::clipboard()->mimeData()->hasUrls())
+        return;
+
+    qDebug() << "paste:";
+    foreach ( QUrl url, QApplication::clipboard()->mimeData()->urls()) {
+        qDebug() << " " << url.toString();
+    }
 }
 
 /**
@@ -869,6 +906,9 @@ void ContainerModel::cut() {
     // FIXME/NOTE: must store differently because entry list is rebuild on every dir change
     foreach ( Entry *entry, this->selectionList )
         entry->setCut();
+
+    //this->copy;
+    //this.
 }
 
 /**

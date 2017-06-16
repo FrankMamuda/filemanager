@@ -100,8 +100,7 @@ protected:
     bool eventFilter( QObject *object, QEvent *event );
 
 public slots:
-    void showBookmarkDock();
-    void hideBookmarkDock();
+    void bookmarkPanelToggled( bool toggled );
     void setCurrentPath( const QString &path = QDir::currentPath(), bool saveToHistory = true );
 
 private slots:

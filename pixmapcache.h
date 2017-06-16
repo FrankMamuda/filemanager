@@ -71,20 +71,20 @@ class PixmapCache : public QObject {
 public:
     PixmapCache( const QString &path );
     ~PixmapCache() { this->shutdown(); }
-    QPixmap pixmap( const QString &name, int scale, const QString themeName = QString::null, bool thumbnail = false );
+    QPixmap pixmap(const QString &name, int scale, const QString themeName = QString::null, bool thumbnail = false );
     QIcon icon( const QString &name, int scale = 0, const QString themeName = QString::null );
     void buildIndex( const QString &themeName );
     int parseSVG( const QString &buffer );
     IconMatch readIconFile( const QString &buffer, bool &ok, int recursionLevel = 2 );
     IconMatchList getIconMatchList( const QString &name, const QString &themeName );
+    QIcon findIcon( const QString &name, int scale = 0, const QString &themeName = QString::null );
+    QPixmap findPixmap( const QString &name, int scale, const QString &themeName = QString::null );
 
 private slots:
     void setValid( bool valid ) { this->m_valid = valid; }
     void shutdown();
 
 private:
-    QIcon findIcon( const QString &name, int scale = 0, const QString &themeName = QString::null );
-    QPixmap findPixmap( const QString &name, int scale, const QString &themeName = QString::null );
     QHash<QString, QPixmap> pixmapCache;
     QHash<QString, QIcon> iconCache;
     QHash<QString, QStringList> index;

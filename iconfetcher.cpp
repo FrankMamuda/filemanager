@@ -24,6 +24,10 @@
 #include "pixmapcache.h"
 #include "main.h"
 
+//
+// FIXME: with the new pixmap cache, this also lists missing icons
+//
+
 /**
  * @brief IconFetcher::addWork
  * @param iconName
@@ -52,7 +56,9 @@ void IconFetcher::run() {
             QPixmap pixmap;
 
             index = this->workList.takeLast();
-            pixmap = m.pixmapCache->pixmap( index.first, index.second );
+
+            // NOTE: we can afford non-efficient fetch via findPixmap
+            pixmap = m.pixmapCache->findPixmap( index.first, index.second );
 
             if ( !pixmap.isNull() && pixmap.width())
                 emit this->workDone( index.first, index.second, pixmap );

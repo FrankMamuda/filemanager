@@ -482,7 +482,6 @@ IconMatch PixmapCache::readIconFile( const QString &fileName, bool &ok, int recu
  * @param name
  * @return
  */
-// FIXME: precache icons???
 QPixmap PixmapCache::findPixmap( const QString &name, int scale, const QString &themeName ) {
     int y = 0, bestIndex = 0, bestScale = 0;
     IconMatchList matchList;

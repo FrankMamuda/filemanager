@@ -81,8 +81,8 @@ void IconBrowser::on_pushButton_clicked() {
     pixmap.load( QFileDialog::getOpenFileName( this, this->tr( "Open Image" ), QDir::currentPath(), this->tr( "Image Files (*.png *.jpg *.bmp *.svg)" )));
     if ( !pixmap.isNull()) {
         this->iconModel->clear();
-        this->iconModel->addIcon( "scaled to height", pixmap.scaledToHeight( 32, Qt::SmoothTransformation ));
-        this->iconModel->addIcon( "scaled to width", pixmap.scaledToWidth( 32, Qt::SmoothTransformation ));
+        this->iconModel->addIcon( "scaled to height", pixmap.scaledToHeight( 16, Qt::SmoothTransformation ));
+        this->iconModel->addIcon( "scaled to width", pixmap.scaledToWidth( 16, Qt::SmoothTransformation ));
 
         QRect rect;
         if ( pixmap.width() > pixmap.height())
@@ -91,6 +91,6 @@ void IconBrowser::on_pushButton_clicked() {
             rect = QRect( 0, pixmap.height() / 2 - pixmap.width() / 2, pixmap.width(), pixmap.width());
 
         pixmap = pixmap.copy( rect );
-        this->iconModel->addIcon( "cropped to square", pixmap.scaled( 32, 32, Qt::IgnoreAspectRatio, Qt::SmoothTransformation ));
+        this->iconModel->addIcon( "cropped to square", pixmap.scaled( 16, 16, Qt::IgnoreAspectRatio, Qt::SmoothTransformation ));
     }
 }

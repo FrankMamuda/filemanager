@@ -28,10 +28,6 @@
 #include "pixmapcache.h"
 #include "main.h"
 
-//
-// TODO: show edit button only on hover over navigationSpacer
-//
-
 /**
  * @brief PathBar::PathBar
  * @param parent

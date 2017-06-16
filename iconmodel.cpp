@@ -126,5 +126,5 @@ void IconModel::fetch() {
     QMimeDatabase db;
 
     foreach ( QMimeType mimeType, db.allMimeTypes())
-        QMetaObject::invokeMethod( m.iconCache, "process", Qt::QueuedConnection, Q_ARG( QString, mimeType.iconName()), Q_ARG( quint8, 48 ));
+        QMetaObject::invokeMethod( m.iconCache, "process", Qt::QueuedConnection, Q_ARG( QString, mimeType.iconName()), Q_ARG( quint8, 16 ));
 }

@@ -32,7 +32,7 @@
  * @param parent
  */
 BookmarkModel::BookmarkModel( QAbstractItemView *parent ) : m_parent( parent ) {
-    this->m_bookmarks = new Bookmark( QDir::currentPath() + "/.config", parent );
+    this->m_bookmarks = new Bookmark( QDir::homePath() + "/.filemanager", parent );
 }
 
 /**

@@ -41,8 +41,8 @@ namespace IconCacheSystem {
     static const quint8 Version = 1;
     static const QString IndexFilename( "icons.index" );
     static const QString DataFilename( "icons.data" );
-    static const quint8 NumIconScales = 4;
-    static const quint8 IconScales[NumIconScales] = { 64, 48, 32, 16 };
+    static const quint8 NumIconScales = /*4*/1;
+    static const quint8 IconScales[NumIconScales] = { /*64, 48, 32,*/ 16 };
 }
 
 /**

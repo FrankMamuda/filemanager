@@ -36,7 +36,7 @@ class SideView;
  */
 namespace BookMarkSystem {
     static const quint8 Version = 2;
-    static const QString DataFilename( "bookmarks" );
+    static const QString DataFilename( "bookmarks.data" );
 }
 
 /**
