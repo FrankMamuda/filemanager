@@ -68,7 +68,11 @@ int main( int argc, char *argv[] ) {
     qRegisterMetaType<PixmapEntry>( "PixmapEntry" );
 
     // set up icon theme
+#ifdef Q_OS_WIN32
     QDir iconDir( QDir::currentPath() + "/icons" );
+#else
+    QDir iconDir( "/usr/share/icons" );
+#endif
     QIcon::setThemeSearchPaths( QStringList( iconDir.absolutePath()));
     QIcon::setThemeName( Ui::lightIconTheme );
 

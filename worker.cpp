@@ -19,15 +19,17 @@
 //
 // includes
 //
-#include <QtConcurrent>
+#ifdef Q_OS_WIN32
 #include <QtWin>
-#include <QSysInfo>
 #include <commctrl.h>
 #include <commoncontrols.h>
 #include <shellapi.h>
+#include <Winuser.h>
+#endif
+#include <QtConcurrent>
+#include <QSysInfo>
 #include "worker.h"
 #include "cache.h"
-#include <Winuser.h>
 #include <QRgb>
 
 /**
@@ -36,6 +38,7 @@
  * @return
  */
 QPixmap Worker::extractPixmap( const QString &path, bool &ok, bool jumbo ) {
+#ifdef Q_OS_WIN32
     SHFILEINFO shellInfo;
     QPixmap pixmap;
     QImage image;
@@ -100,6 +103,7 @@ QPixmap Worker::extractPixmap( const QString &path, bool &ok, bool jumbo ) {
             }
         }
     }
+#endif
     return QPixmap();
 }
 

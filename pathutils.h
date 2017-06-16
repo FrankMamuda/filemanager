@@ -34,7 +34,11 @@ public:
     static bool isUnixPath( const QString &path );
     static QString toUnixPath( const QString &path, bool homePath = false );
     static QString toWindowsPathE( const QString &path );
-    static QString toWindowsPath( const QString &path ) { return QDir::toNativeSeparators( toWindowsPathE( path )); }
+#ifdef Q_OS_WIN32
+    static QString toWindowsPath( const QString &path ) { return QDir::toNativeSeparators( PathUtils::toWindowsPathE( path )); }
+#else
+    static QString toWindowsPath( const QString &path ) { return PathUtils::toUnixPath( path ); }
+#endif
     static bool isWindowsDevicePath( const QString &path );
     static QString windowsDevicePath( const QString &path );
     QString currentPath;

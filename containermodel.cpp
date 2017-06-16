@@ -185,8 +185,10 @@ Qt::ItemFlags ContainerModel::flags( const QModelIndex &index ) const {
     case SpecialDirectory::General:
         return ( Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled );
 
-    case SpecialDirectory::Root:
     case SpecialDirectory::NoType:
+#ifdef Q_OS_WIN32
+    case SpecialDirectory::Root:
+#endif
     case SpecialDirectory::Trash:
     case SpecialDirectory::Bookmarks:
     default:
@@ -286,7 +288,9 @@ Qt::DropActions ContainerModel::supportedDropActions() const {
     case SpecialDirectory::General:
         return Qt::CopyAction;
 
+#ifdef Q_OS_WIN32
     case SpecialDirectory::Root:
+#endif
     case SpecialDirectory::NoType:
     case SpecialDirectory::Trash:
     case SpecialDirectory::Bookmarks:
@@ -324,6 +328,7 @@ void ContainerModel::buildList( const QString &path ) {
             this->list << new Entry( Entry::FileFolder, info, this );
         break;
 
+#ifdef Q_OS_WIN32
     case SpecialDirectory::Root:
         // add root pseudo-folder
         this->list << new Entry( Entry::Root, QFileInfo(), this );
@@ -336,6 +341,7 @@ void ContainerModel::buildList( const QString &path ) {
 
         this->list << new Entry( Entry::Trash, QFileInfo(), this );
         break;
+#endif
 
     case SpecialDirectory::NoType:
     case SpecialDirectory::Trash:
@@ -770,7 +776,9 @@ void ContainerModel::processItemOpen( const QModelIndex &index ) {
             QDesktopServices::openUrl( QUrl::fromLocalFile( entry->path()));
             return;
 
+#ifdef Q_OS_WIN32
         case SpecialDirectory::Root:
+#endif
         case SpecialDirectory::NoType:
         case SpecialDirectory::Trash:
         case SpecialDirectory::Bookmarks:

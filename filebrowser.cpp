@@ -449,7 +449,9 @@ void FileBrowser::setCurrentPath( const QString &path, bool saveToHistory ) {
 
     // determine directory type
     switch ( SpecialDirectory::pathToType( path )) {
+#ifdef Q_OS_WIN32
     case SpecialDirectory::Root:
+#endif
     case SpecialDirectory::Trash:
     case SpecialDirectory::Bookmarks:
         pathUtils.currentPath = path;

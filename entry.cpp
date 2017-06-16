@@ -20,7 +20,9 @@
 // includes
 //
 #include <QMimeDatabase>
+#ifdef Q_OS_WIN32
 #include <QtWin>
+#endif
 #include <QSysInfo>
 #include "entry.h"
 #include "pixmapcache.h"
@@ -44,6 +46,7 @@ Entry::Entry( EntryTypes type, const QFileInfo &fileInfo, ContainerModel *parent
  * @return
  */
 QString Entry::getDriveIconName( const QFileInfo &info ) {
+#ifdef Q_OS_WIN32
     UINT type;
 
     type = GetDriveType(( wchar_t * )info.absoluteFilePath().utf16());
@@ -73,6 +76,9 @@ QString Entry::getDriveIconName( const QFileInfo &info ) {
     default:
         return "drive-removable-media";
     }
+#else
+    return "drive-removable-media";
+#endif
 }
 
 /**

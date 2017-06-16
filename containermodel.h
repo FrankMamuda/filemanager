@@ -50,7 +50,9 @@ struct SpecialDirectory {
     enum Types {
         NoType = -1,
         General,
+#ifdef Q_OS_WIN32
         Root,
+#endif
         Trash,
         Bookmarks
     };
@@ -66,7 +68,9 @@ struct SpecialDirectory {
 namespace ContainerNamespace {
 static const QList<SpecialDirectory> SpecialDirectories =
         ( QList<SpecialDirectory>() <<
+#ifdef Q_OS_WIN32
           SpecialDirectory( SpecialDirectory::Root, "/" ) <<
+#endif
           SpecialDirectory( SpecialDirectory::Trash, "trash://" ) <<
           SpecialDirectory( SpecialDirectory::Bookmarks, "bookmarks://" ));
 }

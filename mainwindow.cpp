@@ -34,8 +34,10 @@
 #include "textutils.h"
 #include "pixmapcache.h"
 #include "worker.h"
+#ifdef Q_OS_WIN32
 #include <windows.h>
 #include <dwmapi.h>
+#endif
 #include "filebrowser.h"
 /*
 GOALS:
@@ -304,18 +306,22 @@ void MainWindow::setCurrentPath( const QString &path, bool saveToHistory ) {
  * @brief MainWindow::removeFrame
  */
 void MainWindow::removeFrame() {
+#ifdef Q_OS_WIN32
     MARGINS margins = { -1, -1, -1, -1 };
     int flag = DWMNCRP_ENABLED;
     HWND hwnd;
+#endif
 
     // remove frame, detect leave event
     this->setWindowFlags( Qt::FramelessWindowHint );
     this->setAttribute( Qt::WA_Hover );
 
     // enable shadow
+#ifdef Q_OS_WIN32
     hwnd = reinterpret_cast<HWND>( this->winId());
     DwmSetWindowAttribute( hwnd, 2, &flag, 4 );
     DwmExtendFrameIntoClientArea( hwnd, &margins );
+#endif
 
     // enable mouse tracking
     this->setMouseTracking( true );
